@@ -156,7 +156,22 @@ I have also tried to calculate the degree of freedom by considering $\mathrm{Tra
 There is a huge decrease in degree of freedom from free GP to invariance GP, but there seem not to be that much difference from coarse grids to fine grids of invariance (I tested from $10\times 10$ to $60\times 60$).
 
 Now I am trying to not telling the invaraince what the mass, $m$, and spring constant $k$ is, which I previously assumed to be one. (the data will still fix at one, but the model should learn it by maximising log marginal likelihood).
-So if I have general $k$ and $m$, my energy $E=\frac{m\dot{x}^2}{2}+\frac{kx^2}{2}.$
+So if I have general $k$ and $m$, my energy $E=\frac{m\dot{x}^2}{2}+\frac{kx^2}{2},$ so the invariance is $ma\dot{x}+kvx=0.$
+Therefore, I will make $k$ and $m$ an unknown paremeter in the energy kernel and see how it goes.
+Our matrix A will be unchanged, but the B matrix will now be
+$$
+B = \begin{pmatrix}
+  K_a(X, X_g) \\ K_v(X, X_g) \end{pmatrix}
+  \odot \begin{pmatrix}
+    m\dot{\tilde{X}} \\ k\tilde{X}
+  \end{pmatrix}, 
+$$
+and 
+$$
+D = K_a(X_g, X_g) \odot m^2\dot{\tilde{X}}^2 + K_v(X_g, X_g) \odot k^2\tilde{X}^2
+$$
+The result is quite good, I initialised the mass to be 3 and spring constant to be 1, and the GP learnt that the $m$ should be equal to $k$, and infer them to be around 2.7. 
+This is because actually the actual $m$ and $k$ doesn't matter in the dynamics, it's just their ratios, which should be 1 in our case. 
 
 
 
