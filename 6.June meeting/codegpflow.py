@@ -9,15 +9,15 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from termcolor import colored
 
 # %%
-t = tf.linspace(0, 100, 50)
+t = tf.linspace(0, 100, 100)
 x = tf.math.sin(t)
 v = tf.math.cos(t)
 plt.plot(t, x, "--")
 plt.plot(t, v, "--")
 # to sample the data randomly instead of regular spacing
-#sampled_t = list(sorted(random.sample(list(t), 100)))
-#sampled_x = 5*np.cos(sampled_t)
-#sampled_v = 5*np.sin(sampled_t)
+#sampled_t = list(sorted(random.sample(list(t), 50)))
+#sampled_x = tf.math.cos(sampled_t)
+#sampled_v = tf.math.sin(sampled_t)
 #plt.plot(sampled_t, sampled_x, 'x')
 #plt.plot(sampled_t, sampled_v, 'x')
 #plt.plot(x,v)
