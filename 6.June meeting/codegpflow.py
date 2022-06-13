@@ -9,7 +9,7 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from termcolor import colored
 
 # %%
-t = tf.linspace(0, 100, 100)
+t = tf.linspace(0, 30, 30)
 x = tf.math.sin(t)
 v = tf.math.cos(t)
 plt.plot(t, x, "--")
@@ -266,7 +266,7 @@ print(degree_of_freedom(m, energy_kernel, X).numpy())
 plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=m.log_marginal_likelihood().numpy())
 plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m.log_marginal_likelihood().numpy())
 # %%
-for i in [20]:
+for i in [5]:
     energy_kernel = SHO_Energy_Invariance(5, i)
     set_trainable(energy_kernel.jitter.variance, False)
     energy_kernel.RBFa.variance = gpflow.Parameter(energy_kernel.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.01), to_default_float(5.0))) 
@@ -275,8 +275,8 @@ for i in [20]:
     energy_kernel.RBFv.lengthscales = gpflow.Parameter(energy_kernel.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.01), to_default_float(10.))) 
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=energy_kernel, mean_function=Zero_mean(output_dim=2))
     opt = gpflow.optimizers.Scipy()
-    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=10))
-    print(degree_of_freedom(m, energy_kernel, X))
+    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=50))
+    print(degree_of_freedom(m, energy_kernel, X).numpy())
         
 # %%
 def plotting_samples(kernel, n_of_samples, eval_points, acc):

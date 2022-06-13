@@ -2,8 +2,8 @@ PWD c:/Users/cheng/Documents/Charlie learning invariance research project/6.June
 INPUT c:/texlive/2021/texmf.cnf
 INPUT c:/texlive/2021/texmf-dist/web2c/texmf.cnf
 INPUT c:/texlive/2021/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT c:/Users/cheng/Documents/Charlie learning invariance research project/6.June meeting/meeting.tex
-OUTPUT meeting.log
+INPUT c:/Users/cheng/Documents/Charlie learning invariance research project/6.June meeting/Charlie meeting 6.June.tex
+OUTPUT Charlie meeting 6.June.log
 INPUT c:/texlive/2021/texmf-dist/tex/latex/base/article.cls
 INPUT c:/texlive/2021/texmf-dist/tex/latex/base/article.cls
 INPUT c:/texlive/2021/texmf-dist/tex/latex/base/article.cls
@@ -1031,12 +1031,12 @@ INPUT c:/texlive/2021/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/ti
 INPUT c:/texlive/2021/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibraryfadings.code.tex
 INPUT c:/texlive/2021/texmf-dist/tex/generic/pgf/libraries/pgflibraryfadings.code.tex
 INPUT c:/texlive/2021/texmf-dist/tex/generic/pgf/libraries/pgflibraryfadings.code.tex
-OUTPUT meeting.pdf
+OUTPUT Charlie meeting 6.June.pdf
 INPUT c:/texlive/2021/texmf-dist/tex/latex/tcolorbox/tcbposter.code.tex
-INPUT ./meeting.aux
-INPUT meeting.aux
-INPUT meeting.aux
-OUTPUT meeting.aux
+INPUT ./Charlie meeting 6.June.aux
+INPUT Charlie meeting 6.June.aux
+INPUT Charlie meeting 6.June.aux
+OUTPUT Charlie meeting 6.June.aux
 INPUT c:/texlive/2021/texmf-dist/tex/latex/hyperref/nameref.sty
 INPUT c:/texlive/2021/texmf-dist/tex/latex/hyperref/nameref.sty
 INPUT c:/texlive/2021/texmf-dist/tex/latex/hyperref/nameref.sty
@@ -1074,17 +1074,17 @@ INPUT c:/texlive/2021/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
 INPUT c:/texlive/2021/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
 INPUT c:/texlive/2021/texmf-dist/tex/latex/kvoptions/kvoptions.sty
 INPUT c:/texlive/2021/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
-INPUT ./meeting.out
-INPUT meeting.out
-INPUT ./meeting.out
-INPUT meeting.out
-INPUT ./meeting.out
-INPUT meeting.out
-INPUT ./meeting.out
-INPUT meeting.out
-INPUT ./meeting.out
-INPUT ./meeting.out
-OUTPUT meeting.out
+INPUT ./Charlie meeting 6.June.out
+INPUT Charlie meeting 6.June.out
+INPUT ./Charlie meeting 6.June.out
+INPUT Charlie meeting 6.June.out
+INPUT ./Charlie meeting 6.June.out
+INPUT Charlie meeting 6.June.out
+INPUT ./Charlie meeting 6.June.out
+INPUT Charlie meeting 6.June.out
+INPUT ./Charlie meeting 6.June.out
+INPUT ./Charlie meeting 6.June.out
+OUTPUT Charlie meeting 6.June.out
 INPUT c:/texlive/2021/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 INPUT c:/texlive/2021/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 INPUT c:/texlive/2021/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
@@ -1150,9 +1150,9 @@ INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx7.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx5.tfm
 INPUT c:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map
-INPUT meeting.aux
-INPUT ./meeting.out
-INPUT ./meeting.out
+INPUT Charlie meeting 6.June.aux
+INPUT ./Charlie meeting 6.June.out
+INPUT ./Charlie meeting 6.June.out
 INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb
 INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
