@@ -27,10 +27,14 @@ plt.plot(t, v, "--")
 #plt.plot(sampled_x, sampled_v, "x")
 
 # %%
-X = tf.concat([x[:,None], v[:,None]], axis=-1)
-X = tf.concat([X, 2*X], axis=0)
-Y = (X[2:,:]-X[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
-X = X[1:-1, :]
+X1 = tf.concat([x[:,None], v[:,None]], axis=-1)
+X2 = 2*X1
+Y1 = (X1[2:,:]-X1[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
+Y2 = (X2[2:,:]-X2[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
+X1 = X1[1:-1, :]
+X2 = X2[1:-1, :]
+X = tf.concat([X1, X2], axis=0)
+Y = tf.concat([Y1, Y2], axis=0)
 plt.plot(X[:,1])
 plt.plot(Y[:,0])
 # %%
@@ -86,10 +90,9 @@ class Zero_mean(gpflow.mean_functions.Constant):
 
     def __call__(self, X) -> tf.Tensor:
         return tf.zeros((X.shape[0]*self.output_dim, 1), dtype=X.dtype)
-def degree_of_freedom(m, kernel, data):
-    X = data
-    K = kernel(X)
-    return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+m.likelihood.variance.numpy()*tf.eye(K.shape[0], dtype=tf.float64)), 1))
+def degree_of_freedom(kernel):
+    K = kernel(test_points)
+    return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+tf.eye(K.shape[0], dtype=tf.float64)), 1))
 
 # %%
 class MOI(gpflow.kernels.Kernel):
@@ -137,7 +140,6 @@ opt_logs = opt.minimize(m_normal.training_loss, m_normal.trainable_variables, op
 pred, var = m_normal.predict_f(test_points)
 print(m_normal.log_marginal_likelihood().numpy())
 print_summary(m_normal)
-print(degree_of_freedom(m_normal, moi, X).numpy())
 # %%
 plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=m_normal.log_marginal_likelihood().numpy())
 plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m_normal.log_marginal_likelihood().numpy())
@@ -147,7 +149,7 @@ plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points
 class SHO_Energy_Invariance(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density):
         super().__init__(active_dims=[0, 1])
-        self.jitter = gpflow.kernels.White(1e-5)
+        self.jitter = gpflow.kernels.White(5e-6)
         self.RBFa = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.RBFv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.Ka =  self.RBFa + self.jitter
@@ -243,7 +245,7 @@ class SHO_Energy_Invariance(gpflow.kernels.Kernel):
 
 
 # %%
-energy_kernel = SHO_Energy_Invariance(5, 20)
+energy_kernel = SHO_Energy_Invariance(5, 40)
 set_trainable(energy_kernel.jitter.variance, False)
 energy_kernel.RBFa.variance = gpflow.Parameter(energy_kernel.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
 energy_kernel.RBFv.variance = gpflow.Parameter(energy_kernel.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
@@ -264,7 +266,6 @@ opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(max
 pred, var = m.predict_f(test_points)
 print_summary(m)
 print(m.log_marginal_likelihood().numpy())
-print(degree_of_freedom(m, energy_kernel, X).numpy())
 # %%
 plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=m.log_marginal_likelihood().numpy())
 plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m.log_marginal_likelihood().numpy())
