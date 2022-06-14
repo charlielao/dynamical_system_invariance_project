@@ -12,7 +12,7 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from termcolor import colored
 
 # %%
-t = tf.linspace(0, 30, 30)
+t = tf.linspace(0, 10, 100)
 x = tf.math.sin(t)
 v = tf.math.cos(t)
 plt.plot(t, x, "--")
@@ -29,8 +29,8 @@ plt.plot(t, v, "--")
 # %%
 X1 = tf.concat([x[:,None], v[:,None]], axis=-1)
 X2 = 2*X1
-Y1 = (X1[2:,:]-X1[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
-Y2 = (X2[2:,:]-X2[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
+Y1 = (X1[2:,:]-X1[:-2, :])/(2*0.1) # to estimate acceleration and velocity by discrete differenation
+Y2 = (X2[2:,:]-X2[:-2, :])/(2*0.1) # to estimate acceleration and velocity by discrete differenation
 X1 = X1[1:-1, :]
 X2 = X2[1:-1, :]
 X = tf.concat([X1, X2], axis=0)
@@ -245,7 +245,7 @@ class SHO_Energy_Invariance(gpflow.kernels.Kernel):
 
 
 # %%
-energy_kernel = SHO_Energy_Invariance(5, 40)
+energy_kernel = SHO_Energy_Invariance(5, 20)
 set_trainable(energy_kernel.jitter.variance, False)
 energy_kernel.RBFa.variance = gpflow.Parameter(energy_kernel.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
 energy_kernel.RBFv.variance = gpflow.Parameter(energy_kernel.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
