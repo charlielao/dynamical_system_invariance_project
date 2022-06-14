@@ -1,3 +1,7 @@
+#######
+# basically all wrong, shouldn't have implemented them independently
+# some mathematical expressions may be helpful though, but not much is needed
+#######
 # %%
 import gpflow
 import numpy as np

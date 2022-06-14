@@ -1,0 +1,113 @@
+\documentclass{article}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{mathtools}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{listings}
+\usepackage{bbm}
+\usepackage[most]{tcolorbox}
+\newcommand{\e}[1]{{\mathbb E}\left[ #1 \right]}
+\definecolor{block-gray}{gray}{0.90}
+\newtcolorbox{code}{colback=block-gray,grow to right by=-1mm,grow to left by=-1mm,boxrule=0pt,boxsep=0pt,breakable}
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+}
+
+\title{\vspace{-3cm}Charlie meeting 6th May\vspace{-3em}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\section*{Meeting}
+This week, after talking with Mark, I first need to redo the calculation of degree of freedom of invariance GP on a fixed grid instead of the data, and compare similar thing with the degree of freedom on a RBF.
+The next thing for the week is try to extend the system to a nonlinear dynamics system as opposed to a linear system as before.
+A simple example will be a pendulum with largeish angle swing (not too big such that it tips over)
+Afterwards, we will demonstrate the kernel on a dissipative system, a prime example will be a damped oscillator, where we will not enforce strong invariance but have say a small noise tolerance, "soft invariance". 
+We also discussed the effect of jitter and I will try to assess if it's too big by increasing it until it breaks.
+After discussion with Andrew, he had concerns about the grid invariance being not scalable in high dimensions and proposed the idea of active learning, where we produce a grid along the trajectory (local mesh), which will be looked into as a side exploration when dimension gets high.
+He also mentioned some possible parametisation techniques (something about Fourier components or polynomical or neural network) to paramertise invariances but it will be looked at only at the final phase of the project.
+\section*{Pendulum}
+To get dataset, we need to solve the second order ODE numerically
+$$
+\frac{d^2\theta}{dt^2}+\frac{g}{l}\sin(\theta)=0,
+$$ 
+we can rewrite it as two coupled ODEs
+$$
+\begin{cases}
+  \frac{d\theta}{dt} = \omega \\
+  \frac{d\omega}{dt} = -\frac{g}{l}\sin\theta
+\end{cases}
+$$
+and then we can use (two) Runge-Kutta method (RK4) to generate data.
+Note that the acceleration and velocity targets will again be estimated using discrete difference since we assume the trajectory data is given.
+This time, we have the energy 
+$$
+E = \frac{1}{2}ml^2\dot{\theta}^2 + mgl(1-\cos(\theta)), 
+$$
+with small angle approximation, we have $1-\cos(\theta)\approx\theta^2$ so we get the original SHM form back.
+Now the invariance is $$\dot{E} = ml^2\dot{\theta}a(\theta, \dot{\theta})+mgl\sin(\theta)v(\theta, \dot{\theta})=0$$
+Therefore, the structure of codes will not change, it is just the expression will be slightly different.
+We have m and l canceled out so we are left with 
+$$
+l\dot{\theta}a+g\sin(\theta)v=0
+$$
+For simplicity and consistency, we will label $\theta:=x$ so that we can reuse most of previous works.
+We again have:
+$$
+\begin{pmatrix}
+  \mathbf{f}(X_1)\\\mathbf{f}(X_2) \\ L_{X_g}[\mathbf{f}(X_g)]
+\end{pmatrix}
+\sim \mathcal{N}
+\left(
+\begin{pmatrix}
+  \mathbf{0}_{2n} \\ \mathbf{0}_{2m} \\ \mathbf{0}_{\ell}
+\end{pmatrix},
+\begin{pmatrix}
+K(X_1, X_1) & K(X_1, X_2) & B_1 \\
+K(X_2, X_1) & K(X_2, X_2) & B_2 \\
+C_1         & C_2         & D \\
+\end{pmatrix}
+\right), 
+$$
+This time since the invaraince is $la\dot{x}+gv\sin x=0$, 
+we have 
+$$
+B = \begin{pmatrix}
+  K_a(X, X_g) \\ K_v(X, X_g) \end{pmatrix}
+  \odot \begin{pmatrix}
+    l\dot{\tilde{X}} \\ g\sin\tilde{X}
+  \end{pmatrix}, 
+$$
+and 
+$$
+D = K_a(X_g, X_g) \odot l^2\dot{\tilde{X}}^2 + K_v(X_g, X_g) \odot g^2\sin\tilde{X}^2
+$$
+Note that $\sin\tilde{X}^2=\begin{pmatrix}
+  \sin^2\tilde{x}_1 & \sin\tilde{x}_1\sin\tilde{x}_2 & \dots & \sin\tilde{x}_1\sin\tilde{x}_{\ell} \\
+  \vdots & \vdots & \vdots & \vdots \\
+  \sin\tilde{x}_{\ell}\sin\tilde{x}_1 & \sin\tilde{x}_{\ell}\sin\tilde{x}_2 & \dots & \sin^2\tilde{x}_{\ell} \\
+\end{pmatrix}.$ 
+For simplicity we will set $g=10$ since it is a universal constant.
+
+
+\section*{Damped SHM}
+If we have a damped SHM, we have a second order ODE 
+$$
+m\frac{d^2x}{dt^2}+c\frac{dx}{dt}+kx=0
+$$, with a damping force $F_{damp}=-cv$ and the damping coefficient is given by $\gamma=\frac{c}{2m}$.
+
+
+\end{document}
+

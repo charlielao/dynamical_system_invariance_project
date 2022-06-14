@@ -1,20 +1,28 @@
-######
-# first version, contains SHM kernel, SHM parameter learning kernel, standard GP kernel, prior plot, posterior plot, degree of freedom calculation 
-######
 # %%
 import gpflow
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
+from scipy.integrate import solve_ivp, odeint
 import random
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 from termcolor import colored
 
 # %%
-t = tf.linspace(0, 30, 30)
-x = tf.math.sin(t)
-v = tf.math.cos(t)
+t = np.linspace(0, 10, 100)
+g = 9.81
+l = 1
+initial_angle = 15
+init = [np.radians(initial_angle), 0]
+def f(t, r):
+    theta = r[0]
+    omega = r[1]
+    return np.array([omega, -g / l * np.sin(theta)])
+results = odeint(f, init, t, tfirst=True)
+x = results[:,0]
+v = results[:,1]
+
 plt.plot(t, x, "--")
 plt.plot(t, v, "--")
 # to sample the data randomly instead of regular spacing
@@ -28,8 +36,7 @@ plt.plot(t, v, "--")
 
 # %%
 X = tf.concat([x[:,None], v[:,None]], axis=-1)
-X = tf.concat([X, 2*X], axis=0)
-Y = (X[2:,:]-X[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
+Y = (X[2:,:]-X[:-2, :])/(2*0.1) # to estimate acceleration and velocity by discrete differenation
 X = X[1:-1, :]
 plt.plot(X[:,1])
 plt.plot(Y[:,0])
