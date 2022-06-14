@@ -1,5 +1,5 @@
 ######
-# first version, contains SHM kernel, SHM parameter learning kernel, standard GP kernel, prior plot, posterior plot, degree of freedom calculation 
+# first version, contains SHM kernel, SHM parameter learning kernel, standard GP kernel, prior plot, posterior plot, degree of freedom calculation as well as samples from a kernel 
 ######
 # %%
 import gpflow
