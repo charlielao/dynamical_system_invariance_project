@@ -13,7 +13,7 @@ from termcolor import colored
 
 # %%
 dt = 1
-t = tf.linspace(0, 10, int(10/dt))
+t = tf.linspace(0, 30, int(30/dt))
 x = tf.math.sin(t)
 v = tf.math.cos(t)
 plt.plot(t, x, "--")
@@ -77,7 +77,7 @@ def plotting(pred, var, eval_points, data, save, name, angle1, angle2, acc, lml)
     if save:
         plt.savefig(name+"_contour.pdf")
 # range we are evaluating the test points on
-test_range = 5 
+test_range = 3 
 test_density = 40
 test_xs = tf.linspace(-test_range,test_range,test_density)
 test_vs = tf.linspace(-test_range,test_range,test_density)
@@ -247,7 +247,7 @@ class SHO_Energy_Invariance(gpflow.kernels.Kernel):
 
 
 # %%
-energy_kernel = SHO_Energy_Invariance(5, 20)
+energy_kernel = SHO_Energy_Invariance(3, 20)
 set_trainable(energy_kernel.jitter.variance, False)
 energy_kernel.RBFa.variance = gpflow.Parameter(energy_kernel.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
 energy_kernel.RBFv.variance = gpflow.Parameter(energy_kernel.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
