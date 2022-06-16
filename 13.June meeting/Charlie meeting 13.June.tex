@@ -106,9 +106,67 @@ Need certain level of accuracy in the data to perform well, which makes sense si
 \section*{Damped SHM}
 If we have a damped SHM, we have a second order ODE 
 $$
-m\frac{d^2x}{dt^2}+c\frac{dx}{dt}+kx=0
-$$, with a damping force $F_{damp}=-cv$ and the damping coefficient is given by $\gamma=\frac{c}{2m}$.
+m\frac{d^2x}{dt^2}+c\frac{dx}{dt}+kx=0,
+$$ with a damping force $F_{damp}=-cv$ and the damping coefficient is given by $\gamma=\frac{c}{2m}$.
+People usually write it as 
+$$
+\ddot{x}+2\gamma\dot{x}+\omega_0^2 = 0, 
+$$ where $\gamma=\frac{c}{2m}$ and $\omega_0=\sqrt{\frac{k}{m}}.$
+We will only consider the light damping case ($\gamma << \omega_0$) since invariance definitely would not hold at all at large damping regime.
+Essentially, we will keep most of the machinary of original SHM but instead of conditioning on $a\dot{x}+vx=0$, we will condition on $a\dot{x}+vx=\epsilon$, where $\epsilon$ is some small number that allows tolerance to slight violation of invariance.
+In this case, since $E=\frac{kx^2}{2}+\frac{m\dot{x}^2}{2}$ is still true, we have $$\frac{dE}{dt}=\dot{x}(m\ddot{x}+kx)=-c\dot{x}^2=-2m\gamma\dot{x}^2<0$$
+If $\gamma$ is small enough, we should expect the invariance to hold relatively okay.
+To produce the data, we have $x(t)=e^{-\gamma t}\sin(\omega_dt),$ and $\omega_d = \sqrt{\omega_0^2-\gamma^2}$ $\dot{x}(t)=-\gamma e^{-\gamma t}\sin(\omega_dt)+\omega_de^{-\gamma t}\cos(\omega_dt)=e^{-\gamma t}(\omega_d\cos(\omega_dt)-\gamma \sin(\omega_dt))$
+We need to modify the mean function to accomdate the small tolerance $\epsilon.$
+Before we have
+$$
+\begin{pmatrix}
+  \mathbf{f}(X_1)\\
+  \mathbf{f}(X_2)
+\end{pmatrix}|L_{X_g}[\mathbf{f}(X_g)]=0
+\sim\mathcal{N}
+\left(
+\begin{pmatrix}
+  \mathbf{0}_{2n}\\
+  \mathbf{0}_{2m}\\
+\end{pmatrix}
+,
+A-\begin{pmatrix}
+  B_1 \\B_2
+\end{pmatrix}D^{-1}\left(C_1, C_2\right)
+\right)
+$$
+and now we have 
 
-
+$$
+\begin{pmatrix}
+  \mathbf{f}(X_1)\\
+  \mathbf{f}(X_2)
+\end{pmatrix}|L_{X_g}[\mathbf{f}(X_g)]=\epsilon
+\sim\mathcal{N}
+\left(
+\begin{pmatrix}
+  \mathbf{0}_{2n}\\
+  \mathbf{0}_{2m}\\
+\end{pmatrix}
++
+\begin{pmatrix}
+  B_1\\B_2\\
+\end{pmatrix}
+D^{-1}
+\bigg(\mathbf{\epsilon}_l\bigg)
+,
+A-\begin{pmatrix}
+  B_1 \\B_2
+\end{pmatrix}D^{-1}\left(C_1, C_2\right)
+\right)
+$$
+For the purpose of subclassing the mean function, we only need $X1$ so that we have the mean function $$\mathbf{0}_{2n}+BD^{-1}\mathbf{\epsilon}_l$$
+\section*{Damped Pendulum}
+It has equation
+$$
+\frac{d^2\theta}{dt^2} + 2\gamma\frac{d\theta}{dt} + \omega_0^2\sin\theta = 0, 
+$$
+where $\gamma$ is again some damping coefficient and $\omega_0^2$ is $\frac{g}{l}$.
 \end{document}
 

@@ -12,7 +12,7 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from termcolor import colored
 
 # %%
-dt = 0.1
+dt = 1
 t = tf.linspace(0, 10, int(10/dt))
 x = tf.math.sin(t)
 v = tf.math.cos(t)
@@ -150,7 +150,7 @@ plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points
 class SHO_Energy_Invariance(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density):
         super().__init__(active_dims=[0, 1])
-        self.jitter = gpflow.kernels.White(1e-5)
+        self.jitter = gpflow.kernels.White(1.3e-5)
         self.RBFa = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.RBFv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.Ka =  self.RBFa + self.jitter
@@ -265,7 +265,7 @@ m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[
 opt = gpflow.optimizers.Scipy()
 opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=100))
 pred, var = m.predict_f(test_points)
-print_summary(m)
+#print_summary(m)
 print(m.log_marginal_likelihood().numpy())
 # %%
 plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=m.log_marginal_likelihood().numpy())
