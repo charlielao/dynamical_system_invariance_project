@@ -15,8 +15,8 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from termcolor import colored
 
 # %%
-dt = 1
-t = np.linspace(0, 10, int(10/dt))
+dt = 0.1
+t = np.linspace(0, 30, int(30/dt))
 g = 1
 l = 1
 def f(t, r):
@@ -25,11 +25,11 @@ def f(t, r):
     return np.array([omega, -g / l * np.sin(theta)])
 results = odeint(f, [np.radians(150), 0], t, tfirst=True)
 results2 = odeint(f, [np.radians(90), 0], t, tfirst=True)
-x1 = results[:,0]
-v1 = results[:,1]
-x2 = results2[:,0]
-v2 = results2[:,1]
-#t = t[0::100]
+x1 = results[0::10,0]
+v1 = results[0::10,1]
+x2 = results2[0::10,0]
+v2 = results2[0::10,1]
+t = t[0::10]
 
 plt.plot(t, x1, "--")
 plt.plot(t, v1, "--")
@@ -39,13 +39,14 @@ plt.plot(t, v2)
 # %%
 X_1 = tf.concat([x1[:,None], v1[:,None]], axis=-1)
 X_2 = tf.concat([x2[:,None], v2[:,None]], axis=-1)
-Y_1 = (X_1[2:,:]-X_1[:-2, :])/(2*dt) # to estimate acceleration and velocity by discrete differenation
-Y_2 = (X_2[2:,:]-X_2[:-2, :])/(2*dt) # to estimate acceleration and velocity by discrete differenation
+X_1 += tf.random.normal((X_1.shape), 0, 0.1, dtype=tf.float64)
+X_2 += tf.random.normal((X_2.shape), 0, 0.1, dtype=tf.float64)
+Y_1 = (X_1[2:,:]-X_1[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
+Y_2 = (X_2[2:,:]-X_2[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
 X_1 = X_1[1:-1, :]
 X_2 = X_2[1:-1, :]
 X = tf.concat([X_1,X_2], axis=0)
 Y = tf.concat([Y_1,Y_2], axis=0)
-Y += tf.random.normal((Y.shape), 0, 0.1, dtype=tf.float64)
 
 plt.plot(X[:,1])
 plt.plot(Y[:,0])
