@@ -35,7 +35,8 @@ Y2 = (X2[2:,:]-X2[:-2, :])/(2*dt) # to estimate acceleration and velocity by dis
 X1 = X1[1:-1, :]
 X2 = X2[1:-1, :]
 X = tf.concat([X1, X2], axis=0)
-Y = tf.concat([Y1, Y2], axis=0)
+Y = tf.concat([Y1, Y2], axis=0) 
+Y += tf.random.normal((Y.shape), 0, 0.1, dtype=tf.float64)
 plt.plot(X[:,1])
 plt.plot(Y[:,0])
 # %%

@@ -12,8 +12,8 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from termcolor import colored
 
 # %%
-dt = 0.1
-gamma = 0.01
+dt = 1
+gamma = 0.05
 m = 1
 k = 1
 w = np.sqrt(k/m-gamma**2)
@@ -41,8 +41,9 @@ X1 = X1[1:-1, :]
 X2 = X2[1:-1, :]
 X = tf.concat([X1, X2], axis=0)
 Y = tf.concat([Y1, Y2], axis=0)
-#plt.plot(X1[:,1])
-#plt.plot(Y1[:,0])
+Y += tf.random.normal((Y.shape), 0, 0.1, dtype=tf.float64)
+plt.plot(X[:,0])
+plt.plot(Y[:,1])
 # %%
 # plotting
 
@@ -255,7 +256,7 @@ class epsilon_mean(gpflow.mean_functions.MeanFunction):
         self.invar_grids = kernel.invar_grids
         self.Ka = kernel.Ka
         self.Kv = kernel.Kv
-#        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(1e-6), to_default_float(1.)))
+        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(1e-6), to_default_float(1.)))
 
     def __call__(self, X) -> tf.Tensor:
         n = X.shape[0]
@@ -274,8 +275,8 @@ class epsilon_mean(gpflow.mean_functions.MeanFunction):
         x_g_dot_squared = tf.tensordot(self.invar_grids[:,1,None],self.invar_grids[None,:,1],1)
         B = tf.multiply(K_Xg, x_g_stacked)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
-#        return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -self.epsilon*tf.ones((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
-        return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -2*to_default_float(gamma)*tf.math.square(self.invar_grids[:,1,None]),1) 
+        return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -self.epsilon*tf.ones((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
+#        return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -2*to_default_float(gamma)*tf.math.square(self.invar_grids[:,1,None]),1) 
 
 
 # %%

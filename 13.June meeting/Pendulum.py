@@ -15,7 +15,7 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from termcolor import colored
 
 # %%
-dt = 0.1
+dt = 1
 t = np.linspace(0, 10, int(10/dt))
 g = 1
 l = 1
@@ -45,6 +45,7 @@ X_1 = X_1[1:-1, :]
 X_2 = X_2[1:-1, :]
 X = tf.concat([X_1,X_2], axis=0)
 Y = tf.concat([Y_1,Y_2], axis=0)
+Y += tf.random.normal((Y.shape), 0, 0.1, dtype=tf.float64)
 
 plt.plot(X[:,1])
 plt.plot(Y[:,0])
