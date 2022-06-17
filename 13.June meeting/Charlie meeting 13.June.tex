@@ -196,6 +196,33 @@ For some reason, greater jitter give better performance? (not that much differen
 In general there's not a dramatic difference.
 Is there a problem with my data generating mechanism?
 Is there a problem with the way I add jitter?
+When damping gets stronger, the anlaytical model may be better. 
+\section*{General Parametisation}
+If we want to learn the invariance automatically by backpropagation, maybe we should try to paramertise the invariance by neural network.
+Say if have a general energy expression, with velocity seperated from the position (most situation), we have $E=f(\dot{x})+g(x),$ and we also have
+$$
+\frac{dE}{dt} = af'(\dot{x}) + vg'(x). 
+$$
+If we label $f'=f, g'=g$ for simplicity of notation, we have 
+$$
+af(\dot{x})+vg(x)=0.
+$$
+In SHM case, $f=m\dot{x}, g=kx$ and for pendulum, $f=l\dot{x}, g=g\sin x$.
+We will then have 
+$$
+B = \begin{pmatrix}
+  K_a(X, X_g) \\ K_v(X, X_g) \end{pmatrix}
+  \odot \begin{pmatrix}
+    f(\dot{\tilde{X}}) \\ g(\tilde{X})
+  \end{pmatrix}, 
+$$
+and 
+$$
+D = K_a(X_g, X_g) \odot f(\dot{\tilde{X}})^2 + K_v(X_g, X_g) \odot g(\tilde{X})^2.
+$$
+We can then parametise f and g with neural network.
+It should in principle work if we cannot seperate position and velocity, say if we have $E=V(x, \dot{x})+T(x, \dot{x})$, we will have $$\frac{dE}{dt} = \frac{\partial V}{\partial x}v+\frac{\partial V}{\partial \dot{x}}a+\frac{\partial T}{\partial x}v+\frac{\partial T}{\partial \dot{x}}a=(\frac{\partial V}{\partial \dot{x}}+\frac{\partial T}{\partial \dot{x}})a+(\frac{\partial V}{\partial x}+\frac{\partial T}{\partial x})v=\frac{\partial E}{\partial \dot{x}}a+\frac{\partial E}{\partial x}v=0$$
+Which we can again write as $f(x, \dot{x})a+g(x, \dot{x})v=0,$ we can then proceed as before.
 
 
 \end{document}
