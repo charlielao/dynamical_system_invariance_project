@@ -147,8 +147,6 @@ print_summary(m_normal)
 plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=m_normal.log_marginal_likelihood().numpy())
 plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m_normal.log_marginal_likelihood().numpy())
 # %%
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Flatten, Dense ,Input
 # %%
 class SHO_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density):
