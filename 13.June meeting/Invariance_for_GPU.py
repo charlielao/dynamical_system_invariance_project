@@ -6,7 +6,6 @@ import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 from termcolor import colored
-
 class MOI(gpflow.kernels.Kernel):
     def __init__(self):
         super().__init__(active_dims=[0,1])
@@ -305,7 +304,7 @@ class damping_SHM_mean(gpflow.mean_functions.MeanFunction):
 
 def degree_of_freedom(kernel, test_points):
     K = kernel(test_points)
-    return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+1e-6*tf.eye(K.shape[0], dtype=tf.float64)), 1))
+    return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+1e-6*tf.eye(K.shape[0], dtype=tf.float64)), 1)).numpy()
 
 def get_SHM_data():
     t = tf.linspace(0, 30, 30)
@@ -417,8 +416,8 @@ def get_MOI():
     moi.RBFv.lengthscales = gpflow.Parameter(moi.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
     return moi
     
-def get_SHM_Invariance():
-    invariance_kernel = SHM_Invariance(3, 20, 1e-6)
+def get_SHM_Invariance(invar_range, invar_density, jitter_size):
+    invariance_kernel = SHM_Invariance(invar_range, invar_density, jitter_size)
     set_trainable(invariance_kernel.jitter.variance, False)
     invariance_kernel.RBFa.variance = gpflow.Parameter(invariance_kernel.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
     invariance_kernel.RBFv.variance = gpflow.Parameter(invariance_kernel.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
@@ -426,8 +425,8 @@ def get_SHM_Invariance():
     invariance_kernel.RBFv.lengthscales = gpflow.Parameter(invariance_kernel.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
     return invariance_kernel
 
-def get_Pendulum_Invariance():
-    invariance_kernel = Pendulum_Invariance(3, 20, 1e-6)
+def get_Pendulum_Invariance(invar_range, invar_density, jitter_size):
+    invariance_kernel = Pendulum_Invariance(invar_range, invar_density, jitter_size)
     set_trainable(invariance_kernel.jitter.variance, False)
     invariance_kernel.RBFa.variance = gpflow.Parameter(invariance_kernel.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
     invariance_kernel.RBFv.variance = gpflow.Parameter(invariance_kernel.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
@@ -444,4 +443,18 @@ def get_GPR_model(kernel, mean_function, data, test_points):
     print_summary(m)
     print(m.log_marginal_likelihood().numpy())
     return (m, pred, var)
-            
+
+test_grids = get_test_points()
+for jitter in [1e-8, 1e-7, 1e-6, 1e-5]:
+    try:
+        mean_function = zero_mean(2)
+        kernel = MOI()
+        print(degree_of_freedom(kernel, test_grids))
+#        get_GPR_model
+
+    except tf.errors.InvalidArgumentError:
+        print("%s jitter too small" %jitter)
+        continue
+                
+
+# %%
