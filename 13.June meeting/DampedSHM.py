@@ -13,16 +13,16 @@ from termcolor import colored
 
 # %%
 dt = 1
-gamma = 0.05
+gamma = 0.01
 m = 1
 k = 1
 w = np.sqrt(k/m-gamma**2)
-t = np.linspace(0, 10, int(10/dt))
+t = np.linspace(0, 30, int(30/dt))
 x = np.sin(w*t)*np.exp(-gamma*t)
 v = np.exp(-gamma*t)*(w*np.cos(w*t)-gamma*np.sin(w*t))
-#plt.plot(t, x, "--")
-#plt.plot(t, v, "--")
-plt.plot(t, 0.5*k*np.square(x)+0.5*m*np.square(v))
+plt.plot(t, x, "--")
+plt.plot(t, v, "--")
+#plt.plot(t, 0.5*k*np.square(x)+0.5*m*np.square(v))
 # to sample the data randomly instead of regular spacing
 #sampled_t = list(sorted(random.sample(list(t), 50)))
 #sampled_x = tf.math.cos(sampled_t)
@@ -34,16 +34,17 @@ plt.plot(t, 0.5*k*np.square(x)+0.5*m*np.square(v))
 
 # %%
 X1 = tf.concat([x[:,None], v[:,None]], axis=-1)
+X1 += tf.random.normal((X1.shape), 0, 0.1, dtype=tf.float64)
 X2 = 2*X1
+X2 += tf.random.normal((X2.shape), 0, 0.1, dtype=tf.float64)
 Y1 = (X1[2:,:]-X1[:-2, :])/(2*dt) # to estimate acceleration and velocity by discrete differenation
 Y2 = (X2[2:,:]-X2[:-2, :])/(2*dt) # to estimate acceleration and velocity by discrete differenation
 X1 = X1[1:-1, :]
 X2 = X2[1:-1, :]
 X = tf.concat([X1, X2], axis=0)
 Y = tf.concat([Y1, Y2], axis=0)
-Y += tf.random.normal((Y.shape), 0, 0.1, dtype=tf.float64)
-plt.plot(X[:,0])
-plt.plot(Y[:,1])
+plt.plot(X[:,1])
+plt.plot(Y[:,0])
 # %%
 # plotting
 
@@ -105,10 +106,11 @@ def degree_of_freedom(kernel):
 class MOI(gpflow.kernels.Kernel):
     def __init__(self):
         super().__init__(active_dims=[0,1])
-        self.RBFa = gpflow.kernels.RBF(variance=1, lengthscales=[1,1])
-        self.RBFv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1])
-        self.Ka = self.RBFa
-        self.Kv = self.RBFv
+        self.jitter = gpflow.kernels.White(1e-5)
+        self.RBFa = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
+        self.RBFv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
+        self.Ka =  self.RBFa + self.jitter
+        self.Kv =  self.RBFv + self.jitter
     def K(self, X, X2=None):
         if X2 is None:
             X2 = X
@@ -136,6 +138,7 @@ class MOI(gpflow.kernels.Kernel):
 
 # %%
 moi = MOI()
+set_trainable(moi.jitter.variance, False)
 moi.RBFa.variance = gpflow.Parameter(moi.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
 moi.RBFv.variance = gpflow.Parameter(moi.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
 moi.RBFa.lengthscales = gpflow.Parameter(moi.RBFa.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
