@@ -444,17 +444,6 @@ def get_GPR_model(kernel, mean_function, data, test_points):
     print(m.log_marginal_likelihood().numpy())
     return (m, pred, var)
 
-test_grids = get_test_points()
-for jitter in [1e-8, 1e-7, 1e-6, 1e-5]:
-    try:
-        mean_function = zero_mean(2)
-        kernel = MOI()
-        print(degree_of_freedom(kernel, test_grids))
-#        get_GPR_model
-
-    except tf.errors.InvalidArgumentError:
-        print("%s jitter too small" %jitter)
-        continue
                 
 
 # %%
