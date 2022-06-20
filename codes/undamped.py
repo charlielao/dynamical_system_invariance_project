@@ -5,7 +5,6 @@ import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 import invariance_functions as inv
-
 test_grids = inv.get_grid_of_points(3, 40)
 zero_mean = inv.zero_mean(2)
 print("SHM") #switch
