@@ -1,0 +1,40 @@
+\documentclass{article}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{mathtools}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{listings}
+\usepackage{bbm}
+\usepackage[most]{tcolorbox}
+\newcommand{\e}[1]{{\mathbb E}\left[ #1 \right]}
+\definecolor{block-gray}{gray}{0.90}
+\newtcolorbox{code}{colback=block-gray,grow to right by=-1mm,grow to left by=-1mm,boxrule=0pt,boxsep=0pt,breakable}
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+}
+
+\title{\vspace{-3cm}Charlie meeting 20th June\vspace{-3em}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\section*{Meeting}
+In this meeting, Andrew and I discussed the result I produced last week. 
+Everything is working, which is good. 
+This week I will work on different type of paramtisation to paramatise the energy function, Andrew suggested a few different methods as basis functions, such as polynomial, splines and Fourier representation. 
+We also talked about my methods of adding jitter, which might not be entire reasonable so I am fixing that too. 
+He also talked about a way that makes this methods scalable, which is that instead of a grid of invariance, we only condition on the local area around the data points as well as the test points we wish to evaluate. 
+\end{document}
+
