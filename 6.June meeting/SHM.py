@@ -30,6 +30,8 @@ plt.plot(t, v, "--")
 # %%
 X1 = tf.concat([x[:,None], v[:,None]], axis=-1)
 X2 = 2*X1
+X1 += tf.random.normal((X1.shape), 0, 0.1, dtype=tf.float64)
+X2 += tf.random.normal((X2.shape), 0, 0.1, dtype=tf.float64)
 Y1 = (X1[2:,:]-X1[:-2, :])/(2*dt) # to estimate acceleration and velocity by discrete differenation
 Y2 = (X2[2:,:]-X2[:-2, :])/(2*dt) # to estimate acceleration and velocity by discrete differenation
 X1 = X1[1:-1, :]
@@ -154,8 +156,8 @@ class SHO_Energy_Invariance(gpflow.kernels.Kernel):
         self.jitter = gpflow.kernels.White(1.3e-5)
         self.RBFa = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.RBFv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
-        self.Ka =  self.RBFa + self.jitter
-        self.Kv =  self.RBFv + self.jitter
+        self.Ka =  self.RBFa# + self.jitter
+        self.Kv =  self.RBFv# + self.jitter
         invariance_xs = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_vs = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_xx, invariance_vv = tf.meshgrid(invariance_xs, invariance_vs)
@@ -214,7 +216,7 @@ class SHO_Energy_Invariance(gpflow.kernels.Kernel):
         C = tf.transpose(B)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg) 
         
-        return (A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), C, 1))[:2*n, 2*n:]
+        return (A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D+1e-6*tf.eye(D.shape[0], dtype=tf.float64)), 1), C, 1))[:2*n, 2*n:]
 
     def K_diag(self, X):
         n = X.shape[0]
@@ -243,11 +245,11 @@ class SHO_Energy_Invariance(gpflow.kernels.Kernel):
         C = tf.transpose(B)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
         
-        return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
+        return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D+1e-6*tf.eye(D.shape[0], dtype=tf.float64)),1), C, 1))
 
 
 # %%
-energy_kernel = SHO_Energy_Invariance(3, 20)
+energy_kernel = SHO_Energy_Invariance(3, 40)
 set_trainable(energy_kernel.jitter.variance, False)
 energy_kernel.RBFa.variance = gpflow.Parameter(energy_kernel.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
 energy_kernel.RBFv.variance = gpflow.Parameter(energy_kernel.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 

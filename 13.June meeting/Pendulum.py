@@ -398,7 +398,7 @@ class Pendulum_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
         Kv_XgXg = self.Kv(self.invar_grids) 
         
         x_g = tf.ones([n, 1], dtype=tf.float64) * tf.math.sin(self.invar_grids[:,0]) * self.g
-        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.math.sin(self.invar_grids[:,1]) * self.l
+        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * self.invar_grids[:,1] * self.l
         x_g_stacked = tf.concat([x_g_dot, x_g],0)
         
         x_g_squared = tf.tensordot(tf.math.sin(self.invar_grids[:,0,None]),tf.math.sin(self.invar_grids[None,:,0]),1) * self.g**2

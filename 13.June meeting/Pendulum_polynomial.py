@@ -1,43 +1,53 @@
-######
-# first version, contains SHM kernel, SHM parameter learning kernel, standard GP kernel, prior plot, posterior plot, degree of freedom calculation as well as samples from a kernel 
-######
+#####
+#Nonlinear pendulum
+
+#####
 # %%
 import gpflow
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
+from scipy.integrate import solve_ivp, odeint
+from scipy.misc import derivative
 import random
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 from termcolor import colored
 
 # %%
-dt = 1
-t = tf.linspace(0, 30, int(30/dt))
-x = tf.math.sin(t)
-v = tf.math.cos(t)
-plt.plot(t, x, "--")
-plt.plot(t, v, "--")
-# to sample the data randomly instead of regular spacing
-#sampled_t = list(sorted(random.sample(list(t), 50)))
-#sampled_x = tf.math.cos(sampled_t)
-#sampled_v = tf.math.sin(sampled_t)
-#plt.plot(sampled_t, sampled_x, 'x')
-#plt.plot(sampled_t, sampled_v, 'x')
-#plt.plot(x,v)
-#plt.plot(sampled_x, sampled_v, "x")
+dt = 0.1
+t = np.linspace(0, 30, int(30/dt))
+g = 1
+l = 1
+def f(t, r):
+    theta = r[0]
+    omega = r[1]
+    return np.array([omega, -g / l * np.sin(theta)])
+results = odeint(f, [np.radians(150), 0], t, tfirst=True)
+results2 = odeint(f, [np.radians(90), 0], t, tfirst=True)
+x1 = results[0::10,0]
+v1 = results[0::10,1]
+x2 = results2[0::10,0]
+v2 = results2[0::10,1]
+t = t[0::10]
+
+plt.plot(t, x1, "--")
+plt.plot(t, v1, "--")
+plt.plot(t, x2)
+plt.plot(t, v2)
 
 # %%
-X1 = tf.concat([x[:,None], v[:,None]], axis=-1)
-X1 += tf.random.normal((X1.shape), 0, 0.1, dtype=tf.float64)
-X2 = 2*X1
-X2 += tf.random.normal((X2.shape), 0, 0.1, dtype=tf.float64)
-Y1 = (X1[2:,:]-X1[:-2, :])/(2*dt) # to estimate acceleration and velocity by discrete differenation
-Y2 = (X2[2:,:]-X2[:-2, :])/(2*dt) # to estimate acceleration and velocity by discrete differenation
-X1 = X1[1:-1, :]
-X2 = X2[1:-1, :]
-X = tf.concat([X1, X2], axis=0)
-Y = tf.concat([Y1, Y2], axis=0) 
+X_1 = tf.concat([x1[:,None], v1[:,None]], axis=-1)
+X_2 = tf.concat([x2[:,None], v2[:,None]], axis=-1)
+X_1 += tf.random.normal((X_1.shape), 0, 0.1, dtype=tf.float64)
+X_2 += tf.random.normal((X_2.shape), 0, 0.1, dtype=tf.float64)
+Y_1 = (X_1[2:,:]-X_1[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
+Y_2 = (X_2[2:,:]-X_2[:-2, :])/(2) # to estimate acceleration and velocity by discrete differenation
+X_1 = X_1[1:-1, :]
+X_2 = X_2[1:-1, :]
+X = tf.concat([X_1,X_2], axis=0)
+Y = tf.concat([Y_1,Y_2], axis=0)
+
 plt.plot(X[:,1])
 plt.plot(Y[:,0])
 # %%
@@ -101,10 +111,11 @@ def degree_of_freedom(kernel):
 class MOI(gpflow.kernels.Kernel):
     def __init__(self):
         super().__init__(active_dims=[0,1])
+        self.jitter = gpflow.kernels.White(1e-8)
         self.RBFa = gpflow.kernels.RBF(variance=1, lengthscales=[1,1])
         self.RBFv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1])
-        self.Ka = self.RBFa
-        self.Kv = self.RBFv
+        self.Ka = self.RBFa + self.jitter
+        self.Kv = self.RBFv + self.jitter
     def K(self, X, X2=None):
         if X2 is None:
             X2 = X
@@ -132,6 +143,7 @@ class MOI(gpflow.kernels.Kernel):
 
 # %%
 moi = MOI()
+set_trainable(moi.jitter.variance, False)
 moi.RBFa.variance = gpflow.Parameter(moi.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
 moi.RBFv.variance = gpflow.Parameter(moi.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
 moi.RBFa.lengthscales = gpflow.Parameter(moi.RBFa.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
@@ -141,29 +153,19 @@ m_normal = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,N
 opt = gpflow.optimizers.Scipy()
 opt_logs = opt.minimize(m_normal.training_loss, m_normal.trainable_variables, options=dict(maxiter=100))
 pred, var = m_normal.predict_f(test_points)
-print(m_normal.log_marginal_likelihood().numpy())
 print_summary(m_normal)
+print(m_normal.log_marginal_likelihood().numpy())
 # %%
 plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=m_normal.log_marginal_likelihood().numpy())
 plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m_normal.log_marginal_likelihood().numpy())
-# %%
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Flatten, Dense ,Input
 
 # %%
-class SHO_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
+class Pendulum_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density):
         super().__init__(active_dims=[0, 1])
-
-        self.weight_f_0 = gpflow.Parameter(tf.reshape(tf.Variable([1.]*1),(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.bias_f_0 = gpflow.Parameter(tf.reshape(1.,(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-        self.weight_g_0 = gpflow.Parameter(tf.reshape(tf.Variable([1.]*1),(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.bias_g_0 = gpflow.Parameter(tf.reshape(1.,(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.weight_f_1 = gpflow.Parameter(tf.reshape(tf.Variable([1.]*1),(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.bias_f_1 = gpflow.Parameter(tf.reshape(1.,(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.weight_g_1 = gpflow.Parameter(tf.reshape(tf.Variable([1.]*1),(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.bias_g_1 = gpflow.Parameter(tf.reshape(1.,(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-
+        self.poly_d = 3
+        self.f_poly = gpflow.Parameter(tf.Variable([1.]*self.poly_d)[:,None], transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(2.)))
+        self.g_poly = gpflow.Parameter(tf.Variable([1.]*self.poly_d)[:,None], transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(2.)))
         self.jitter = gpflow.kernels.White(1e-5)
         self.RBFa = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.RBFv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
@@ -175,12 +177,16 @@ class SHO_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
         self.invar_grids = tf.stack([tf.reshape(invariance_xx,[-1]), tf.reshape(invariance_vv,[-1])], axis=1)
 
     def inv_f(self, X):
-#        return tf.tensordot(tf.math.sigmoid(tf.tensordot(X, self.weight_f_0, 1)+self.bias_f_0), self.weight_f_1,1)+self.bias_f_1
-        return tf.tensordot(X, self.weight_f_0, 1)
+#        s = tf.Variable(to_default_float(tf.zeros((X.shape))))
+#        for i in range(2):
+#        s.assign_add(self.f_poly[0]*tf.math.pow(X, 0))
+#        s.assign_add(self.f_poly[1]*tf.math.pow(X, 1))
         
+        return tf.linalg.matmul(tf.math.pow(X, list(range(self.poly_d))), self.f_poly)
     def inv_g(self, X):
-        return tf.tensordot(X, self.weight_g_0, 1)
-#        return tf.tensordot(tf.math.sigmoid(tf.tensordot(X, self.weight_g_0, 1)+self.bias_g_0), self.weight_g_1,1)+self.bias_g_1
+#        s = tf.Variable(to_default_float(tf.zeros((X.shape))))
+        return tf.linalg.matmul(tf.math.pow(X, list(range(self.poly_d))), self.g_poly)
+        
 
     def K(self, X, X2=None):
         if X2 is None:
@@ -217,16 +223,16 @@ class SHO_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
         Ka_XgXg = self.Ka(self.invar_grids) 
         Kv_XgXg = self.Kv(self.invar_grids) 
         
-        x_g_1 = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,0, None]))
-        x_g_dot_1 = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze( self.inv_f(self.invar_grids[:,1, None]))
+        x_g_1 = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
+        x_g_dot_1 = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
         x_g_1_stacked = tf.concat([x_g_dot_1, x_g_1],0) 
         
-        x_g_2 = tf.ones([m, 1], dtype=tf.float64) *  tf.squeeze(self.inv_g(self.invar_grids[:,0, None]))
-        x_g_dot_2 = tf.ones([m, 1], dtype=tf.float64) *  tf.squeeze(self.inv_f(self.invar_grids[:,1, None]))
+        x_g_2 = tf.ones([m, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
+        x_g_dot_2 = tf.ones([m, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
         x_g_2_stacked = tf.concat([x_g_dot_2, x_g_2],0) 
 
-        x_g_squared = tf.tensordot(self.inv_g(self.invar_grids[:,0,None]),tf.transpose(self.inv_g(self.invar_grids[:,0, None])),1) 
-        x_g_dot_squared = tf.tensordot(self.inv_f(self.invar_grids[:,1,None]),tf.transpose(self.inv_f(self.invar_grids[:,1, None])),1)
+        x_g_squared = tf.tensordot(self.inv_f(self.invar_grids[:,0,None]),tf.transpose(self.inv_f(self.invar_grids[:,0, None])),1)
+        x_g_dot_squared = tf.tensordot(self.inv_g(self.invar_grids[:,1,None]),tf.transpose(self.inv_g(self.invar_grids[:,1, None])),1)
         
         A = tf.concat([tf.concat([K_X1X1, K_X1X2],1),tf.concat([K_X2X1, K_X2X2],1)],0) 
         B1 = tf.multiply(K_X1Xg, x_g_1_stacked)
@@ -252,13 +258,13 @@ class SHO_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
         Ka_XgXg = self.Ka(self.invar_grids) 
         Kv_XgXg = self.Kv(self.invar_grids) 
         
-        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,0, None]))
-        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,1, None]))
+        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
+        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
         x_g_stacked = tf.concat([x_g_dot, x_g],0)
-
-        x_g_squared = tf.tensordot(self.inv_g(self.invar_grids[:,0,None]),tf.transpose(self.inv_g(self.invar_grids[:,0, None])),1) 
-        x_g_dot_squared = tf.tensordot(self.inv_f(self.invar_grids[:,1,None]),tf.transpose(self.inv_f(self.invar_grids[:,1, None])),1)
-
+        
+        x_g_squared = tf.tensordot(self.inv_f(self.invar_grids[:,0,None]),tf.transpose(self.inv_f(self.invar_grids[:,0, None])),1)
+        x_g_dot_squared = tf.tensordot(self.inv_g(self.invar_grids[:,1,None]),tf.transpose(self.inv_g(self.invar_grids[:,1, None])),1)
+        
         A = K_X
         B = tf.multiply(K_Xg, x_g_stacked)
         C = tf.transpose(B)
@@ -267,19 +273,17 @@ class SHO_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
 # %%
-energy_kernel_unknown = SHO_Energy_Invariance_unknown_parameter(3, 20)
+energy_kernel_unknown = Pendulum_Energy_Invariance_unknown_parameter(3, 20)
 set_trainable(energy_kernel_unknown.jitter.variance, False)
-energy_kernel_unknown.RBFa.variance = gpflow.Parameter(energy_kernel_unknown.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-energy_kernel_unknown.RBFv.variance = gpflow.Parameter(energy_kernel_unknown.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-energy_kernel_unknown.RBFa.lengthscales = gpflow.Parameter(energy_kernel_unknown.RBFa.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-energy_kernel_unknown.RBFv.lengthscales = gpflow.Parameter(energy_kernel_unknown.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
+energy_kernel_unknown.RBFa.variance = gpflow.Parameter(energy_kernel_unknown.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
+energy_kernel_unknown.RBFv.variance = gpflow.Parameter(energy_kernel_unknown.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
+energy_kernel_unknown.RBFa.lengthscales = gpflow.Parameter(energy_kernel_unknown.RBFa.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
+energy_kernel_unknown.RBFv.lengthscales = gpflow.Parameter(energy_kernel_unknown.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
 # %%
-energy_kernel_unknown(X)
-#%%
 m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=energy_kernel_unknown, mean_function=Zero_mean(output_dim=2))
 
 opt = gpflow.optimizers.Scipy()
-opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=200))
+opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=100))
 pred, var = m.predict_f(test_points)
 print_summary(m)
 print(m.log_marginal_likelihood().numpy())
