@@ -312,7 +312,7 @@ def degree_of_freedom(kernel, test_points):
 def get_SHM_data(total_time, noise):
     t = tf.linspace(0, total_time, total_time)
     x = tf.math.sin(t)
-    v = tf.math.cos(t)
+    v = tf.math.cos(t) 
     X1 = tf.concat([x[:,None], v[:,None]], axis=-1)
     X2 = 2*X1
     X1 += tf.random.normal((X1.shape), 0, noise, dtype=tf.float64)
