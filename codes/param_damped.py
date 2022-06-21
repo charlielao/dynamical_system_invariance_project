@@ -27,19 +27,24 @@ for gamma in [0.01, 0.05, 0.1]:
             print("Naive GP            lml: %s" %get_GPR_model(get_MOI(), zero_mean(2), data, test_grids, 100)[0].log_marginal_likelihood().numpy())
 #            print("%s, " %round(get_GPR_model(get_MOI(), zero_mean(2), data, test_grids, 100)[0].log_marginal_likelihood().numpy()))
             for invar_density in [20]:#np.arange(10, 40, 10):
-                for poly_f_d in [2, 3, 4, 5, 6]:
-                    for poly_g_d in [2, 3, 4, 5, 6]:
+                for poly_f_d in [2, 3]:
+                    for poly_g_d in [2, 3]:
                             try:
                                 kernel = get_Polynomial_Invariance(3, invar_density, jitter, poly_f_d, poly_g_d)#switch
                                 if fixed:
                                     mean_function = polynomial_fixed_damping_mean(kernel)#switch
+                                    m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 100)
+                                    print("Invariance GP  %s, %s degrees lml: %s" %(poly_f_d, poly_g_d, m.log_marginal_likelihood().numpy()))
+                                    print(kernel.f_poly.numpy())
+                                    print(kernel.g_poly.numpy())
                                 else:
-                                    for poly_damping_d in [2, 3, 4, 5, 6]:
+                                    for poly_damping_d in [2, 3]:
                                         mean_function = polynomial_dynamical_damping_mean(kernel, poly_damping_d)#switch
-                                m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 100)
-                                print("Invariance GP  %s, %s, %s degrees lml: %s" %(poly_f_d, poly_g_d, poly_damping_d, m.log_marginal_likelihood().numpy()))
-                                print(kernel.f_poly.numpy())
-                                print(kernel.g_poly.numpy())
+                                        m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 100)
+                                        print("Invariance GP  %s, %s, %s degrees lml: %s" %(poly_f_d, poly_g_d, poly_damping_d, m.log_marginal_likelihood().numpy()))
+                                        print(kernel.f_poly.numpy())
+                                        print(kernel.g_poly.numpy())
+                                        print(mean_function.damping_poly.numpy())
         #                        print(round(m.log_marginal_likelihood().numpy()))
 
                             except tf.errors.InvalidArgumentError:
