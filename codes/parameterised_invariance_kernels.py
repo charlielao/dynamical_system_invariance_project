@@ -5,12 +5,12 @@ import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 
-class Polynomial_Parameterised_Invariance(gpflow.kernels.Kernel):
-    def __init__(self, invariance_range, invar_density, jitter_size):
+class Polynomial_Invariance(gpflow.kernels.Kernel):
+    def __init__(self, invariance_range, invar_density, jitter_size, poly_d):
         super().__init__(active_dims=[0, 1])
-        self.poly_d = 3
-        self.f_poly = gpflow.Parameter(tf.Variable([1.]*self.poly_d)[:,None], transform =tfp.bijectors.Sigmoid(to_default_float(0.01), to_default_float(5.)))
-        self.g_poly = gpflow.Parameter(tf.Variable([1.]*self.poly_d)[:,None], transform =tfp.bijectors.Sigmoid(to_default_float(0.01), to_default_float(5.)))
+        self.poly_d = poly_d
+        self.f_poly = gpflow.Parameter(tf.Variable(tf.random.normal((self.poly_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))
+        self.g_poly = gpflow.Parameter(tf.Variable(tf.random.normal((self.poly_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))
 
         self.jitter =jitter_size
         self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
@@ -110,3 +110,11 @@ class Polynomial_Parameterised_Invariance(gpflow.kernels.Kernel):
         D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
+
+def get_Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_d):
+    invariance_kernel = Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_d)
+    invariance_kernel.Ka.variance = gpflow.Parameter(invariance_kernel.Ka.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
+    invariance_kernel.Kv.variance = gpflow.Parameter(invariance_kernel.Kv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
+    invariance_kernel.Ka.lengthscales = gpflow.Parameter(invariance_kernel.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
+    invariance_kernel.Kv.lengthscales = gpflow.Parameter(invariance_kernel.Kv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
+    return invariance_kernel

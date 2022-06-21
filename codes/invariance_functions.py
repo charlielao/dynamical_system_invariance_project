@@ -43,7 +43,7 @@ def get_damped_SHM_data(gamma, time_interval, noise):
     Y = tf.concat([Y1, Y2], axis=0)
     return (X, Y)
 
-def get_pendulum_data(time_interval, noise):
+def get_pendulum_data(time_interval, noise, initial_angles):
     dt = 0.01
     sample_rate = int(time_interval/dt)
     t = np.linspace(0, 30, int(30/dt))
@@ -53,8 +53,9 @@ def get_pendulum_data(time_interval, noise):
         theta = r[0]
         omega = r[1]
         return np.array([omega, -g / l * np.sin(theta)])
-    results = odeint(f, [np.radians(90), 0], t, tfirst=True)
-    results2 = odeint(f, [np.radians(150), 0], t, tfirst=True)
+    angle1, angle2 = initial_angles
+    results = odeint(f, [np.radians(angle1), 0], t, tfirst=True)
+    results2 = odeint(f, [np.radians(angle2), 0], t, tfirst=True)
     x1 = results[0::sample_rate,0]
     v1 = results[0::sample_rate,1]
     x2 = results2[0::sample_rate,0]
@@ -72,7 +73,7 @@ def get_pendulum_data(time_interval, noise):
     Y = tf.concat([Y_1,Y_2], axis=0)
     return (X, Y)
 
-def get_damped_pendulum_data(gamma, time_interval, noise):
+def get_damped_pendulum_data(gamma, time_interval, noise, initial_angles):
     dt = 0.01
     sample_rate = int(time_interval/dt)
     t = np.linspace(0, 30, int(30/dt))
@@ -82,8 +83,9 @@ def get_damped_pendulum_data(gamma, time_interval, noise):
         theta = r[0]
         omega = r[1]
         return np.array([omega, -g / l * np.sin(theta)-2*gamma*omega])
-    results = odeint(f, [np.radians(90), 0], t, tfirst=True)
-    results2 = odeint(f, [np.radians(150), 0], t, tfirst=True)
+    angle1, angle2 = initial_angles
+    results = odeint(f, [np.radians(angle1), 0], t, tfirst=True)
+    results2 = odeint(f, [np.radians(angle2), 0], t, tfirst=True)
     x1 = results[0::sample_rate,0]
     v1 = results[0::sample_rate,1]
     x2 = results2[0::sample_rate,0]
@@ -108,11 +110,11 @@ def get_grid_of_points(grid_range, grid_density):
     grid_points = tf.stack([tf.reshape(grid_xx,[-1]), tf.reshape(grid_vv,[-1])], axis=1)
     return grid_points
 
-def get_GPR_model(kernel, mean_function, data, test_points):
+def get_GPR_model(kernel, mean_function, data, test_points, iterations):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
-    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=100))
+    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations))
     pred, var = m.predict_f(test_points)
     return (m, pred, var)
 
