@@ -16,7 +16,7 @@ for gamma in [0.01, 0.05, 0.1]:
     print("current damping: %s" %gamma)
 #    data = get_damped_SHM_data(gamma, 0.5, 0.1) #switch
     data = get_damped_SHM_data(gamma, 0.5, 0.1) #switch
-    for fixed in [True]:
+    for fixed in [True, False]:
         if fixed:
             fixed_mean = "fixed mean"
         else:
@@ -27,16 +27,18 @@ for gamma in [0.01, 0.05, 0.1]:
             print("Naive GP            lml: %s" %get_GPR_model(get_MOI(), zero_mean(2), data, test_grids, 100)[0].log_marginal_likelihood().numpy())
 #            print("%s, " %round(get_GPR_model(get_MOI(), zero_mean(2), data, test_grids, 100)[0].log_marginal_likelihood().numpy()))
             for invar_density in [20]:#np.arange(10, 40, 10):
-                for poly_d in [4, 5, 6]:
-                    try:
-                        kernel = get_Polynomial_Invariance(3, invar_density, jitter, poly_d)#switch
-                        mean_function = damping_SHM_mean(kernel, fixed, gamma, mass=1)#switch
-                        m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 300)
-                        print("Invariance GP  %s degrees lml: %s" %(poly_d, m.log_marginal_likelihood().numpy()))
-                        print(kernel.f_poly.numpy())
-                        print(kernel.g_poly.numpy())
-#                        print(round(m.log_marginal_likelihood().numpy()))
+                for poly_f_d in [2, 3, 4, 5, 6]:
+                    for poly_g_d in [2, 3, 4, 5, 6]:
+                        for poly_damping_d in [2, 3, 4, 5, 6]:
+                            try:
+                                kernel = get_Polynomial_Invariance(3, invar_density, jitter, poly_f_d, poly_g_d)#switch
+                                mean_function = damping_SHM_mean(kernel, fixed, poly_damping_d)#switch
+                                m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 300)
+                                print("Invariance GP  %s, %s, %s degrees lml: %s" %(poly_f_d, poly_g_d, poly_damping_d, m.log_marginal_likelihood().numpy()))
+                                print(kernel.f_poly.numpy())
+                                print(kernel.g_poly.numpy())
+        #                        print(round(m.log_marginal_likelihood().numpy()))
 
-                    except tf.errors.InvalidArgumentError:
-                        print("jitter too small")
-                        break
+                            except tf.errors.InvalidArgumentError:
+                                print("jitter too small")
+                                break

@@ -19,15 +19,16 @@ for jitter in [1e-5]:
     print("Naive GP            lml: %s" %get_GPR_model(get_MOI(), zero_mean, data, test_grids, 100)[0].log_marginal_likelihood().numpy())
 #    print("%s, "%round(get_GPR_model(get_MOI(), zero_mean, data, test_grids)[0].log_marginal_likelihood().numpy()))
     for invar_density in [20]: #np.arange(10, 30, 10):
-        for poly_d in [4, 5, 6, 7, 8, 9]:
-            try:
-                kernel = get_Polynomial_Invariance(3, invar_density, jitter, poly_d) #switch
-                m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids, 300)
-                print("Invariance GP  %s degrees lml: %s" %(poly_d, m.log_marginal_likelihood().numpy()))
-                print(kernel.f_poly.numpy())
-                print(kernel.g_poly.numpy())
-#                print(round(m.log_marginal_likelihood().numpy()))
+        for poly_f_d in [4, 5, 6, 7, 8, 9]:
+            for poly_g_d in [4, 5, 6, 7, 8, 9]:
+                try:
+                    kernel = get_Polynomial_Invariance(3, invar_density, jitter, poly_f_d, poly_g_d) #switch
+                    m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids, 300)
+                    print("Invariance GP  %s, %s degrees lml: %s" %(poly_f_d, poly_g_d, m.log_marginal_likelihood().numpy()))
+                    print(kernel.f_poly.numpy())
+                    print(kernel.g_poly.numpy())
+    #                print(round(m.log_marginal_likelihood().numpy()))
 
-            except tf.errors.InvalidArgumentError:
-                print("jitter too small")
-                break 
+                except tf.errors.InvalidArgumentError:
+                    print("jitter too small")
+                    break 

@@ -6,11 +6,12 @@ from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 
 class Polynomial_Invariance(gpflow.kernels.Kernel):
-    def __init__(self, invariance_range, invar_density, jitter_size, poly_d):
+    def __init__(self, invariance_range, invar_density, jitter_size, poly_f_d, poly_g_d):
         super().__init__(active_dims=[0, 1])
-        self.poly_d = poly_d
-        self.f_poly = gpflow.Parameter(tf.Variable(tf.random.normal((self.poly_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))
-        self.g_poly = gpflow.Parameter(tf.Variable(tf.random.normal((self.poly_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))
+        self.poly_f_d = poly_f_d
+        self.poly_g_d = poly_g_d
+        self.f_poly = gpflow.Parameter(tf.Variable(tf.random.normal((self.poly_f_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))
+        self.g_poly = gpflow.Parameter(tf.Variable(tf.random.normal((self.poly_g_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))
 
         self.jitter =jitter_size
         self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
@@ -21,9 +22,9 @@ class Polynomial_Invariance(gpflow.kernels.Kernel):
         self.invar_grids = tf.stack([tf.reshape(invariance_xx,[-1]), tf.reshape(invariance_vv,[-1])], axis=1)
 
     def inv_f(self, X):
-        return tf.linalg.matmul(tf.math.pow(X, list(range(self.poly_d))), self.f_poly)
+        return tf.linalg.matmul(tf.math.pow(X, list(range(self.poly_f_d))), self.f_poly)
     def inv_g(self, X):
-        return tf.linalg.matmul(tf.math.pow(X, list(range(self.poly_d))), self.g_poly)
+        return tf.linalg.matmul(tf.math.pow(X, list(range(self.poly_g_d))), self.g_poly)
 
     def K(self, X, X2=None):
         if X2 is None:
@@ -111,8 +112,51 @@ class Polynomial_Invariance(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
-def get_Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_d):
-    invariance_kernel = Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_d)
+class polynomial_damping_mean(gpflow.mean_functions.MeanFunction):
+    def __init__(self, kernel, fixed, poly_damping_d):
+        gpflow.mean_functions.MeanFunction.__init__(self)
+        self.invar_grids = kernel.invar_grids
+        self.Ka = kernel.Ka
+        self.Kv = kernel.Kv
+        self.jitter = kernel.jitter
+        self.inv_f = kernel.inv_f
+        self.inv_g = kernel.inv_g
+        self.poly_damping_d = poly_damping_d
+        self.damping_poly = gpflow.Parameter(tf.Variable(tf.random.normal((self.poly_damping_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-3.), to_default_float(3.)))
+        self.fixed = fixed
+        if self.fixed:
+            self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(1e-6), to_default_float(1.)))
+
+    def damping(self, X):
+        return tf.linalg.matmul(tf.math.pow(X, list(range(self.poly_damping_d))), self.damping_poly)
+
+    def __call__(self, X) -> tf.Tensor:
+        n = X.shape[0]
+        Ka_Xg  = self.Ka(X, self.invar_grids) 
+        Kv_Xg  = self.Kv(X, self.invar_grids) 
+        K_Xg = tf.concat([Ka_Xg, Kv_Xg],0)
+
+        Ka_XgXg = self.Ka(self.invar_grids) 
+        Kv_XgXg = self.Kv(self.invar_grids) 
+
+        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
+        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
+        x_g_stacked = tf.concat([x_g_dot, x_g],0)
+        
+        x_g_squared = tf.tensordot(self.inv_f(self.invar_grids[:,0,None]),tf.transpose(self.inv_f(self.invar_grids[:,0, None])),1)
+        x_g_dot_squared = tf.tensordot(self.inv_g(self.invar_grids[:,1,None]),tf.transpose(self.inv_g(self.invar_grids[:,1, None])),1)
+        
+        B = tf.multiply(K_Xg, x_g_stacked)
+        D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
+        D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
+        if self.fixed:
+            return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -self.epsilon*tf.ones((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
+        else:
+            return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), self.damping(self.invar_grids[:,1,None]),1) 
+
+
+def get_Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d):
+    invariance_kernel = Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d)
     invariance_kernel.Ka.variance = gpflow.Parameter(invariance_kernel.Ka.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
     invariance_kernel.Kv.variance = gpflow.Parameter(invariance_kernel.Kv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
     invariance_kernel.Ka.lengthscales = gpflow.Parameter(invariance_kernel.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
