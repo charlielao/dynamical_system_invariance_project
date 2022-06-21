@@ -33,7 +33,7 @@ for gamma in [0.01, 0.05, 0.1]:
                             try:
                                 kernel = get_Polynomial_Invariance(3, invar_density, jitter, poly_f_d, poly_g_d)#switch
                                 mean_function = damping_SHM_mean(kernel, fixed, poly_damping_d)#switch
-                                m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 300)
+                                m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 100)
                                 print("Invariance GP  %s, %s, %s degrees lml: %s" %(poly_f_d, poly_g_d, poly_damping_d, m.log_marginal_likelihood().numpy()))
                                 print(kernel.f_poly.numpy())
                                 print(kernel.g_poly.numpy())
