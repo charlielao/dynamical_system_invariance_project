@@ -13,14 +13,15 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
 test_grids = get_grid_of_points(3, 40)
 zero_mean = zero_mean(2)
-data = get_pendulum_data(0.5, 0.1, [90, 130]) #switch
+#data = get_pendulum_data(0.5, 0.1, [90, 130]) #switch
+data = get_SHM_data(0.5, 0.1) #switch
 for jitter in [1e-5]:
     print("current jitter %s" %jitter)
     print("Naive GP            lml: %s" %get_GPR_model(get_MOI(), zero_mean, data, test_grids, 100)[0].log_marginal_likelihood().numpy())
 #    print("%s, "%round(get_GPR_model(get_MOI(), zero_mean, data, test_grids)[0].log_marginal_likelihood().numpy()))
     for invar_density in [20]: #np.arange(10, 30, 10):
-        for poly_f_d in [4, 5, 6, 7, 8, 9]:
-            for poly_g_d in [4, 5, 6, 7, 8, 9]:
+        for poly_f_d in [2, 3, 4]:
+            for poly_g_d in [2, 3, 4]:
                 try:
                     kernel = get_Polynomial_Invariance(3, invar_density, jitter, poly_f_d, poly_g_d) #switch
                     m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids, 300)

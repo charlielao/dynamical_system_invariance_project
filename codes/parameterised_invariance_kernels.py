@@ -61,16 +61,17 @@ class Polynomial_Invariance(gpflow.kernels.Kernel):
         Ka_XgXg = self.Ka(self.invar_grids) 
         Kv_XgXg = self.Kv(self.invar_grids) 
         
-        x_g_1 = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
-        x_g_dot_1 = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
+        x_g_1 = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,0, None]))
+        x_g_dot_1 = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,1, None]))
         x_g_1_stacked = tf.concat([x_g_dot_1, x_g_1],0) 
         
-        x_g_2 = tf.ones([m, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
-        x_g_dot_2 = tf.ones([m, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
+        x_g_2 = tf.ones([m, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,0, None]))
+        x_g_dot_2 = tf.ones([m, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,1, None]))
         x_g_2_stacked = tf.concat([x_g_dot_2, x_g_2],0) 
 
-        x_g_squared = tf.tensordot(self.inv_f(self.invar_grids[:,0,None]),tf.transpose(self.inv_f(self.invar_grids[:,0, None])),1)
-        x_g_dot_squared = tf.tensordot(self.inv_g(self.invar_grids[:,1,None]),tf.transpose(self.inv_g(self.invar_grids[:,1, None])),1)
+        x_g_squared = tf.tensordot(self.inv_g(self.invar_grids[:,0,None]),tf.transpose(self.inv_g(self.invar_grids[:,0, None])),1)
+        x_g_dot_squared = tf.tensordot(self.inv_f(self.invar_grids[:,1,None]),tf.transpose(self.inv_f(self.invar_grids[:,1, None])),1)
+        
         
         A = tf.concat([tf.concat([K_X1X1, K_X1X2],1),tf.concat([K_X2X1, K_X2X2],1)],0) 
         B1 = tf.multiply(K_X1Xg, x_g_1_stacked)
@@ -97,12 +98,12 @@ class Polynomial_Invariance(gpflow.kernels.Kernel):
         Ka_XgXg = self.Ka(self.invar_grids) 
         Kv_XgXg = self.Kv(self.invar_grids) 
         
-        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
-        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
+        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,0, None]))
+        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,1, None]))
         x_g_stacked = tf.concat([x_g_dot, x_g],0)
         
-        x_g_squared = tf.tensordot(self.inv_f(self.invar_grids[:,0,None]),tf.transpose(self.inv_f(self.invar_grids[:,0, None])),1)
-        x_g_dot_squared = tf.tensordot(self.inv_g(self.invar_grids[:,1,None]),tf.transpose(self.inv_g(self.invar_grids[:,1, None])),1)
+        x_g_squared = tf.tensordot(self.inv_g(self.invar_grids[:,0,None]),tf.transpose(self.inv_g(self.invar_grids[:,0, None])),1)
+        x_g_dot_squared = tf.tensordot(self.inv_f(self.invar_grids[:,1,None]),tf.transpose(self.inv_f(self.invar_grids[:,1, None])),1)
         
         A = K_X
         B = tf.multiply(K_Xg, x_g_stacked)
@@ -136,12 +137,12 @@ class polynomial_dynamical_damping_mean(gpflow.mean_functions.MeanFunction):
         Ka_XgXg = self.Ka(self.invar_grids) 
         Kv_XgXg = self.Kv(self.invar_grids) 
 
-        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
-        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
+        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,0, None]))
+        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,1, None]))
         x_g_stacked = tf.concat([x_g_dot, x_g],0)
         
-        x_g_squared = tf.tensordot(self.inv_f(self.invar_grids[:,0,None]),tf.transpose(self.inv_f(self.invar_grids[:,0, None])),1)
-        x_g_dot_squared = tf.tensordot(self.inv_g(self.invar_grids[:,1,None]),tf.transpose(self.inv_g(self.invar_grids[:,1, None])),1)
+        x_g_squared = tf.tensordot(self.inv_g(self.invar_grids[:,0,None]),tf.transpose(self.inv_g(self.invar_grids[:,0, None])),1)
+        x_g_dot_squared = tf.tensordot(self.inv_f(self.invar_grids[:,1,None]),tf.transpose(self.inv_f(self.invar_grids[:,1, None])),1)
         
         B = tf.multiply(K_Xg, x_g_stacked)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
@@ -168,12 +169,12 @@ class polynomial_fixed_damping_mean(gpflow.mean_functions.MeanFunction):
         Ka_XgXg = self.Ka(self.invar_grids) 
         Kv_XgXg = self.Kv(self.invar_grids) 
 
-        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
-        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
+        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,0, None]))
+        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,1, None]))
         x_g_stacked = tf.concat([x_g_dot, x_g],0)
         
-        x_g_squared = tf.tensordot(self.inv_f(self.invar_grids[:,0,None]),tf.transpose(self.inv_f(self.invar_grids[:,0, None])),1)
-        x_g_dot_squared = tf.tensordot(self.inv_g(self.invar_grids[:,1,None]),tf.transpose(self.inv_g(self.invar_grids[:,1, None])),1)
+        x_g_squared = tf.tensordot(self.inv_g(self.invar_grids[:,0,None]),tf.transpose(self.inv_g(self.invar_grids[:,0, None])),1)
+        x_g_dot_squared = tf.tensordot(self.inv_f(self.invar_grids[:,1,None]),tf.transpose(self.inv_f(self.invar_grids[:,1, None])),1)
         
         B = tf.multiply(K_Xg, x_g_stacked)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
