@@ -39,12 +39,93 @@ He also talked about a way that makes this methods scalable, which is that inste
 If noise too small or too much data, it's not good for nonlinear nor damping.
 But in most reasonable cases, 30 seconds with 30 points with noise 0.1 the kernel all worked well.
 We have four scenarios to check.
+Noisy being 0.1 and not noisy being 0.01. Lots of data means 0.1 time spacing.
+left is naive, right is invariance
 \begin{enumerate}
   \item lots of data, noisy
   \item little data, noisy
   \item lots of data, not noisy
   \item little, not noisy
 \end{enumerate}
-
+\begin{flushleft}
+\resizebox{\columnwidth}{!}{\begin{tabular}{ r|r|r|r|r} 
+ & lots of data, noisy& little data, noisy & lots of data, not noisy & little data, not noisy\\
+ \hline
+ SHM &-1323,
+-1305 &65,
+81 &1354,
+1394 & 271,
+311\\
+ \hline
+Fixed Damped SHM & -1310,
+-1292; -1305,
+-1290; -1310,
+-1297&78,
+96; 79,
+92; 54,
+69& 1387,
+1419; 1349,
+1338; 1404,
+1346 & 289,
+322; 269,
+254; 329,
+253\\
+ \hline
+Dynamical Damped SHM & -1310,
+-1292; -1305,
+-1289; -1310,
+-1295 &78,
+95; 79,
+96; 54,
+68 &1387,
+1423; 1349,
+1382; 1404,
+1435 &289,
+316; 269,
+258; 329,
+256\\
+ \hline
+Pendulum & -1307,
+-1288 &61,
+65 &1403,
+1451 & 232,
+115 \\
+ \hline
+Fixed Damped Pendulum & -1257,
+-1239; -1324,
+-1308; -1315,
+-1301& 52,
+62; 55,
+69; 67,
+79&1397,
+1428; 1401,
+1363; 1373,
+1266 & 272,
+133; 267,
+179; 296,
+175 \\
+ \hline
+Dynamical Damped Pendulum &-1257,
+-1239; -1324,
+-1308; -1315,
+-1299 & 52,
+62; 55,
+70; 67,
+82  &1397,
+1442; 1401,
+1442; 1373,
+1412 & 272,
+135; 267,
+209; 296,
+241\\
+ \hline
+\end{tabular}}
+\end{flushleft}
+We can see that most of the entries are good, except lots of data not noisy for fixed damping when damping is high, but dynamical damping still outperforms.
+A lot of problem is found in low data, low noise area; especially when it is non linear or damping is high. 
+This make sense in some way.
+For the first case, since it is harder to for fixed damping to handle and predict larger damping, if there are less noise to smooth out the effect of damping, so that damping is more varying, it makes sense for fixed damping to perform worse. 
+For the second case, I think the main reason is that the estimation of acceleration and velocity is already not so good to start with, if we have low noise, it's like we are assuming that's the truth.
+Therefore, our physical intuition (invariance) will misguide us since we will be expecting something else. 
 \end{document}
 
