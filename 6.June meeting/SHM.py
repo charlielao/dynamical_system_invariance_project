@@ -47,14 +47,15 @@ plt.plot(Y[:,0])
 def plotting(pred, var, eval_points, data, save, name, angle1, angle2, acc, lml):
     X, Y = data
     test_xx, test_vv = eval_points
-    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
     surf = ax.plot_surface(test_xx, test_vv, tf.reshape(pred, test_xx.shape), cmap="viridis",linewidth=0, antialiased=False, alpha=0.5)
-    surf = ax.plot_surface(test_xx, test_vv, tf.reshape(pred, test_xx.shape)+1.96*tf.math.sqrt(tf.reshape(var, test_xx.shape)), color="grey",linewidth=0, antialiased=False, alpha=0.1)
-    surf = ax.plot_surface(test_xx, test_vv, tf.reshape(pred, test_xx.shape)-1.96*tf.math.sqrt(tf.reshape(var, test_xx.shape)), color="grey",linewidth=0, antialiased=False, alpha=0.1)
-    if acc:
-        ax.scatter(X[:,0], X[:,1],Y[:,1,None], color="black", marker="o", s=3) #data
-    else:
-        ax.scatter(X[:,0], X[:,1],Y[:,0,None], color="black", marker="o", s=3) #data
+    surf = ax.plot_surface(test_xx, test_vv, tf.reshape(pred, test_xx.shape)+1.96*tf.math.sqrt(tf.reshape(var, test_xx.shape)), color="grey",linewidth=0, antialiased=False, alpha=0.4)
+    surf = ax.plot_surface(test_xx, test_vv, tf.reshape(pred, test_xx.shape)-1.96*tf.math.sqrt(tf.reshape(var, test_xx.shape)), color="grey",linewidth=0, antialiased=False, alpha=0.4)
+ #   if acc:
+  #      ax.scatter(X[:,0], X[:,1],Y[:,1,None], color="black", marker="o", s=3) #data
+   # else:
+    #    ax.scatter(X[:,0], X[:,1],Y[:,0,None], color="black", marker="o", s=3) #data
     ax.view_init(angle1,angle2)
     ax.set_xlabel("position")
     ax.set_ylabel("velocity")
@@ -62,9 +63,12 @@ def plotting(pred, var, eval_points, data, save, name, angle1, angle2, acc, lml)
         ax.set_zlabel("acceleration")
     else:
         ax.set_zlabel("velocity")
-    ax.annotate("log marginal likelihood: {0:0.2f}".format(lml), xy=(0.5, 0.9), xycoords='axes fraction')
+    fig.tight_layout()
+    fig.subplots_adjust(left=-0.11)  # plot outside the normal area
+#    ax.annotate("log marginal likelihood: {0:0.2f}".format(lml), xy=(0.5, 0.9), xycoords='axes fraction')
     if save:
         plt.savefig(name+"_3D.pdf")
+    '''
     plt.figure(figsize=(5, 3))
     contours = plt.contourf(test_xx, test_vv, tf.reshape(pred,(test_xx.shape)), levels=100, cmap="viridis", alpha=0.3)
     plt.colorbar(contours)
@@ -78,6 +82,7 @@ def plotting(pred, var, eval_points, data, save, name, angle1, angle2, acc, lml)
     plt.ylabel("velocity")
     if save:
         plt.savefig(name+"_contour.pdf")
+    '''
 # range we are evaluating the test points on
 test_range = 3 
 test_density = 40
@@ -133,10 +138,10 @@ class MOI(gpflow.kernels.Kernel):
 
 # %%
 moi = MOI()
-moi.RBFa.variance = gpflow.Parameter(moi.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
-moi.RBFv.variance = gpflow.Parameter(moi.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
-moi.RBFa.lengthscales = gpflow.Parameter(moi.RBFa.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
-moi.RBFv.lengthscales = gpflow.Parameter(moi.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
+moi.RBFa.variance = gpflow.Parameter(moi.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(3.))) 
+moi.RBFv.variance = gpflow.Parameter(moi.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(3.))) 
+moi.RBFa.lengthscales = gpflow.Parameter(moi.RBFa.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(3.))) 
+moi.RBFv.lengthscales = gpflow.Parameter(moi.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(3.))) 
 #%%
 m_normal = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0, None]],1)),(Y.shape[0]*2,1))), kernel=moi, mean_function=Zero_mean(output_dim=2))
 opt = gpflow.optimizers.Scipy()
@@ -145,15 +150,15 @@ pred, var = m_normal.predict_f(test_points)
 print(m_normal.log_marginal_likelihood().numpy())
 print_summary(m_normal)
 # %%
-plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=m_normal.log_marginal_likelihood().numpy())
-plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m_normal.log_marginal_likelihood().numpy())
+plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=1, name="moi", angle1=10, angle2=-65, acc=1, lml=m_normal.log_marginal_likelihood().numpy())
+#plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m_normal.log_marginal_likelihood().numpy())
 
 # %%
 # Try to write a kernel to condition on 
 class SHO_Energy_Invariance(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density):
         super().__init__(active_dims=[0, 1])
-        self.jitter = gpflow.kernels.White(1.3e-5)
+        self.jitter = 1e-5
         self.RBFa = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.RBFv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.Ka =  self.RBFa# + self.jitter
@@ -215,8 +220,9 @@ class SHO_Energy_Invariance(gpflow.kernels.Kernel):
         B = tf.concat([B1, B2], 0)
         C = tf.transpose(B)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg) 
+        D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         
-        return (A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D+1e-6*tf.eye(D.shape[0], dtype=tf.float64)), 1), C, 1))[:2*n, 2*n:]
+        return (A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), C, 1))[:2*n, 2*n:]
 
     def K_diag(self, X):
         n = X.shape[0]
@@ -244,23 +250,23 @@ class SHO_Energy_Invariance(gpflow.kernels.Kernel):
         B = tf.multiply(K_Xg, x_g_stacked)
         C = tf.transpose(B)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
+        D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         
-        return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D+1e-6*tf.eye(D.shape[0], dtype=tf.float64)),1), C, 1))
+        return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
 
 # %%
-energy_kernel = SHO_Energy_Invariance(3, 40)
-set_trainable(energy_kernel.jitter.variance, False)
-energy_kernel.RBFa.variance = gpflow.Parameter(energy_kernel.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
-energy_kernel.RBFv.variance = gpflow.Parameter(energy_kernel.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
-energy_kernel.RBFa.lengthscales = gpflow.Parameter(energy_kernel.RBFa.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
-energy_kernel.RBFv.lengthscales = gpflow.Parameter(energy_kernel.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(10.))) 
+energy_kernel = SHO_Energy_Invariance(3, 20)
+energy_kernel.RBFa.variance = gpflow.Parameter(energy_kernel.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(3.))) 
+energy_kernel.RBFv.variance = gpflow.Parameter(energy_kernel.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(3.))) 
+energy_kernel.RBFa.lengthscales = gpflow.Parameter(energy_kernel.RBFa.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(3.))) 
+energy_kernel.RBFv.lengthscales = gpflow.Parameter(energy_kernel.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(3.))) 
 # %% 
 # prior
 pred = tf.zeros((test_points.shape[0], 1), dtype=tf.float64)
 var = tf.linalg.diag_part(energy_kernel(test_points))
-plotting(pred, var[:int(var.shape[0]/2)], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=0)
-plotting(pred, var[int(var.shape[0]/2):], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=0)
+plotting(pred, var[:int(var.shape[0]/2)], eval_points=(test_xx, test_vv), data=(X,Y),save=1, name="prior", angle1=10, angle2=-65, acc=1, lml=0)
+#plotting(pred, var[int(var.shape[0]/2):], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=0)
 # %%
 # posterior
 m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=energy_kernel, mean_function=Zero_mean(output_dim=2))
@@ -271,8 +277,8 @@ pred, var = m.predict_f(test_points)
 #print_summary(m)
 print(m.log_marginal_likelihood().numpy())
 # %%
-plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=m.log_marginal_likelihood().numpy())
-plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m.log_marginal_likelihood().numpy())
+plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=1, name="posterior", angle1=10, angle2=-65, acc=1, lml=m.log_marginal_likelihood().numpy())
+#plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m.log_marginal_likelihood().numpy())
 # %%
 # degree of freedom
 moi = MOI()
