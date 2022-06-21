@@ -8,45 +8,45 @@ def degree_of_freedom(kernel, test_points):
     K = kernel(test_points)
     return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+1e-6*tf.eye(K.shape[0], dtype=tf.float64)), 1)).numpy()
 
-def get_SHM_data(total_time, noise):
-    t = tf.linspace(0, total_time, total_time)
+def get_SHM_data(time_interval, noise):
+    t = tf.linspace(0, 30, int(30/time_interval))
     x = tf.math.sin(t)
     v = tf.math.cos(t) 
     X1 = tf.concat([x[:,None], v[:,None]], axis=-1)
     X2 = 2*X1
     X1 += tf.random.normal((X1.shape), 0, noise, dtype=tf.float64)
     X2 += tf.random.normal((X2.shape), 0, noise, dtype=tf.float64)
-    Y1 = (X1[2:,:]-X1[:-2, :])/(2) 
-    Y2 = (X2[2:,:]-X2[:-2, :])/(2) 
+    Y1 = (X1[2:,:]-X1[:-2, :])/(2*time_interval) 
+    Y2 = (X2[2:,:]-X2[:-2, :])/(2*time_interval) 
     X1 = X1[1:-1, :]
     X2 = X2[1:-1, :]
     X = tf.concat([X1, X2], axis=0)
     Y = tf.concat([Y1, Y2], axis=0) 
     return (X, Y)
 
-def get_damped_SHM_data(gamma, total_time, noise):
+def get_damped_SHM_data(gamma, time_interval, noise):
     m = 1
     k = 1
     w = np.sqrt(k/m-gamma**2)
-    t = np.linspace(0, total_time, total_time)
+    t = np.linspace(0, 30, int(30/time_interval))
     x = np.sin(w*t)*np.exp(-gamma*t)
     v = np.exp(-gamma*t)*(w*np.cos(w*t)-gamma*np.sin(w*t))
     X1 = tf.concat([x[:,None], v[:,None]], axis=-1)
     X2 = 2*X1
     X1 += tf.random.normal((X1.shape), 0, noise, dtype=tf.float64)
     X2 += tf.random.normal((X2.shape), 0, noise, dtype=tf.float64)
-    Y1 = (X1[2:,:]-X1[:-2, :])/(2) 
-    Y2 = (X2[2:,:]-X2[:-2, :])/(2) 
+    Y1 = (X1[2:,:]-X1[:-2, :])/(2*time_interval) 
+    Y2 = (X2[2:,:]-X2[:-2, :])/(2*time_interval) 
     X1 = X1[1:-1, :]
     X2 = X2[1:-1, :]
     X = tf.concat([X1, X2], axis=0)
     Y = tf.concat([Y1, Y2], axis=0)
     return (X, Y)
 
-def get_pendulum_data(total_time, noise):
+def get_pendulum_data(time_interval, noise):
     dt = 0.01
-    sample_rate = int(1/dt)
-    t = np.linspace(0, total_time, int(total_time/dt))
+    sample_rate = int(time_interval/dt)
+    t = np.linspace(0, 30, int(30/dt))
     g = 1
     l = 1
     def f(t, r):
@@ -64,18 +64,18 @@ def get_pendulum_data(total_time, noise):
     X_2 = tf.concat([x2[:,None], v2[:,None]], axis=-1)
     X_1 += tf.random.normal((X_1.shape), 0, noise, dtype=tf.float64)
     X_2 += tf.random.normal((X_2.shape), 0, noise, dtype=tf.float64)
-    Y_1 = (X_1[2:,:]-X_1[:-2, :])/(2) 
-    Y_2 = (X_2[2:,:]-X_2[:-2, :])/(2) 
+    Y_1 = (X_1[2:,:]-X_1[:-2, :])/(2*time_interval) 
+    Y_2 = (X_2[2:,:]-X_2[:-2, :])/(2*time_interval) 
     X_1 = X_1[1:-1, :]
     X_2 = X_2[1:-1, :]
     X = tf.concat([X_1,X_2], axis=0)
     Y = tf.concat([Y_1,Y_2], axis=0)
     return (X, Y)
 
-def get_damped_pendulum_data(gamma, total_time, noise):
+def get_damped_pendulum_data(gamma, time_interval, noise):
     dt = 0.01
-    sample_rate = int(total_time/dt)
-    t = np.linspace(0, total_time, int(total_time/dt))
+    sample_rate = int(time_interval/dt)
+    t = np.linspace(0, 30, int(30/dt))
     g = 1
     l = 1
     def f(t, r):
@@ -93,8 +93,8 @@ def get_damped_pendulum_data(gamma, total_time, noise):
     X_2 = tf.concat([x2[:,None], v2[:,None]], axis=-1)
     X_1 += tf.random.normal((X_1.shape), 0, noise, dtype=tf.float64)
     X_2 += tf.random.normal((X_2.shape), 0, noise, dtype=tf.float64)
-    Y_1 = (X_1[2:,:]-X_1[:-2, :])/(2) 
-    Y_2 = (X_2[2:,:]-X_2[:-2, :])/(2) 
+    Y_1 = (X_1[2:,:]-X_1[:-2, :])/(2*time_interval) 
+    Y_2 = (X_2[2:,:]-X_2[:-2, :])/(2*time_interval) 
     X_1 = X_1[1:-1, :]
     X_2 = X_2[1:-1, :]
     X = tf.concat([X_1,X_2], axis=0)
