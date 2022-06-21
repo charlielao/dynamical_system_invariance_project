@@ -7,20 +7,22 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from invariance_mean_functions import zero_mean
 from invariance_kernels import get_MOI, get_Pendulum_Invariance, get_SHM_Invariance
 from invariance_functions import degree_of_freedom, get_GPR_model, get_SHM_data, get_pendulum_data, get_grid_of_points
+from local_invariance_kernels import get_SHM_Local_Invariance
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
-test_grids = get_grid_of_points(3, 40)
+test_grids = get_grid_of_points(3, 10)
 zero_mean = zero_mean(2)
-data = get_pendulum_data(1, 0.01) #switch
+#data = get_pendulum_data(1, 0.01) #switch
+data = get_SHM_data(1, 0.01) #switch
 for jitter in [1e-5]:
 #    print("current jitter %s" %jitter)
 #    print("Naive GP            lml: %s" %get_GPR_model(get_MOI(), zero_mean, data, test_grids)[0].log_marginal_likelihood().numpy())
-    print("%s, "%round(get_GPR_model(get_MOI(), zero_mean, data, test_grids)[0].log_marginal_likelihood().numpy()))
+    print("%s, "%round(get_GPR_model(get_MOI(), zero_mean, data, test_grids, 100)[0].log_marginal_likelihood().numpy()))
     for invar_density in [20]: #np.arange(10, 30, 10):
             try:
-                kernel = get_Pendulum_Invariance(3, invar_density, jitter) #switch
-                m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids)
+                kernel = get_SHM_Local_Invariance(0.1, jitter) #switch
+                m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids, 100)
 #                print("Invariance GP density %s lml: %s" %(invar_density, m.log_marginal_likelihood().numpy()))
                 print(round(m.log_marginal_likelihood().numpy()))
 

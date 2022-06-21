@@ -212,8 +212,8 @@ class Pendulum_Invariance(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
-def get_SHM_Local_Invariance(invar_range, invar_density, jitter_size):
-    invariance_kernel = SHM_Local_Invariance(invar_range, invar_density, jitter_size)
+def get_SHM_Local_Invariance(invar_neighbourhood, jitter_size):
+    invariance_kernel = SHM_Local_Invariance(invar_neighbourhood, jitter_size)
     invariance_kernel.Ka.variance = gpflow.Parameter(invariance_kernel.Ka.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Kv.variance = gpflow.Parameter(invariance_kernel.Kv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Ka.lengthscales = gpflow.Parameter(invariance_kernel.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 

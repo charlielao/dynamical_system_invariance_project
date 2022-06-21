@@ -13,7 +13,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 test_grids = get_grid_of_points(3, 40)
 for gamma in [0.01, 0.05, 0.1]:
     print("current damping: %s" %gamma)
-    data = get_damped_pendulum_data(gamma, 1, 0.01) #switch
+    data = get_damped_pendulum_data(gamma, 1, 0.01, [90, 130]) #switch
     for fixed in [True, False]:
         if fixed:
             fixed_mean = "fixed mean"

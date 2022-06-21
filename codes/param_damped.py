@@ -14,7 +14,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 test_grids = get_grid_of_points(3, 40)
 for gamma in [0.01, 0.05, 0.1]:
     print("current damping: %s" %gamma)
-#    data = get_damped_SHM_data(gamma, 0.5, 0.1) #switch
     data = get_damped_SHM_data(gamma, 0.5, 0.1) #switch
     for fixed in [True, False]:
         if fixed:
