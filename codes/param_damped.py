@@ -22,7 +22,7 @@ for gamma in [0.01, 0.05, 0.1]:
         else:
             fixed_mean = "analytical damping mean"
         print(fixed_mean)
-        for jitter in [1e-4]:
+        for jitter in [1e-5]:
             print("current jitter %s" %jitter)
             print("Naive GP            lml: %s" %get_GPR_model(get_MOI(), zero_mean(2), data, test_grids, 100)[0].log_marginal_likelihood().numpy())
 #            print("%s, " %round(get_GPR_model(get_MOI(), zero_mean(2), data, test_grids, 100)[0].log_marginal_likelihood().numpy()))
@@ -33,14 +33,14 @@ for gamma in [0.01, 0.05, 0.1]:
                                 kernel = get_Polynomial_Invariance(3, invar_density, jitter, poly_f_d, poly_g_d)#switch
                                 if fixed:
                                     mean_function = polynomial_fixed_damping_mean(kernel)#switch
-                                    m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 100)
+                                    m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 300)
                                     print("Invariance GP  %s, %s degrees lml: %s" %(poly_f_d, poly_g_d, m.log_marginal_likelihood().numpy()))
                                     print(kernel.f_poly.numpy())
                                     print(kernel.g_poly.numpy())
                                 else:
                                     for poly_damping_d in [3]:
                                         mean_function = polynomial_dynamical_damping_mean(kernel, poly_damping_d)#switch
-                                        m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 200)
+                                        m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 300)
                                         print("Invariance GP  %s, %s, %s degrees lml: %s" %(poly_f_d, poly_g_d, poly_damping_d, m.log_marginal_likelihood().numpy()))
                                         print(kernel.f_poly.numpy())
                                         print(kernel.g_poly.numpy())
