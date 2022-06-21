@@ -36,6 +36,15 @@ Everything is working, which is good.
 This week I will work on different type of paramtisation to paramatise the energy function, Andrew suggested a few different methods as basis functions, such as polynomial, splines and Fourier representation. 
 We also talked about my methods of adding jitter, which might not be entire reasonable so I am fixing that too. 
 He also talked about a way that makes this methods scalable, which is that instead of a grid of invariance, we only condition on the local area around the data points as well as the test points we wish to evaluate. 
-If noise too small, it's not good for nonlinear. Noise size matters too.
+If noise too small or too much data, it's not good for nonlinear nor damping.
+But in most reasonable cases, 30 seconds with 30 points with noise 0.1 the kernel all worked well.
+We have four scenarios to check.
+\begin{enumerate}
+  \item lots of data, noisy
+  \item little data, noisy
+  \item lots of data, not noisy
+  \item little, not noisy
+\end{enumerate}
+
 \end{document}
 
