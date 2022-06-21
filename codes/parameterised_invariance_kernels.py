@@ -112,8 +112,8 @@ class Polynomial_Invariance(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
-class polynomial_damping_mean(gpflow.mean_functions.MeanFunction):
-    def __init__(self, kernel, fixed, poly_damping_d):
+class polynomial_dynamical_damping_mean(gpflow.mean_functions.MeanFunction):
+    def __init__(self, kernel, poly_damping_d):
         gpflow.mean_functions.MeanFunction.__init__(self)
         self.invar_grids = kernel.invar_grids
         self.Ka = kernel.Ka
@@ -123,9 +123,6 @@ class polynomial_damping_mean(gpflow.mean_functions.MeanFunction):
         self.inv_g = kernel.inv_g
         self.poly_damping_d = poly_damping_d
         self.damping_poly = gpflow.Parameter(tf.Variable(tf.random.normal((self.poly_damping_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-3.), to_default_float(3.)))
-        self.fixed = fixed
-        if self.fixed:
-            self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(1e-6), to_default_float(1.)))
 
     def damping(self, X):
         return tf.linalg.matmul(tf.math.pow(X, list(range(self.poly_damping_d))), self.damping_poly)
@@ -149,11 +146,39 @@ class polynomial_damping_mean(gpflow.mean_functions.MeanFunction):
         B = tf.multiply(K_Xg, x_g_stacked)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
         D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
-        if self.fixed:
-            return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -self.epsilon*tf.ones((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
-        else:
-            return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), self.damping(self.invar_grids[:,1,None]),1) 
+        return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), self.damping(self.invar_grids[:,1,None]),1) 
 
+class polynomial_fixed_damping_mean(gpflow.mean_functions.MeanFunction):
+    def __init__(self, kernel):
+        gpflow.mean_functions.MeanFunction.__init__(self)
+        self.invar_grids = kernel.invar_grids
+        self.Ka = kernel.Ka
+        self.Kv = kernel.Kv
+        self.jitter = kernel.jitter
+        self.inv_f = kernel.inv_f
+        self.inv_g = kernel.inv_g
+        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(1e-6), to_default_float(1.)))
+
+    def __call__(self, X) -> tf.Tensor:
+        n = X.shape[0]
+        Ka_Xg  = self.Ka(X, self.invar_grids) 
+        Kv_Xg  = self.Kv(X, self.invar_grids) 
+        K_Xg = tf.concat([Ka_Xg, Kv_Xg],0)
+
+        Ka_XgXg = self.Ka(self.invar_grids) 
+        Kv_XgXg = self.Kv(self.invar_grids) 
+
+        x_g = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_f(self.invar_grids[:,0, None]))
+        x_g_dot = tf.ones([n, 1], dtype=tf.float64) * tf.squeeze(self.inv_g(self.invar_grids[:,1, None]))
+        x_g_stacked = tf.concat([x_g_dot, x_g],0)
+        
+        x_g_squared = tf.tensordot(self.inv_f(self.invar_grids[:,0,None]),tf.transpose(self.inv_f(self.invar_grids[:,0, None])),1)
+        x_g_dot_squared = tf.tensordot(self.inv_g(self.invar_grids[:,1,None]),tf.transpose(self.inv_g(self.invar_grids[:,1, None])),1)
+        
+        B = tf.multiply(K_Xg, x_g_stacked)
+        D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
+        D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
+        return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -self.epsilon*tf.ones((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
 
 def get_Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d):
     invariance_kernel = Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d)

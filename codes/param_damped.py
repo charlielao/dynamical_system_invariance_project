@@ -5,7 +5,7 @@ import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 from invariance_mean_functions import zero_mean, damping_SHM_mean, damping_pendulum_mean
-from parameterised_invariance_kernels import get_Polynomial_Invariance, polynomial_damping_mean
+from parameterised_invariance_kernels import get_Polynomial_Invariance, polynomial_dynamical_damping_mean, polynomial_fixed_damping_mean
 from invariance_kernels import get_MOI
 from invariance_functions import degree_of_freedom, get_GPR_model, get_damped_SHM_data, get_damped_pendulum_data, get_grid_of_points
 import os
@@ -29,10 +29,13 @@ for gamma in [0.01, 0.05, 0.1]:
             for invar_density in [20]:#np.arange(10, 40, 10):
                 for poly_f_d in [2, 3, 4, 5, 6]:
                     for poly_g_d in [2, 3, 4, 5, 6]:
-                        for poly_damping_d in [2, 3, 4, 5, 6]:
                             try:
                                 kernel = get_Polynomial_Invariance(3, invar_density, jitter, poly_f_d, poly_g_d)#switch
-                                mean_function = polynomial_damping_mean(kernel, fixed, poly_damping_d)#switch
+                                if fixed:
+                                    mean_function = polynomial_fixed_damping_mean(kernel)#switch
+                                else:
+                                    for poly_damping_d in [2, 3, 4, 5, 6]:
+                                        mean_function = polynomial_dynamical_damping_mean(kernel, poly_damping_d)#switch
                                 m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 100)
                                 print("Invariance GP  %s, %s, %s degrees lml: %s" %(poly_f_d, poly_g_d, poly_damping_d, m.log_marginal_likelihood().numpy()))
                                 print(kernel.f_poly.numpy())
