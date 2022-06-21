@@ -127,5 +127,29 @@ This make sense in some way.
 For the first case, since it is harder to for fixed damping to handle and predict larger damping, if there are less noise to smooth out the effect of damping, so that damping is more varying, it makes sense for fixed damping to perform worse. 
 For the second case, I think the main reason is that the estimation of acceleration and velocity is already not so good to start with, if we have low noise, it's like we are assuming that's the truth.
 Therefore, our physical intuition (invariance) will misguide us since we will be expecting something else. 
+\section*{Paramatisation}
+\section*{Local Invariance}
+Before we have
+$$
+\begin{pmatrix}
+  \mathbf{f}(X_1)\\\mathbf{f}(X_2) \\ L_{X_g}[\mathbf{f}(X_g)]
+\end{pmatrix}
+\sim \mathcal{N}
+\left(
+\begin{pmatrix}
+  \mathbf{0}_{2n} \\ \mathbf{0}_{2m} \\ \mathbf{0}_{\ell}
+\end{pmatrix},
+\begin{pmatrix}
+K(X_1, X_1) & K(X_1, X_2) & B_1 \\
+K(X_2, X_1) & K(X_2, X_2) & B_2 \\
+C_1         & C_2         & D \\
+\end{pmatrix}
+\right), 
+$$
+Before with the grid of invariance $X_g$ is fixed, now they are consist of the local area around the test points and the training trajectory data. 
+Therefore, the only change we need to make is $X_g$ is now a function of $X_1, X_2$ so that $X_g = X_g(X_1, X_2)$.
+As a result, now $B, C, D$ will all be a function of $X_1, X_2.$
+Essentially, we just have to redefine our grids to be the neighbourhoods around test and training points.  
+In our case, before we have 1600 points in a 6 by 6 area, now perhaps we can have 4 points around the 0.1 by 0.1 area around each point. 
 \end{document}
 
