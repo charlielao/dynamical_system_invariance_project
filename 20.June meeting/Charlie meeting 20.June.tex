@@ -152,6 +152,61 @@ As a result, now $B, C, D$ will all be a function of $X_1, X_2.$
 Essentially, we just have to redefine our grids to be the neighbourhoods around test and training points.  
 In our case, before we have 1600 points in a 6 by 6 area, now perhaps we can have 4 points around the 0.1 by 0.1 area around each point. 
 
+\section*{Change to damping approximate invariance}
+Now instead of our original method of conditioning on an either analytical form or like a fix or random vector, we will allow the invariance to be noisy.
+Before we had, 
+$$
+\begin{pmatrix}
+  \mathbf{f}(X_1)\\
+  \mathbf{f}(X_2)
+\end{pmatrix}|L_{X_g}[\mathbf{f}(X_g)]=0
+\sim\mathcal{N}
+\left(
+\begin{pmatrix}
+  \mathbf{0}_{2n}\\
+  \mathbf{0}_{2m}\\
+\end{pmatrix}
+,
+A-\begin{pmatrix}
+  B_1 \\B_2
+\end{pmatrix}D^{-1}\left(C_1, C_2\right)
+\right)
+$$
+now we want
+$$
+\begin{pmatrix}
+  \mathbf{f}(X_1)\\
+  \mathbf{f}(X_2)
+\end{pmatrix}|L_{X_g}[\mathbf{f}(X_g)] = \text{noise}
+\sim\mathcal{N}
+\left(
+\begin{pmatrix}
+  \mathbf{0}_{2n}\\
+  \mathbf{0}_{2m}\\
+\end{pmatrix}
+,
+A-\begin{pmatrix}
+  B_1 \\B_2
+\end{pmatrix}D^{-1}\left(C_1, C_2\right)
+\right)
+$$
+
+We had
+$$
+\begin{pmatrix}
+  \mathbf{f}(X) \\ L_{X_g}[\mathbf{f}(X_g)]
+\end{pmatrix}
+\sim \mathcal{N}
+\left(
+\begin{pmatrix}
+  \mathbf{0}_{2n} \\ \mathbf{0}_{\ell}
+\end{pmatrix},
+\begin{pmatrix}
+A & B \\C&D\\
+\end{pmatrix}
+\right), 
+$$
+
 \section*{Question}
 I still don't quite understand the difference between conditioning on a random vector and add noise to the thing itself.
 \end{document}
