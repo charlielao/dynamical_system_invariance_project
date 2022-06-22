@@ -45,7 +45,7 @@ class damping_pendulum_mean(gpflow.mean_functions.MeanFunction):
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
         D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         if self.fixed:
-            return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -self.epsilon*tf.ones((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
+            return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), self.epsilon*tf.random.normal((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
         else:
             return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -2*to_default_float(self.gamma*self.length)*tf.math.square(self.invar_grids[:,1,None]),1) 
 
@@ -81,6 +81,6 @@ class damping_SHM_mean(gpflow.mean_functions.MeanFunction):
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
         D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         if self.fixed:
-            return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -self.epsilon*tf.ones((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
+            return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), self.epsilon*tf.random.normal((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
         else:
             return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -2*to_default_float(self.gamma*self.mass)*tf.math.square(self.invar_grids[:,1,None]),1) 

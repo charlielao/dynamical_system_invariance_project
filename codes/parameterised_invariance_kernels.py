@@ -225,6 +225,7 @@ class Spline_Invariance(gpflow.kernels.Kernel):
         D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
+
 class polynomial_dynamical_damping_mean(gpflow.mean_functions.MeanFunction):
     def __init__(self, kernel, poly_damping_d):
         gpflow.mean_functions.MeanFunction.__init__(self)
@@ -291,7 +292,7 @@ class polynomial_fixed_damping_mean(gpflow.mean_functions.MeanFunction):
         B = tf.multiply(K_Xg, x_g_stacked)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
         D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
-        return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), -self.epsilon*tf.ones((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
+        return tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), self.epsilon*tf.random.normal((self.invar_grids.shape[0], 1), dtype=tf.float64),1) 
 
 def get_Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d):
     invariance_kernel = Polynomial_Invariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d)
