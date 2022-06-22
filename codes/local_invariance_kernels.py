@@ -116,7 +116,7 @@ class SHM_Local_Invariance(gpflow.kernels.Kernel):
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
 
-class Pendulum_Invariance(gpflow.kernels.Kernel):
+class Pendulum_Local_Invariance(gpflow.kernels.Kernel):
     def __init__(self, invar_neighbourhood, jitter_size):
         super().__init__(active_dims=[0, 1])
         self.invar_neighbourhood = invar_neighbourhood
@@ -177,13 +177,15 @@ class Pendulum_Invariance(gpflow.kernels.Kernel):
         x_g_dot_2 = tf.ones([m, 1], dtype=tf.float64) * local_invar_grids[:,1]
         x_g_2_stacked = tf.concat([x_g_dot_2, x_g_2],0)
 
-        
+        x_g_squared = tf.tensordot(tf.math.sin(local_invar_grids[:,0,None]),tf.math.sin(local_invar_grids[None,:,0]),1)
+        x_g_dot_squared = tf.tensordot(local_invar_grids[:,1,None],local_invar_grids[None,:,1],1)
+
         A = tf.concat([tf.concat([K_X1X1, K_X1X2],1),tf.concat([K_X2X1, K_X2X2],1)],0) 
         B1 = tf.multiply(K_X1Xg, x_g_1_stacked)
         B2 = tf.multiply(K_X2Xg, x_g_2_stacked)
         B = tf.concat([B1, B2], 0)
         C = tf.transpose(B)
-        D = tf.multiply(self.x_g_dot_squared, Ka_XgXg) + tf.multiply(self.x_g_squared, Kv_XgXg) 
+        D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg) 
         D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         
         return (A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), C, 1))[:2*n, 2*n:]
@@ -212,11 +214,14 @@ class Pendulum_Invariance(gpflow.kernels.Kernel):
         x_g = tf.ones([n, 1], dtype=tf.float64) * tf.math.sin(local_invar_grids[:,0])
         x_g_dot = tf.ones([n, 1], dtype=tf.float64) * local_invar_grids[:,1]
         x_g_stacked = tf.concat([x_g_dot, x_g],0)
+
+        x_g_squared = tf.tensordot(tf.math.sin(local_invar_grids[:,0,None]),tf.math.sin(local_invar_grids[None,:,0]),1)
+        x_g_dot_squared = tf.tensordot(local_invar_grids[:,1,None],local_invar_grids[None,:,1],1)
         
         A = K_X
         B = tf.multiply(K_Xg, x_g_stacked)
         C = tf.transpose(B)
-        D = tf.multiply(self.x_g_dot_squared, Ka_XgXg) + tf.multiply(self.x_g_squared, Kv_XgXg)
+        D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
         D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
@@ -229,8 +234,8 @@ def get_SHM_Local_Invariance(invar_neighbourhood, jitter_size):
     invariance_kernel.Kv.lengthscales = gpflow.Parameter(invariance_kernel.Kv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     return invariance_kernel
 
-def get_Pendulum_Invariance(invar_range, invar_density, jitter_size):
-    invariance_kernel = Pendulum_Invariance(invar_range, invar_density, jitter_size)
+def get_Pendulum_Local_Invariance(invar_neighbourhood, jitter_size):
+    invariance_kernel = Pendulum_Local_Invariance(invar_neighbourhood, jitter_size)
     invariance_kernel.Ka.variance = gpflow.Parameter(invariance_kernel.Ka.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Kv.variance = gpflow.Parameter(invariance_kernel.Kv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Ka.lengthscales = gpflow.Parameter(invariance_kernel.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
