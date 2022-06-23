@@ -4,10 +4,11 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
-from invariance_mean_functions import zero_mean
-from invariance_kernels import get_MOI, get_Pendulum_Invariance, get_SHM_Invariance
+from invariance_kernels import zero_mean, get_MOI, get_Pendulum_Invariance, get_SHM_Invariance
 from invariance_functions import degree_of_freedom, get_GPR_model, get_SHM_data, get_pendulum_data, get_grid_of_points
 from local_invariance_kernels import get_SHM_Local_Invariance, get_Pendulum_Local_Invariance
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
 test_grids = get_grid_of_points(3, 10)
 zero_mean = zero_mean(2)
