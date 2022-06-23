@@ -22,11 +22,13 @@ for gamma in [0.01, 0.05, 0.1]:
         print("%s, " %round(get_GPR_model(get_MOI(), mean_function , data, test_grids, 100)[0].log_marginal_likelihood().numpy()))
         for invar_density in [20]:#np.arange(10, 40, 10):
                 try:
-                    kernel = get_Pendulum_Invariance(3, invar_density, jitter)#switch
+                    kernel = get_Damped_Pendulum_Invariance(3, invar_density, jitter)#switch
+#                    mean_function = damping_pendulum_mean(kernel, True, gamma, length=1)#switch
+
                     m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 200)
 #                        print("Invariance GP density %s lml: %s" %(invar_density, m.log_marginal_likelihood().numpy()))
                     print(round(m.log_marginal_likelihood().numpy()))
-#                    print(m.kernel.epsilon.numpy())
+                    print(m.kernel.epsilon.numpy())
 
                 except tf.errors.InvalidArgumentError:
                     print("jitter too small")
