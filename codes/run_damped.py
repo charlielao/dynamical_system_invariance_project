@@ -1,3 +1,4 @@
+# %%
 import gpflow
 import numpy as np
 import tensorflow as tf
@@ -13,7 +14,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 test_grids = get_grid_of_points(3, 40)
 for gamma in [0.01, 0.05, 0.1]:
     print("current damping: %s" %gamma)
-    data = get_damped_SHM_data(gamma, 1, 0.1)#), [90, 130]) #switch
+    data = get_damped_pendulum_data(gamma, 1, 0.1, [90, 130]) #switch
     mean_function = zero_mean(2)
     for jitter in [1e-5]:
 #            print("current jitter %s" %jitter)
@@ -25,7 +26,10 @@ for gamma in [0.01, 0.05, 0.1]:
                     m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 200)
 #                        print("Invariance GP density %s lml: %s" %(invar_density, m.log_marginal_likelihood().numpy()))
                     print(round(m.log_marginal_likelihood().numpy()))
+#                    print(m.kernel.epsilon.numpy())
 
                 except tf.errors.InvalidArgumentError:
                     print("jitter too small")
                     break
+
+# %%
