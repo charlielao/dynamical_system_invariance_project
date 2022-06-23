@@ -4,9 +4,9 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
-from invariance_mean_functions import zero_mean, damping_SHM_mean, damping_pendulum_mean
-from invariance_kernels import get_MOI, get_Pendulum_Invariance, get_SHM_Invariance
+from invariance_kernels import get_MOI, get_Pendulum_Invariance, get_SHM_Invariance, zero_mean, damping_SHM_mean, damping_pendulum_mean
 from invariance_functions import degree_of_freedom, get_GPR_model, get_damped_SHM_data, get_damped_pendulum_data, get_grid_of_points
+from damped_invariance_kernels import get_Damped_Pendulum_Invariance, get_Damped_SHM_Invariance
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 

@@ -154,44 +154,8 @@ In our case, before we have 1600 points in a 6 by 6 area, now perhaps we can hav
 
 \section*{Change to damping approximate invariance}
 Now instead of our original method of conditioning on an either analytical form or like a fix or random vector, we will allow the invariance to be noisy.
-Before we had, 
-$$
-\begin{pmatrix}
-  \mathbf{f}(X_1)\\
-  \mathbf{f}(X_2)
-\end{pmatrix}|L_{X_g}[\mathbf{f}(X_g)]=0
-\sim\mathcal{N}
-\left(
-\begin{pmatrix}
-  \mathbf{0}_{2n}\\
-  \mathbf{0}_{2m}\\
-\end{pmatrix}
-,
-A-\begin{pmatrix}
-  B_1 \\B_2
-\end{pmatrix}D^{-1}\left(C_1, C_2\right)
-\right)
-$$
-now we want
-$$
-\begin{pmatrix}
-  \mathbf{f}(X_1)\\
-  \mathbf{f}(X_2)
-\end{pmatrix}|L_{X_g}[\mathbf{f}(X_g)] = \text{noise}
-\sim\mathcal{N}
-\left(
-\begin{pmatrix}
-  \mathbf{0}_{2n}\\
-  \mathbf{0}_{2m}\\
-\end{pmatrix}
-,
-A-\begin{pmatrix}
-  B_1 \\B_2
-\end{pmatrix}D^{-1}\left(C_1, C_2\right)
-\right)
-$$
 
-We had
+Before we had, 
 $$
 \begin{pmatrix}
   \mathbf{f}(X) \\ L_{X_g}[\mathbf{f}(X_g)]
@@ -206,6 +170,16 @@ A & B \\C&D\\
 \end{pmatrix}
 \right), 
 $$
+
+Now it is like when we have noise on the observation, we also have noise on the invariance. 
+Therefore, in a simliar way to $y=f+\text{noise}_{\sigma^2_n}$, wer have $\tilde{L} = L+\text{noise}_{\epsilon}$. 
+Since all the noise are uncorrelated (Gaussian white noise), we will only modify the D matrix (signal noise will be accounted for by GPflow).
+Therefore, we will have $\tilde{D}=D+\epsilon I$.
+So we have 
+$$
+\mathbf{f}(X) | \tilde{L}_{X_g}[\mathbf{f}(X_g)]=0 \sim \mathcal{N} \left(0, A-B\tilde{D}^{-1}C\right).
+$$
+The rest would be the same as before. 
 
 \section*{Question}
 I still don't quite understand the difference between conditioning on a random vector and add noise to the thing itself.
