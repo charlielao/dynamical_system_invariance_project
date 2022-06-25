@@ -9,6 +9,8 @@ from scipy.misc import derivative
 import random
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 from termcolor import colored
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
 # %%
 dt = 1
@@ -143,13 +145,13 @@ class SHM2D_Invariance(gpflow.kernels.Kernel):
         Ka2_X1X1  = self.Ka2(X) 
         Kv1_X1X1  = self.Kv1(X) 
         Kv2_X1X1  = self.Kv2(X) 
-        K_X1X1   = tf.concat([tf.concat([Ka1_X1X1,zeros_nn, zeros_nn, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, Ka2_X1X1, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, Kv1_X1X1, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, zeros_nn, Kv2_X1X1],1)],0)
+        K_X1X1   = tf.concat([tf.concat([Ka1_X1X1,zeros_nn, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, Ka2_X1X1, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, Kv1_X1X1, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, zeros_nn, Kv2_X1X1],1)],0)
 
         Ka1_X1X2  = self.Ka1(X, X2) 
         Ka2_X1X2  = self.Ka2(X, X2) 
         Kv1_X1X2  = self.Kv1(X, X2) 
         Kv2_X1X2  = self.Kv2(X, X2) 
-        K_X1X2   = tf.concat([tf.concat([Ka1_X1X2,zeros_nm, zeros_nm, zeros_nm, zeros_nm],1),tf.concat([zeros_nm, Ka2_X1X2, zeros_nm, zeros_nm],1),tf.concat([zeros_nm, zeros_nm, Kv1_X1X2, zeros_nm],1),tf.concat([zeros_nm, zeros_nm, zeros_nm, Kv2_X1X2],1)],0)
+        K_X1X2   = tf.concat([tf.concat([Ka1_X1X2,zeros_nm, zeros_nm, zeros_nm],1),tf.concat([zeros_nm, Ka2_X1X2, zeros_nm, zeros_nm],1),tf.concat([zeros_nm, zeros_nm, Kv1_X1X2, zeros_nm],1),tf.concat([zeros_nm, zeros_nm, zeros_nm, Kv2_X1X2],1)],0)
         
         K_X2X1   = tf.transpose(K_X1X2)
         
@@ -157,7 +159,7 @@ class SHM2D_Invariance(gpflow.kernels.Kernel):
         Ka2_X2X2  = self.Ka2(X2) 
         Kv1_X2X2  = self.Kv1(X2) 
         Kv2_X2X2  = self.Kv2(X2) 
-        K_X2X2   = tf.concat([tf.concat([Ka1_X2X2,zeros_mm, zeros_mm, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, Ka2_X2X2, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, Kv1_X2X2, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, zeros_mm, Kv2_X2X2],1)],0)
+        K_X2X2   = tf.concat([tf.concat([Ka1_X2X2,zeros_mm, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, Ka2_X2X2, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, Kv1_X2X2, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, zeros_mm, Kv2_X2X2],1)],0)
         
         Ka1_X1Xg  = self.Ka1(X, self.invar_grids) 
         Ka2_X1Xg  = self.Ka2(X, self.invar_grids) 
@@ -197,7 +199,7 @@ class SHM2D_Invariance(gpflow.kernels.Kernel):
         D = tf.multiply(self.x1_g_dot_squared, Ka1_XgXg) + tf.multiply(self.x2_g_dot_squared, Ka2_XgXg) + tf.multiply(self.x1_g_squared, Kv1_XgXg) + tf.multiply(self.x2_g_squared, Kv2_XgXg) 
         D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         
-        return (A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), C, 1))[:2*n, 2*n:]
+        return (A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), C, 1))[:4*n, 4*n:]
 
     def K_diag(self, X):
         n = X.shape[0]
@@ -207,7 +209,7 @@ class SHM2D_Invariance(gpflow.kernels.Kernel):
         Ka2_X  = self.Ka2(X) 
         Kv1_X  = self.Kv1(X) 
         Kv2_X  = self.Kv2(X) 
-        K_X   = tf.concat([tf.concat([Ka1_X,zeros_nn, zeros_nn, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, Ka2_X, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, Kv1_X, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, zeros_nn, Kv2_X],1)],0)
+        K_X   = tf.concat([tf.concat([Ka1_X, zeros_nn, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, Ka2_X, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, Kv1_X, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, zeros_nn, Kv2_X],1)],0)
         
         Ka1_Xg  = self.Ka1(X, self.invar_grids) 
         Ka2_Xg  = self.Ka2(X, self.invar_grids) 
@@ -235,7 +237,7 @@ class SHM2D_Invariance(gpflow.kernels.Kernel):
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
 # %%
-energy_kernel = SHM2D_Invariance(3, 10)
+energy_kernel = SHM2D_Invariance(3, 5, 1e-5)
 energy_kernel.Ka1.variance = gpflow.Parameter(energy_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
 energy_kernel.Ka2.variance = gpflow.Parameter(energy_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
 energy_kernel.Kv1.variance = gpflow.Parameter(energy_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
