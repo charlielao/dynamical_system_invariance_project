@@ -20,7 +20,7 @@ for jitter in [1e-5]:
     print("%s, "%round(get_GPR_model(get_MOI(), zero_mean, data, test_grids, 100)[0].log_marginal_likelihood().numpy()))
     for invar_density in [20]: #np.arange(10, 30, 10):
             try:
-                kernel = get_Pendulum_Local_Invariance(0.1, jitter) #switch
+                kernel = get_Pendulum_Local_Invariance(1, 5, jitter) #switch
                 m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids, 100)
 #                print("Invariance GP density %s lml: %s" %(invar_density, m.log_marginal_likelihood().numpy()))
                 print(round(m.log_marginal_likelihood().numpy()))
