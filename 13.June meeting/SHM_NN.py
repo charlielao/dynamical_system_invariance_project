@@ -7,9 +7,44 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
+from scipy.integrate import odeint
 import random
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 from termcolor import colored
+
+dt = 0.1
+t = np.linspace(0, 30, int(30/dt))
+g = 1
+l = 1
+def f(t, r):
+    theta = r[0]
+    omega = r[1]
+    return np.array([omega, -g / l * np.sin(theta)])
+results = odeint(f, [np.radians(150), 0], t, tfirst=True)
+results2 = odeint(f, [np.radians(90), 0], t, tfirst=True)
+x1 = results[0::1,0]
+v1 = results[0::1,1]
+x2 = results2[0::1,0]
+v2 = results2[0::1,1]
+t = t[0::1]
+
+plt.plot(t, x1, "--")
+plt.plot(t, v1, "--")
+plt.plot(t, x2)
+plt.plot(t, v2)
+
+# %%
+X_1 = tf.concat([x1[:,None], v1[:,None]], axis=-1)
+X_2 = tf.concat([x2[:,None], v2[:,None]], axis=-1)
+X_1 += tf.random.normal((X_1.shape), 0, 0.01, dtype=tf.float64)
+X_2 += tf.random.normal((X_2.shape), 0, 0.01, dtype=tf.float64)
+Y_1 = (X_1[2:,:]-X_1[:-2, :])/(2*0.1) # to estimate acceleration and velocity by discrete differenation
+Y_2 = (X_2[2:,:]-X_2[:-2, :])/(2*0.1) # to estimate acceleration and velocity by discrete differenation
+X_1 = X_1[1:-1, :]
+X_2 = X_2[1:-1, :]
+X = tf.concat([X_1,X_2], axis=0)
+Y = tf.concat([Y_1,Y_2], axis=0)
+
 
 # %%
 dt = 1
@@ -143,10 +178,6 @@ opt_logs = opt.minimize(m_normal.training_loss, m_normal.trainable_variables, op
 pred, var = m_normal.predict_f(test_points)
 print(m_normal.log_marginal_likelihood().numpy())
 print_summary(m_normal)
-# %%
-plotting(pred[:int(pred.shape[0]/2),:], var[:int(var.shape[0]/2),:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=1, lml=m_normal.log_marginal_likelihood().numpy())
-plotting(pred[int(pred.shape[0]/2):,:], var[int(var.shape[0]/2):,:], eval_points=(test_xx, test_vv), data=(X,Y),save=0, name="", angle1=10, angle2=-65, acc=0, lml=m_normal.log_marginal_likelihood().numpy())
-# %%
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Flatten, Dense ,Input
 
@@ -154,33 +185,34 @@ from tensorflow.keras.layers import Flatten, Dense ,Input
 class SHO_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density):
         super().__init__(active_dims=[0, 1])
+        self.jitter = 1e-5
+        self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
+        self.Kv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
+        self.inv_f = tf.keras.Sequential(
+                [
+                    tf.keras.layers.InputLayer(input_shape=(1)),
+                    tf.keras.layers.Dense(5, activation="sigmoid", dtype=tf.float64),
+                    tf.keras.layers.Dense(5, activation="sigmoid", dtype=tf.float64),
+                    tf.keras.layers.Dense(1, activation="relu", dtype=tf.float64),
+                    tf.keras.layers.Lambda(to_default_float),
+                ]
+            )
+        self.inv_f.build()
 
-        self.weight_f_0 = gpflow.Parameter(tf.reshape(tf.Variable([1.]*1),(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.bias_f_0 = gpflow.Parameter(tf.reshape(1.,(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-        self.weight_g_0 = gpflow.Parameter(tf.reshape(tf.Variable([1.]*1),(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.bias_g_0 = gpflow.Parameter(tf.reshape(1.,(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.weight_f_1 = gpflow.Parameter(tf.reshape(tf.Variable([1.]*1),(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.bias_f_1 = gpflow.Parameter(tf.reshape(1.,(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.weight_g_1 = gpflow.Parameter(tf.reshape(tf.Variable([1.]*1),(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-#        self.bias_g_1 = gpflow.Parameter(tf.reshape(1.,(1,1)),transform =tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.)) )
-
-        self.jitter = gpflow.kernels.White(1e-5)
-        self.RBFa = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
-        self.RBFv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
-        self.Ka =  self.RBFa + self.jitter
-        self.Kv =  self.RBFv + self.jitter
+        self.inv_g = tf.keras.Sequential(
+                [
+                    tf.keras.layers.InputLayer(input_shape=(1)),
+                    tf.keras.layers.Dense(5, activation="sigmoid", dtype=tf.float64),
+                    tf.keras.layers.Dense(5, activation="sigmoid", dtype=tf.float64),
+                    tf.keras.layers.Dense(1, activation="relu", dtype=tf.float64),
+                    tf.keras.layers.Lambda(to_default_float),
+                ]
+            )
+        self.inv_g.build()
         invariance_xs = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_vs = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_xx, invariance_vv = tf.meshgrid(invariance_xs, invariance_vs)
         self.invar_grids = tf.stack([tf.reshape(invariance_xx,[-1]), tf.reshape(invariance_vv,[-1])], axis=1)
-
-    def inv_f(self, X):
-#        return tf.tensordot(tf.math.sigmoid(tf.tensordot(X, self.weight_f_0, 1)+self.bias_f_0), self.weight_f_1,1)+self.bias_f_1
-        return tf.tensordot(X, self.weight_f_0, 1)
-        
-    def inv_g(self, X):
-        return tf.tensordot(X, self.weight_g_0, 1)
-#        return tf.tensordot(tf.math.sigmoid(tf.tensordot(X, self.weight_g_0, 1)+self.bias_g_0), self.weight_g_1,1)+self.bias_g_1
 
     def K(self, X, X2=None):
         if X2 is None:
@@ -234,6 +266,7 @@ class SHO_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
         B = tf.concat([B1, B2], 0)
         C = tf.transpose(B)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg) 
+        D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         
         return (A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D), 1), C, 1))[:2*n, 2*n:]
 
@@ -263,23 +296,24 @@ class SHO_Energy_Invariance_unknown_parameter(gpflow.kernels.Kernel):
         B = tf.multiply(K_Xg, x_g_stacked)
         C = tf.transpose(B)
         D = tf.multiply(x_g_dot_squared, Ka_XgXg) + tf.multiply(x_g_squared, Kv_XgXg)
+        D += self.jitter*tf.eye(D.shape[0], dtype=tf.float64)
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
 # %%
 energy_kernel_unknown = SHO_Energy_Invariance_unknown_parameter(3, 20)
-set_trainable(energy_kernel_unknown.jitter.variance, False)
-energy_kernel_unknown.RBFa.variance = gpflow.Parameter(energy_kernel_unknown.RBFa.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-energy_kernel_unknown.RBFv.variance = gpflow.Parameter(energy_kernel_unknown.RBFv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-energy_kernel_unknown.RBFa.lengthscales = gpflow.Parameter(energy_kernel_unknown.RBFa.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-energy_kernel_unknown.RBFv.lengthscales = gpflow.Parameter(energy_kernel_unknown.RBFv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
+#set_trainable(energy_kernel_unknown.jitter.variance, False)
+energy_kernel_unknown.Ka.variance = gpflow.Parameter(energy_kernel_unknown.Ka.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
+energy_kernel_unknown.Kv.variance = gpflow.Parameter(energy_kernel_unknown.Kv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
+energy_kernel_unknown.Ka.lengthscales = gpflow.Parameter(energy_kernel_unknown.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
+energy_kernel_unknown.Kv.lengthscales = gpflow.Parameter(energy_kernel_unknown.Kv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
 # %%
-energy_kernel_unknown(X)
+energy_kernel_unknown(X, test_points)
 #%%
-m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=energy_kernel_unknown, mean_function=Zero_mean(output_dim=2))
+m = gpflow.models.GPR(data=(to_default_float(X), to_default_float(tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1)))), kernel=energy_kernel_unknown, mean_function=Zero_mean(output_dim=2))
 
 opt = gpflow.optimizers.Scipy()
-opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=200))
+opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=300))
 pred, var = m.predict_f(test_points)
 print_summary(m)
 print(m.log_marginal_likelihood().numpy())
