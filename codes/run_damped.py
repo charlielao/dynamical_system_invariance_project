@@ -14,7 +14,9 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 test_grids = get_grid_of_points(3, 40)
 for gamma in [0.01, 0.05, 0.1]:
     print("current damping: %s" %gamma)
-    data = get_damped_pendulum_data(gamma, 1, 0.1, [90, 130]) #switch
+#    data = get_damped_pendulum_data(gamma, 1, 0.01, [90, 130]) #switch
+    data = get_damped_SHM_data(gamma, 1, 0.1) #switch
+
     mean_function = zero_mean(2)
     for jitter in [1e-5]:
 #            print("current jitter %s" %jitter)
@@ -22,7 +24,7 @@ for gamma in [0.01, 0.05, 0.1]:
         print("%s, " %round(get_GPR_model(get_MOI(), mean_function , data, test_grids, 100)[0].log_marginal_likelihood().numpy()))
         for invar_density in [20]:#np.arange(10, 40, 10):
                 try:
-                    kernel = get_Damped_Pendulum_Invariance(3, invar_density, jitter)#switch
+                    kernel = get_Damped_SHM_Invariance(3, invar_density, jitter)#switch
 #                    mean_function = damping_pendulum_mean(kernel, True, gamma, length=1)#switch
 
                     m, pred, var = get_GPR_model(kernel, mean_function, data, test_grids, 200)
