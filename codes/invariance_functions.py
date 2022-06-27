@@ -157,14 +157,16 @@ def get_GPR_model(kernel, mean_function, data, test_points, iterations):
     return (m, pred, var)
 
 def evaluate_model(m, ground_truth, time_step):
-    X = ground_truth
-    predicted = np.zeros(X.shape)
-    predicted[0,:] = X[0,:]
-    for i in range(1, X.shape[0]):
-        pred = m.predict_f(to_default_float(predicted[i-1,:].reshape(1,2)))[0]
-        predicted[i, 0] = predicted[i-1, 0] + pred[1]*time_step 
-        predicted[i, 1] = predicted[i-1, 1] + pred[0]*time_step 
-    return tf.reduce_mean(tf.math.square(predicted-X))
+    X, Y = ground_truth
+    predicted = m.predict_f(X)[0]
+#    X = ground_truth
+#    predicted = np.zeros(X.shape)
+#    predicted[0,:] = X[0,:]
+#    for i in range(1, X.shape[0]):
+#        pred = m.predict_f(to_default_float(predicted[i-1,:].reshape(1,2)))[0]
+#        predicted[i, 0] = predicted[i-1, 0] + pred[1]*time_step 
+#        predicted[i, 1] = predicted[i-1, 1] + pred[0]*time_step 
+    return tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), 0)
 
 '''
 def plotting(pred, var, test_points, data, save, name, angle1, angle2, acc, lml):

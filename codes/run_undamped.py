@@ -10,20 +10,20 @@ from local_invariance_kernels import get_SHM_Local_Invariance, get_Pendulum_Loca
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
-test_grids = get_SHM_data(1, 10, 0.001, [1, 2])[0]
+test_grids = get_SHM_data(1, 10, 0.001, [3, 5])
 zero_mean = zero_mean(2)
 data = get_SHM_data(1, 30, 0.001, [1, 2]) #switch
-#data = get_SHM_data(1, 0.1) #switch
-for jitter in [5e-5]:
+#data = get_pendulum_data(1, 0.1) #switch
+for jitter in [1e-4]:
 #    print("current jitter %s" %jitter)
 #    print("Naive GP            lml: %s" %get_GPR_model(get_MOI(), zero_mean, data, test_grids)[0].log_marginal_likelihood().numpy())
-    m = get_GPR_model(get_MOI(), zero_mean, data, test_grids, 100)[0]
+    m = get_GPR_model(get_MOI(), zero_mean, data, test_grids[0], 100)[0]
     print("%s, "%round(m.log_marginal_likelihood().numpy()))
     print(evaluate_model(m, test_grids, 1).numpy())
     for invar_density in [20]: #np.arange(10, 30, 10):
             try:
-                kernel = get_SHM_Local_Invariance(1, 10, jitter) #switch
-                m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids, 100)
+                kernel = get_SHM_Local_Invariance(0.5, 15, jitter) #switch
+                m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids[0], 100)
 #                print("Invariance GP density %s lml: %s" %(invar_density, m.log_marginal_likelihood().numpy()))
                 print(round(m.log_marginal_likelihood().numpy()))
                 print(evaluate_model(m, test_grids, 1).numpy())
