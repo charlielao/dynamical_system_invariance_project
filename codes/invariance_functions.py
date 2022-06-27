@@ -118,7 +118,7 @@ def get_damped_pendulum_data(gamma, time_step, total_time, noise, initial_angles
     v1 = np.zeros(int(total_time/euler_dt))
     v2 = np.zeros(int(total_time/euler_dt))
     x1[0] = np.radians(initial_angles[0])
-    x2[0] = np.raidans(initial_angles[1])
+    x2[0] = np.radians(initial_angles[1])
     for i in range(1, int(total_time/euler_dt)):
         x1[i] = x1[i-1] + (v1[i-1]+np.random.normal(0, noise)) * euler_dt
         v1[i] = v1[i-1] + (-2*gamma*v1[i-1]-w02*np.sin(x1[i-1])+np.random.normal(0, noise)) * euler_dt
