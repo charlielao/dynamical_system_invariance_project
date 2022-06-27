@@ -5,6 +5,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
+#from sklearn.metrics import mean_squared_error
 def degree_of_freedom(kernel, test_points):
     K = kernel(test_points)
     return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+1e-6*tf.eye(K.shape[0], dtype=tf.float64)), 1)).numpy()
@@ -156,12 +157,14 @@ def get_GPR_model(kernel, mean_function, data, test_points, iterations):
     return (m, pred, var)
 
 def evaluate_model(m, ground_truth, time_step):
-    X, Y = ground_truth
+    X = ground_truth
     predicted = np.zeros(X.shape)
     predicted[0,:] = X[0,:]
     for i in range(1, X.shape[0]):
-        predicted[i, :] = predicted[i-1,:] + m.predict_f(predicted[i-1,:])[0]*time_step 
-    return predicted 
+        pred = m.predict_f(to_default_float(predicted[i-1,:].reshape(1,2)))[0]
+        predicted[i, 0] = predicted[i-1, 0] + pred[1]*time_step 
+        predicted[i, 1] = predicted[i-1, 1] + pred[0]*time_step 
+    return tf.reduce_mean(tf.math.square(predicted-X))
 
 '''
 def plotting(pred, var, test_points, data, save, name, angle1, angle2, acc, lml):
