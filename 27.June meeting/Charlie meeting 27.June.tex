@@ -1,0 +1,39 @@
+\documentclass{article}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{mathtools}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{listings}
+\usepackage{bbm}
+\usepackage[most]{tcolorbox}
+\newcommand{\e}[1]{{\mathbb E}\left[ #1 \right]}
+\definecolor{block-gray}{gray}{0.90}
+\newtcolorbox{code}{colback=block-gray,grow to right by=-1mm,grow to left by=-1mm,boxrule=0pt,boxsep=0pt,breakable}
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+}
+
+\title{\vspace{-3cm}Charlie meeting 20th June\vspace{-3em}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\section*{Meeting}
+In this meeting, we talked about how I should change my ODE data generator to a SDE model by adding noise to the dynamics; i.e. by adding noise to every Euler discrete integration steps.
+We have also talked about using Laurent Series to represent the inverse term.
+We also talked about how to evaluate our metrics, by producing future predictions of the trajectory. 
+Or else, I should use a latent Markov GP, using Kalman filter or particle filter model that accounts for the noise instead.
+\end{document}
+

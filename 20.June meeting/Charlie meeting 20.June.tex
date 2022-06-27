@@ -95,7 +95,6 @@ This make sense in some way.
 For the first case, since it is harder to for fixed damping to handle and predict larger damping, if there are less noise to smooth out the effect of damping, so that damping is more varying, it makes sense for fixed damping to perform worse. 
 For the second case, I think the main reason is that the estimation of acceleration and velocity is already not so good to start with, if we have low noise, it's like we are assuming that's the truth.
 Therefore, our physical intuition (invariance) will misguide us since we will be expecting something else. 
-\section*{Paramatisation}
 \section*{Local Invariance}
 Before we have
 $$
@@ -156,6 +155,8 @@ When there is damping, the correct coefficient is not picked up by the polynomia
 \begin{enumerate}
   \item I still don't quite understand the difference between conditioning on a random vector and add noise to the thing itself.
   \item Should we try to paramertise the damping term?
+  \item data generation procedure (noise, quantity etc.)
+  \item parameterisation for more complicated cases like double pendulum or inverse square laws?
   \item Can we go over my training procedure
 \end{enumerate}
 So I have data within range -3 to 3, then condition on around the same range for the invariance. 
@@ -266,8 +267,7 @@ C_1         & C_2         & D \\
 \right), 
 $$
 Problem! Parameterisation has mixing and simple polynomial probably will not do! 
-Neural Nets? How do I use it with GPflow, like how do I turn a model into gpflow parameter.
-
+Neural Nets?
 
 \end{document}
 
