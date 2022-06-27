@@ -11,7 +11,7 @@ def degree_of_freedom(kernel, test_points):
 
 def get_SHM_data(time_step, total_time, noise, initial_positions):
     m = k = 1
-    euler_dt = 0.01
+    euler_dt = 0.001
     sample_rate = int(time_step/euler_dt)
     t = tf.linspace(0, total_time, int(total_time/euler_dt))
     x1 = np.zeros(int(total_time/euler_dt))
@@ -45,7 +45,7 @@ def get_SHM_data(time_step, total_time, noise, initial_positions):
 def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions):
     m = k = 1
     w02 = k/m
-    euler_dt = 0.01
+    euler_dt = 0.001
     sample_rate = int(time_step/euler_dt)
     t = tf.linspace(0, total_time, int(total_time/euler_dt))
     x1 = np.zeros(int(total_time/euler_dt))
@@ -77,7 +77,7 @@ def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions):
 
 def get_pendulum_data(time_step, total_time, noise, initial_angles):
     g = l = 1
-    euler_dt = 0.01
+    euler_dt = 0.001
     sample_rate = int(time_step/euler_dt)
     t = tf.linspace(0, total_time, int(total_time/euler_dt))
     x1 = np.zeros(int(total_time/euler_dt))
@@ -85,7 +85,7 @@ def get_pendulum_data(time_step, total_time, noise, initial_angles):
     v1 = np.zeros(int(total_time/euler_dt))
     v2 = np.zeros(int(total_time/euler_dt))
     x1[0] = np.radians(initial_angles[0])
-    x2[0] = np.raidans(initial_angles[1])
+    x2[0] = np.radians(initial_angles[1])
     for i in range(1, int(total_time/euler_dt)):
         x1[i] = x1[i-1] + (v1[i-1]+np.random.normal(0, noise)) * euler_dt
         v1[i] = v1[i-1] + (-g/l*np.sin(x1[i-1])+np.random.normal(0, noise)) * euler_dt
@@ -110,7 +110,7 @@ def get_pendulum_data(time_step, total_time, noise, initial_angles):
 def get_damped_pendulum_data(gamma, time_step, total_time, noise, initial_angles):
     g = l = 1
     w02 = g/l
-    euler_dt = 0.01
+    euler_dt = 0.001
     sample_rate = int(time_step/euler_dt)
     t = tf.linspace(0, total_time, int(total_time/euler_dt))
     x1 = np.zeros(int(total_time/euler_dt))
