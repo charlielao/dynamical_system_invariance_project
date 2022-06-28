@@ -122,13 +122,12 @@ def get_grid_of_points(grid_range, grid_density):
     grid_points = tf.stack([tf.reshape(grid_xx,[-1]), tf.reshape(grid_vv,[-1])], axis=1)
     return grid_points
 
-def get_GPR_model(kernel, mean_function, data, test_points, iterations):
+def get_GPR_model(kernel, mean_function, data, iterations):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations))
-    pred, var = m.predict_f(test_points)
-    return (m, pred, var)
+    return m
 
 def evaluate_model(m, ground_truth, time_step):
     X, Y = ground_truth
@@ -141,7 +140,7 @@ def evaluate_model(m, ground_truth, time_step):
         predicted_future[i, 1] = predicted_future[i-1, 1] + pred[0]*time_step 
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))))
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
-    return (MSE, MSE_future)
+    return (MSE.numpy(), MSE_future.numpy(), predicted_future)
 
 '''
 def plotting(pred, var, test_points, data, save, name, angle1, angle2, acc, lml):
