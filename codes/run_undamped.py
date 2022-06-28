@@ -7,12 +7,12 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from invariance_kernels import zero_mean, get_MOI, get_Pendulum_Invariance, get_SHM_Invariance
 from invariance_functions import degree_of_freedom, get_GPR_model, get_SHM_data, get_pendulum_data, get_grid_of_points, evaluate_model
 from local_invariance_kernels import get_SHM_Local_Invariance, get_Pendulum_Local_Invariance
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+#import os
+#os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
-test_grids = get_SHM_data(1, 10, 0.001, [3, 5])
+test_grids = get_SHM_data(0.1, 1, 0.001, [2, 2], [0,0])
 zero_mean = zero_mean(2)
-data = get_SHM_data(1, 30, 0.001, [1, 2]) #switch
+data = get_SHM_data(0.1, 3, 0.001, [1, 2], [0,0]) #switch
 #data = get_pendulum_data(1, 0.1) #switch
 for jitter in [1e-4]:
 #    print("current jitter %s" %jitter)
@@ -26,7 +26,7 @@ for jitter in [1e-4]:
                 m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids[0], 100)
 #                print("Invariance GP density %s lml: %s" %(invar_density, m.log_marginal_likelihood().numpy()))
                 print(round(m.log_marginal_likelihood().numpy()))
-                print(evaluate_model(m, test_grids, 1).numpy())
+                print(evaluate_model(m, test_grids, 0.1).numpy())
 
             except tf.errors.InvalidArgumentError:
                 print("jitter too small")
