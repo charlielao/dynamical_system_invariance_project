@@ -10,135 +10,109 @@ def degree_of_freedom(kernel, test_points):
     K = kernel(test_points)
     return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+1e-6*tf.eye(K.shape[0], dtype=tf.float64)), 1)).numpy()
 
-def get_SHM_data(time_step, total_time, noise, initial_positions):
+def get_SHM_data(time_step, total_time, noise, initial_positions, initial_velocities):
     m = k = 1
+    w02 = k/m
+    n = len(initial_positions)
     euler_dt = 0.001
     sample_rate = int(time_step/euler_dt)
     t = tf.linspace(0, total_time, int(total_time/euler_dt))
-    x1 = np.zeros(int(total_time/euler_dt))
-    x2 = np.zeros(int(total_time/euler_dt))
-    v1 = np.zeros(int(total_time/euler_dt))
-    v2 = np.zeros(int(total_time/euler_dt))
-    x1[0] = initial_positions[0]
-    x2[0] = initial_positions[1]
+    x = np.zeros((n, int(total_time/euler_dt)))
+    v = np.zeros((n, int(total_time/euler_dt)))
+    x[:,0] = initial_positions
+    v[:,0] = initial_velocities
     for i in range(1, int(total_time/euler_dt)):
-        x1[i] = x1[i-1] + (v1[i-1]+np.random.normal(0, noise)) * euler_dt
-        v1[i] = v1[i-1] + (-k/m*x1[i-1]+np.random.normal(0, noise)) * euler_dt
-        x2[i] = x2[i-1] + (v2[i-1]+np.random.normal(0, noise)) * euler_dt
-        v2[i] = v2[i-1] + (-k/m*x2[i-1]+np.random.normal(0, noise)) * euler_dt
-    x1 = x1[0::sample_rate]
-    x2 = x2[0::sample_rate]
-    v1 = v1[0::sample_rate]
-    v2 = v2[0::sample_rate]
+        x[:,i] = x[:,i-1] + (v[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+        v[:,i] = v[:,i-1] + (-w02*x[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+    x = x[:,0::sample_rate]
+    v = v[:,0::sample_rate]
     t = t[0::sample_rate]
+    dx = (x[:,2:]-x[:,:-2])/(2*time_step)
+    dv = (v[:,2:]-v[:,:-2])/(2*time_step)
+    x = x[:,1:-1]
+    v = v[:,1:-1]
 
-    X1 = tf.concat([x1[:,None], v1[:,None]], axis=-1)
-    X2 = tf.concat([x2[:,None], v2[:,None]], axis=-1)
-    Y1 = (X1[2:,:]-X1[:-2, :])/(2*time_step) 
-    Y2 = (X2[2:,:]-X2[:-2, :])/(2*time_step) 
-    X1 = X1[1:-1, :]
-    X2 = X2[1:-1, :]
-    X = tf.concat([X1, X2], axis=0)
-    Y = tf.concat([Y1, Y2], axis=0)
+    X = np.concatenate([x.reshape(1,-1).T,v.reshape(1,-1).T],1)
+    Y = np.concatenate([dx.reshape(1,-1).T,dv.reshape(1,-1).T],1)
     return (X, Y)
 # %%
 
-def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions):
+def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions, initial_velocities):
     m = k = 1
     w02 = k/m
+    n = len(initial_positions)
     euler_dt = 0.001
     sample_rate = int(time_step/euler_dt)
     t = tf.linspace(0, total_time, int(total_time/euler_dt))
-    x1 = np.zeros(int(total_time/euler_dt))
-    x2 = np.zeros(int(total_time/euler_dt))
-    v1 = np.zeros(int(total_time/euler_dt))
-    v2 = np.zeros(int(total_time/euler_dt))
-    x1[0] = initial_positions[0]
-    x2[0] = initial_positions[1]
+    x = np.zeros((n, int(total_time/euler_dt)))
+    v = np.zeros((n, int(total_time/euler_dt)))
+    x[:,0] = initial_positions
+    v[:,0] = initial_velocities
     for i in range(1, int(total_time/euler_dt)):
-        x1[i] = x1[i-1] + (v1[i-1]+np.random.normal(0, noise)) * euler_dt
-        v1[i] = v1[i-1] + (-2*gamma*v1[i-1]-w02*x1[i-1]+np.random.normal(0, noise)) * euler_dt
-        x2[i] = x2[i-1] + (v2[i-1]+np.random.normal(0, noise)) * euler_dt
-        v2[i] = v2[i-1] + (-2*gamma*v2[i-1]-w02*x2[i-1]+np.random.normal(0, noise)) * euler_dt
-    x1 = x1[0::sample_rate]
-    x2 = x2[0::sample_rate]
-    v1 = v1[0::sample_rate]
-    v2 = v2[0::sample_rate]
+        x[:,i] = x[:,i-1] + (v[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+        v[:,i] = v[:,i-1] + (-2*gamma*v[:,i-1]-w02*x[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+    x = x[:,0::sample_rate]
+    v = v[:,0::sample_rate]
     t = t[0::sample_rate]
+    dx = (x[:,2:]-x[:,:-2])/(2*time_step)
+    dv = (v[:,2:]-v[:,:-2])/(2*time_step)
+    x = x[:,1:-1]
+    v = v[:,1:-1]
 
-    X1 = tf.concat([x1[:,None], v1[:,None]], axis=-1)
-    X2 = tf.concat([x2[:,None], v2[:,None]], axis=-1)
-    Y1 = (X1[2:,:]-X1[:-2, :])/(2*time_step) 
-    Y2 = (X2[2:,:]-X2[:-2, :])/(2*time_step) 
-    X1 = X1[1:-1, :]
-    X2 = X2[1:-1, :]
-    X = tf.concat([X1, X2], axis=0)
-    Y = tf.concat([Y1, Y2], axis=0)
+    X = np.concatenate([x.reshape(1,-1).T,v.reshape(1,-1).T],1)
+    Y = np.concatenate([dx.reshape(1,-1).T,dv.reshape(1,-1).T],1)
     return (X, Y)
 
-def get_pendulum_data(time_step, total_time, noise, initial_angles):
-    g = l = 1
-    euler_dt = 0.001
-    sample_rate = int(time_step/euler_dt)
-    t = tf.linspace(0, total_time, int(total_time/euler_dt))
-    x1 = np.zeros(int(total_time/euler_dt))
-    x2 = np.zeros(int(total_time/euler_dt))
-    v1 = np.zeros(int(total_time/euler_dt))
-    v2 = np.zeros(int(total_time/euler_dt))
-    x1[0] = np.radians(initial_angles[0])
-    x2[0] = np.radians(initial_angles[1])
-    for i in range(1, int(total_time/euler_dt)):
-        x1[i] = x1[i-1] + (v1[i-1]+np.random.normal(0, noise)) * euler_dt
-        v1[i] = v1[i-1] + (-g/l*np.sin(x1[i-1])+np.random.normal(0, noise)) * euler_dt
-        x2[i] = x2[i-1] + (v2[i-1]+np.random.normal(0, noise)) * euler_dt
-        v2[i] = v2[i-1] + (-g/l*np.sin(x2[i-1])+np.random.normal(0, noise)) * euler_dt
-    x1 = x1[0::sample_rate]
-    x2 = x2[0::sample_rate]
-    v1 = v1[0::sample_rate]
-    v2 = v2[0::sample_rate]
-    t = t[0::sample_rate]
-
-    X1 = tf.concat([x1[:,None], v1[:,None]], axis=-1)
-    X2 = tf.concat([x2[:,None], v2[:,None]], axis=-1)
-    Y1 = (X1[2:,:]-X1[:-2, :])/(2*time_step) 
-    Y2 = (X2[2:,:]-X2[:-2, :])/(2*time_step) 
-    X1 = X1[1:-1, :]
-    X2 = X2[1:-1, :]
-    X = tf.concat([X1, X2], axis=0)
-    Y = tf.concat([Y1, Y2], axis=0)
-    return (X, Y)
-
-def get_damped_pendulum_data(gamma, time_step, total_time, noise, initial_angles):
+def get_pendulum_data(time_step, total_time, noise, initial_angles, initial_angular_velocities):
     g = l = 1
     w02 = g/l
+    n = len(initial_angles)
     euler_dt = 0.001
     sample_rate = int(time_step/euler_dt)
     t = tf.linspace(0, total_time, int(total_time/euler_dt))
-    x1 = np.zeros(int(total_time/euler_dt))
-    x2 = np.zeros(int(total_time/euler_dt))
-    v1 = np.zeros(int(total_time/euler_dt))
-    v2 = np.zeros(int(total_time/euler_dt))
-    x1[0] = np.radians(initial_angles[0])
-    x2[0] = np.radians(initial_angles[1])
+    x = np.zeros((n, int(total_time/euler_dt)))
+    v = np.zeros((n, int(total_time/euler_dt)))
+    x[:,0] = np.radians(initial_angles)
+    v[:,0] = np.radians(initial_angular_velocities)
     for i in range(1, int(total_time/euler_dt)):
-        x1[i] = x1[i-1] + (v1[i-1]+np.random.normal(0, noise)) * euler_dt
-        v1[i] = v1[i-1] + (-2*gamma*v1[i-1]-w02*np.sin(x1[i-1])+np.random.normal(0, noise)) * euler_dt
-        x2[i] = x2[i-1] + (v2[i-1]+np.random.normal(0, noise)) * euler_dt
-        v2[i] = v2[i-1] + (-2*gamma*v2[i-1]-w02*np.sin(x2[i-1])+np.random.normal(0, noise)) * euler_dt
-    x1 = x1[0::sample_rate]
-    x2 = x2[0::sample_rate]
-    v1 = v1[0::sample_rate]
-    v2 = v2[0::sample_rate]
+        x[:,i] = x[:,i-1] + (v[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+        v[:,i] = v[:,i-1] + (-w02*np.sin(x[:,i-1])+np.random.normal(0, noise, (n,))) * euler_dt
+    x = x[:,0::sample_rate]
+    v = v[:,0::sample_rate]
     t = t[0::sample_rate]
+    dx = (x[:,2:]-x[:,:-2])/(2*time_step)
+    dv = (v[:,2:]-v[:,:-2])/(2*time_step)
+    x = x[:,1:-1]
+    v = v[:,1:-1]
 
-    X1 = tf.concat([x1[:,None], v1[:,None]], axis=-1)
-    X2 = tf.concat([x2[:,None], v2[:,None]], axis=-1)
-    Y1 = (X1[2:,:]-X1[:-2, :])/(2*time_step) 
-    Y2 = (X2[2:,:]-X2[:-2, :])/(2*time_step) 
-    X1 = X1[1:-1, :]
-    X2 = X2[1:-1, :]
-    X = tf.concat([X1, X2], axis=0)
-    Y = tf.concat([Y1, Y2], axis=0)
+    X = np.concatenate([x.reshape(1,-1).T,v.reshape(1,-1).T],1)
+    Y = np.concatenate([dx.reshape(1,-1).T,dv.reshape(1,-1).T],1)
+    return (X, Y)
+
+def get_damped_pendulum_data(gamma, time_step, total_time, noise, initial_angles, initial_angular_velocities):
+    g = l = 1
+    w02 = g/l
+    n = len(initial_angles)
+    euler_dt = 0.001
+    sample_rate = int(time_step/euler_dt)
+    t = tf.linspace(0, total_time, int(total_time/euler_dt))
+    x = np.zeros((n, int(total_time/euler_dt)))
+    v = np.zeros((n, int(total_time/euler_dt)))
+    x[:,0] = np.radians(initial_angles)
+    v[:,0] = np.radians(initial_angular_velocities)
+    for i in range(1, int(total_time/euler_dt)):
+        x[:,i] = x[:,i-1] + (v[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+        v[:,i] = v[:,i-1] + (-2*gamma*v[:,i-1]-w02*np.sin(x[:,i-1])+np.random.normal(0, noise, (n,))) * euler_dt
+    x = x[:,0::sample_rate]
+    v = v[:,0::sample_rate]
+    t = t[0::sample_rate]
+    dx = (x[:,2:]-x[:,:-2])/(2*time_step)
+    dv = (v[:,2:]-v[:,:-2])/(2*time_step)
+    x = x[:,1:-1]
+    v = v[:,1:-1]
+
+    X = np.concatenate([x.reshape(1,-1).T,v.reshape(1,-1).T],1)
+    Y = np.concatenate([dx.reshape(1,-1).T,dv.reshape(1,-1).T],1)
     return (X, Y)
 
 def get_grid_of_points(grid_range, grid_density):
@@ -159,14 +133,15 @@ def get_GPR_model(kernel, mean_function, data, test_points, iterations):
 def evaluate_model(m, ground_truth, time_step):
     X, Y = ground_truth
     predicted = m.predict_f(X)[0]
-#    X = ground_truth
-#    predicted = np.zeros(X.shape)
-#    predicted[0,:] = X[0,:]
-#    for i in range(1, X.shape[0]):
-#        pred = m.predict_f(to_default_float(predicted[i-1,:].reshape(1,2)))[0]
-#        predicted[i, 0] = predicted[i-1, 0] + pred[1]*time_step 
-#        predicted[i, 1] = predicted[i-1, 1] + pred[0]*time_step 
-    return tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), 0)
+    predicted_future = np.zeros(X.shape)
+    predicted_future[0,:] = X[0,:]
+    for i in range(1, X.shape[0]):
+        pred = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,2)))[0]
+        predicted_future[i, 0] = predicted_future[i-1, 0] + pred[1]*time_step 
+        predicted_future[i, 1] = predicted_future[i-1, 1] + pred[0]*time_step 
+    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))))
+    MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
+    return (MSE, MSE_future)
 
 '''
 def plotting(pred, var, test_points, data, save, name, angle1, angle2, acc, lml):
