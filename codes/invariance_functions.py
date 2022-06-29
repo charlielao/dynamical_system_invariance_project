@@ -35,7 +35,44 @@ def get_SHM_data(time_step, total_time, noise, initial_positions, initial_veloci
     X = np.concatenate([x.reshape(1,-1).T,v.reshape(1,-1).T],1)
     Y = np.concatenate([dx.reshape(1,-1).T,dv.reshape(1,-1).T],1)
     return (X, Y)
-# %%
+
+def get_SHM2D_data(time_step, total_time, noise, initial_positions, initial_velocities):
+    m = k = 1
+    w02 = k/m
+    n = len(initial_positions[0])
+    euler_dt = 0.001
+    sample_rate = int(time_step/euler_dt)
+    t = tf.linspace(0, total_time, int(total_time/euler_dt))
+    x1 = np.zeros((n, int(total_time/euler_dt)))
+    x2 = np.zeros((n, int(total_time/euler_dt)))
+    v1 = np.zeros((n, int(total_time/euler_dt)))
+    v2 = np.zeros((n, int(total_time/euler_dt)))
+    x1[:,0] = initial_positions[0]
+    x2[:,0] = initial_positions[1]
+    v1[:,0] = initial_velocities[0]
+    v2[:,0] = initial_velocities[1]
+    for i in range(1, int(total_time/euler_dt)):
+        x1[:,i] = x1[:,i-1] + (v1[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+        x2[:,i] = x2[:,i-1] + (v2[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+        v1[:,i] = v1[:,i-1] + (-w02*x1[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+        v2[:,i] = v2[:,i-1] + (-w02*x2[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
+    x1 = x1[:,0::sample_rate]
+    x2 = x2[:,0::sample_rate]
+    v1 = v1[:,0::sample_rate]
+    v2 = v2[:,0::sample_rate]
+    t = t[0::sample_rate]
+    dx1 = (x1[:,2:]-x1[:,:-2])/(2*time_step)
+    dx2 = (x2[:,2:]-x2[:,:-2])/(2*time_step)
+    dv1 = (v1[:,2:]-v1[:,:-2])/(2*time_step)
+    dv2 = (v1[:,2:]-v2[:,:-2])/(2*time_step)
+    x1 = x1[:,1:-1]
+    x2 = x2[:,1:-1]
+    v1 = v1[:,1:-1]
+    v2 = v2[:,1:-1]
+
+    X = np.concatenate([x1.reshape(1,-1).T,x2.reshape(1,-1).T, v1.reshape(1,-1).T, v2.reshape(1,-1).T],1)
+    Y = np.concatenate([dx1.reshape(1,-1).T,dx2.reshape(1,-1).T, dv1.reshape(1,-1).T, dv2.reshape(1,-1).T],1)
+    return (X, Y)
 
 def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions, initial_velocities):
     m = k = 1
@@ -129,6 +166,13 @@ def get_GPR_model(kernel, mean_function, data, iterations):
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations))
     return m
 
+def get_GPR_2Dmodel(kernel, mean_function, data, iterations):
+    X, Y = data
+    m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
+    opt = gpflow.optimizers.Scipy()
+    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations))
+    return m
+
 def evaluate_model(m, ground_truth, time_step):
     X, Y = ground_truth
     predicted = m.predict_f(X)[0]
@@ -139,6 +183,21 @@ def evaluate_model(m, ground_truth, time_step):
         predicted_future[i, 0] = predicted_future[i-1, 0] + pred[1]*time_step 
         predicted_future[i, 1] = predicted_future[i-1, 1] + pred[0]*time_step 
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))))
+    MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
+    return (MSE.numpy(), MSE_future.numpy(), predicted_future)
+
+def evaluate_2Dmodel(m, ground_truth, time_step):
+    X, Y = ground_truth
+    predicted = m.predict_f(X)[0]
+    predicted_future = np.zeros(X.shape)
+    predicted_future[0,:] = X[0,:]
+    for i in range(1, X.shape[0]):
+        pred = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,4)))[0]
+        predicted_future[i, 0] = predicted_future[i-1, 0] + pred[2]*time_step 
+        predicted_future[i, 1] = predicted_future[i-1, 1] + pred[3]*time_step 
+        predicted_future[i, 2] = predicted_future[i-1, 2] + pred[0]*time_step 
+        predicted_future[i, 3] = predicted_future[i-1, 3] + pred[1]*time_step 
+    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))))
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
     return (MSE.numpy(), MSE_future.numpy(), predicted_future)
 
