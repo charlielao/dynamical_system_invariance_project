@@ -1,3 +1,4 @@
+# %%
 import gpflow
 import numpy as np
 import tensorflow as tf
@@ -9,25 +10,29 @@ from invariance_functions import degree_of_freedom, get_GPR_model, get_SHM_data,
 from local_invariance_kernels import get_SHM_Local_Invariance, get_Pendulum_Local_Invariance
 #import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = '2'
-
-test_grids = get_SHM_data(0.1, 1, 0.001, [2, 2], [0,0])
-zero_mean = zero_mean(2)
-data = get_SHM_data(0.1, 3, 0.001, [1, 2], [0,0]) #switch
+# %%
+test_data = get_pendulum_data(0.1, 1, 1e-8, [160], [0])
+mean = zero_mean(2)
+data = get_pendulum_data(0.1, 2, 1e-8, [60, 120], [0,0]) #switch
 #data = get_pendulum_data(1, 0.1) #switch
-for jitter in [1e-4]:
+for jitter in [2e-5]:
 #    print("current jitter %s" %jitter)
 #    print("Naive GP            lml: %s" %get_GPR_model(get_MOI(), zero_mean, data, test_grids)[0].log_marginal_likelihood().numpy())
-    m = get_GPR_model(get_MOI(), zero_mean, data, test_grids[0], 100)[0]
+    m = get_GPR_model(get_MOI(), mean, data, 100)
     print("%s, "%round(m.log_marginal_likelihood().numpy()))
-    print(evaluate_model(m, test_grids, 1).numpy())
-    for invar_density in [20]: #np.arange(10, 30, 10):
+    evaluate_moi = evaluate_model(m, test_data, 0.1)
+    print(evaluate_moi[:2])
+    for invar_density in [40]: #np.arange(10, 30, 10):
             try:
-                kernel = get_SHM_Local_Invariance(0.5, 15, jitter) #switch
-                m, pred, var = get_GPR_model(kernel, zero_mean, data, test_grids[0], 100)
+                kernel = get_Pendulum_Invariance(3, invar_density, jitter) #switch
+                m = get_GPR_model(kernel, mean, data, 100)
 #                print("Invariance GP density %s lml: %s" %(invar_density, m.log_marginal_likelihood().numpy()))
                 print(round(m.log_marginal_likelihood().numpy()))
-                print(evaluate_model(m, test_grids, 0.1).numpy())
+                evaluate_invariance = evaluate_model(m, test_data, 0.1)
+                print(evaluate_invariance[:2])
 
             except tf.errors.InvalidArgumentError:
                 print("jitter too small")
                 break 
+
+# %%
