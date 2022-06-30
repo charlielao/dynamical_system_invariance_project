@@ -506,7 +506,6 @@ class Double_Pendulum_Local_Invariance(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
-
 class Polynomial_Local_Invariance(gpflow.kernels.Kernel):
     def __init__(self, invar_neighbourhood, n_neighbours, jitter_size, poly_f_d, poly_g_d):
         super().__init__(active_dims=[0, 1])
