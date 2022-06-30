@@ -13,33 +13,73 @@ def degree_of_freedom(kernel, test_points):
 def get_SHM_data(time_step, total_time, noise, initial_positions, initial_velocities):
     m = k = 1
     w02 = k/m
-    n = len(initial_positions)
-    euler_dt = 0.001
-    sample_rate = int(time_step/euler_dt)
-    t = tf.linspace(0, total_time, int(total_time/euler_dt))
-    x = np.zeros((n, int(total_time/euler_dt)))
-    v = np.zeros((n, int(total_time/euler_dt)))
-    x[:,0] = initial_positions
-    v[:,0] = initial_velocities
-    for i in range(1, int(total_time/euler_dt)):
-        x[:,i] = x[:,i-1] + (v[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
-        v[:,i] = v[:,i-1] + (-w02*x[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
-    x = x[:,0::sample_rate]
-    v = v[:,0::sample_rate]
-    t = t[0::sample_rate]
-    dx = (x[:,2:]-x[:,:-2])/(2*time_step)
-    dv = (v[:,2:]-v[:,:-2])/(2*time_step)
-    x = x[:,1:-1]
-    v = v[:,1:-1]
-
-    X = np.concatenate([x.reshape(1,-1).T,v.reshape(1,-1).T],1)
-    Y = np.concatenate([dx.reshape(1,-1).T,dv.reshape(1,-1).T],1)
+    t = tf.linspace(0, total_time, int(total_time/time_step))
+    def f(t, r):
+        x = r[0]
+        v = r[1]
+        return np.array([v+np.random.normal(0,noise), -w02*x+np.random.normal(0,noise)])
+    initial_conditions = np.array([initial_positions, initial_velocities])
+    X = np.apply_along_axis(lambda m: odeint(f, m, t, tfirst=True), 0, initial_conditions)
+    Y = (X[2:,:,:] - X[:-2,:,:])/(2*time_step)
+    X = X[1:-1,:,:]
+    X = X.transpose(2,0,1).reshape(-1,2)
+    Y = Y.transpose(2,0,1).reshape(-1,2)
     return (X, Y)
-
-def get_SHM2D_data(time_step, total_time, noise, initial_positions, initial_velocities):
+#%%
+def get_SHM2D_data(time_step, total_time, noise, initial_positions_1,initial_positions_2, initial_velocities_1,initial_velocities_2):
     m = k = 1
     w02 = k/m
-    n = len(initial_positions[0])
+    t = tf.linspace(0, total_time, int(total_time/time_step))
+    def f(t, r):
+        x1 = r[0]
+        x2 = r[1]
+        v1 = r[2]
+        v2 = r[3]
+        return np.array([v1+np.random.normal(0,noise), v2+np.random.normal(0,noise),-w02*x1+np.random.normal(0,noise),-w02*x2+np.random.normal(0,noise)])
+    initial_conditions = np.array([initial_positions_1, initial_positions_2, initial_velocities_1, initial_velocities_2])
+    X = np.apply_along_axis(lambda m: odeint(f, m, t, tfirst=True), 0, initial_conditions)
+    Y = (X[2:,:,:] - X[:-2,:,:])/(2*time_step)
+    X = X[1:-1,:,:]
+    X = X.transpose(2,0,1).reshape(-1,4)
+    Y = Y.transpose(2,0,1).reshape(-1,4)
+    return (X, Y)
+
+def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions, initial_velocities):
+    m = k = 1
+    w02 = k/m
+    t = tf.linspace(0, total_time, int(total_time/time_step))
+    def f(t, r):
+        x = r[0]
+        v = r[1]
+        return np.array([v+np.random.normal(0,noise), -2*gamma*v-w02*x+np.random.normal(0,noise)])
+    initial_conditions = np.array([initial_positions, initial_velocities])
+    X = np.apply_along_axis(lambda m: odeint(f, m, t, tfirst=True), 0, initial_conditions)
+    Y = (X[2:,:,:] - X[:-2,:,:])/(2*time_step)
+    X = X[1:-1,:,:]
+    X = X.transpose(2,0,1).reshape(-1,2)
+    Y = Y.transpose(2,0,1).reshape(-1,2)
+    return (X, Y)
+
+def get_pendulum_data(time_step, total_time, noise, initial_angles, initial_angular_velocities):
+    g = l = 1
+    w02 = g/l
+    t = tf.linspace(0, total_time, int(total_time/time_step))
+    def f(t, r):
+        x = r[0]
+        v = r[1]
+        return np.array([v+np.random.normal(0,noise), -w02*np.sin(x)+np.random.normal(0,noise)])
+    initial_conditions = np.array([initial_angles, initial_angular_velocities])
+    X = np.apply_along_axis(lambda m: odeint(f, m, t, tfirst=True), 0, initial_conditions)
+    Y = (X[2:,:,:] - X[:-2,:,:])/(2*time_step)
+    X = X[1:-1,:,:]
+    X = X.transpose(2,0,1).reshape(-1,2)
+    Y = Y.transpose(2,0,1).reshape(-1,2)
+    return (X, Y)
+
+def get_double_pendulum_data(time_step, total_time, noise, initial_angles, initial_angular_velocities):
+    # initial angles/angular velocity will be [[n],[n]]
+    g = l1 = l2 = m1 = m2 = 1
+    n = len(initial_angles[0])
     euler_dt = 0.001
     sample_rate = int(time_step/euler_dt)
     t = tf.linspace(0, total_time, int(total_time/euler_dt))
@@ -47,73 +87,21 @@ def get_SHM2D_data(time_step, total_time, noise, initial_positions, initial_velo
     x2 = np.zeros((n, int(total_time/euler_dt)))
     v1 = np.zeros((n, int(total_time/euler_dt)))
     v2 = np.zeros((n, int(total_time/euler_dt)))
-    x1[:,0] = initial_positions[0]
-    x2[:,0] = initial_positions[1]
-    v1[:,0] = initial_velocities[0]
-    v2[:,0] = initial_velocities[1]
+    x1[:,0] = np.radians(initial_angles[0])
+    x2[:,0] = np.radians(initial_angles[1])
+    v1[:,0] = np.radians(initial_angular_velocities[0])
+    v2[:,0] = np.radians(initial_angular_velocities[1])
+    def f(t, r):
+        theta1 = r[0]
+        theta2 = r[1]
+        omega1 = r[2]
+        omega2 = r[3]
+        return np.array([omega, -g / l * np.sin(theta)])
+    results = odeint(f, [np.radians(angle1), 0], t, tfirst=True)
     for i in range(1, int(total_time/euler_dt)):
         x1[:,i] = x1[:,i-1] + (v1[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
         x2[:,i] = x2[:,i-1] + (v2[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
-        v1[:,i] = v1[:,i-1] + (-w02*x1[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
-        v2[:,i] = v2[:,i-1] + (-w02*x2[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
-    x1 = x1[:,0::sample_rate]
-    x2 = x2[:,0::sample_rate]
-    v1 = v1[:,0::sample_rate]
-    v2 = v2[:,0::sample_rate]
-    t = t[0::sample_rate]
-    dx1 = (x1[:,2:]-x1[:,:-2])/(2*time_step)
-    dx2 = (x2[:,2:]-x2[:,:-2])/(2*time_step)
-    dv1 = (v1[:,2:]-v1[:,:-2])/(2*time_step)
-    dv2 = (v1[:,2:]-v2[:,:-2])/(2*time_step)
-    x1 = x1[:,1:-1]
-    x2 = x2[:,1:-1]
-    v1 = v1[:,1:-1]
-    v2 = v2[:,1:-1]
-
-    X = np.concatenate([x1.reshape(1,-1).T,x2.reshape(1,-1).T, v1.reshape(1,-1).T, v2.reshape(1,-1).T],1)
-    Y = np.concatenate([dx1.reshape(1,-1).T,dx2.reshape(1,-1).T, dv1.reshape(1,-1).T, dv2.reshape(1,-1).T],1)
-    return (X, Y)
-
-def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions, initial_velocities):
-    m = k = 1
-    w02 = k/m
-    n = len(initial_positions)
-    euler_dt = 0.001
-    sample_rate = int(time_step/euler_dt)
-    t = tf.linspace(0, total_time, int(total_time/euler_dt))
-    x = np.zeros((n, int(total_time/euler_dt)))
-    v = np.zeros((n, int(total_time/euler_dt)))
-    x[:,0] = initial_positions
-    v[:,0] = initial_velocities
-    for i in range(1, int(total_time/euler_dt)):
-        x[:,i] = x[:,i-1] + (v[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
-        v[:,i] = v[:,i-1] + (-2*gamma*v[:,i-1]-w02*x[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
-    x = x[:,0::sample_rate]
-    v = v[:,0::sample_rate]
-    t = t[0::sample_rate]
-    dx = (x[:,2:]-x[:,:-2])/(2*time_step)
-    dv = (v[:,2:]-v[:,:-2])/(2*time_step)
-    x = x[:,1:-1]
-    v = v[:,1:-1]
-
-    X = np.concatenate([x.reshape(1,-1).T,v.reshape(1,-1).T],1)
-    Y = np.concatenate([dx.reshape(1,-1).T,dv.reshape(1,-1).T],1)
-    return (X, Y)
-
-def get_pendulum_data(time_step, total_time, noise, initial_angles, initial_angular_velocities):
-    g = l = 1
-    w02 = g/l
-    n = len(initial_angles)
-    euler_dt = 0.001
-    sample_rate = int(time_step/euler_dt)
-    t = tf.linspace(0, total_time, int(total_time/euler_dt))
-    x = np.zeros((n, int(total_time/euler_dt)))
-    v = np.zeros((n, int(total_time/euler_dt)))
-    x[:,0] = np.radians(initial_angles)
-    v[:,0] = np.radians(initial_angular_velocities)
-    for i in range(1, int(total_time/euler_dt)):
-        x[:,i] = x[:,i-1] + (v[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
-        v[:,i] = v[:,i-1] + (-w02*np.sin(x[:,i-1])+np.random.normal(0, noise, (n,))) * euler_dt
+        v[:,i] = v[:,i-1] + ((-g*(2*m1+m2)*np.sin(x1[:,i-1])-m2*g*np.sin(x1[:,i-1]-2*x2[:,i-1])-2*np.sin(x1[:,i-1]-x2[:,i-1])/())+np.random.normal(0, noise, (n,))) * euler_dt
     x = x[:,0::sample_rate]
     v = v[:,0::sample_rate]
     t = t[0::sample_rate]
@@ -129,27 +117,17 @@ def get_pendulum_data(time_step, total_time, noise, initial_angles, initial_angu
 def get_damped_pendulum_data(gamma, time_step, total_time, noise, initial_angles, initial_angular_velocities):
     g = l = 1
     w02 = g/l
-    n = len(initial_angles)
-    euler_dt = 0.001
-    sample_rate = int(time_step/euler_dt)
-    t = tf.linspace(0, total_time, int(total_time/euler_dt))
-    x = np.zeros((n, int(total_time/euler_dt)))
-    v = np.zeros((n, int(total_time/euler_dt)))
-    x[:,0] = np.radians(initial_angles)
-    v[:,0] = np.radians(initial_angular_velocities)
-    for i in range(1, int(total_time/euler_dt)):
-        x[:,i] = x[:,i-1] + (v[:,i-1]+np.random.normal(0, noise, (n,))) * euler_dt
-        v[:,i] = v[:,i-1] + (-2*gamma*v[:,i-1]-w02*np.sin(x[:,i-1])+np.random.normal(0, noise, (n,))) * euler_dt
-    x = x[:,0::sample_rate]
-    v = v[:,0::sample_rate]
-    t = t[0::sample_rate]
-    dx = (x[:,2:]-x[:,:-2])/(2*time_step)
-    dv = (v[:,2:]-v[:,:-2])/(2*time_step)
-    x = x[:,1:-1]
-    v = v[:,1:-1]
-
-    X = np.concatenate([x.reshape(1,-1).T,v.reshape(1,-1).T],1)
-    Y = np.concatenate([dx.reshape(1,-1).T,dv.reshape(1,-1).T],1)
+    t = tf.linspace(0, total_time, int(total_time/time_step))
+    def f(t, r):
+        x = r[0]
+        v = r[1]
+        return np.array([v+np.random.normal(0,noise), -2*gamma*v-w02*np.sin(x)+np.random.normal(0,noise)])
+    initial_conditions = np.array([initial_angles, initial_angular_velocities])
+    X = np.apply_along_axis(lambda m: odeint(f, m, t, tfirst=True), 0, initial_conditions)
+    Y = (X[2:,:,:] - X[:-2,:,:])/(2*time_step)
+    X = X[1:-1,:,:]
+    X = X.transpose(2,0,1).reshape(-1,2)
+    Y = Y.transpose(2,0,1).reshape(-1,2)
     return (X, Y)
 
 def get_grid_of_points(grid_range, grid_density):

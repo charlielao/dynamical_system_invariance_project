@@ -12,7 +12,7 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"] = '3'
 # %%
 mean = zero_mean(4)
-data = get_SHM2D_data(0.1, 2, 1e-4, [[1, 2],[0,1]], [[0,0],[0,0]]) #switch
+data = get_SHM2D_data(0.1, 2, 1e-4, [1, 2],[0,1], [0,0],[0,0]) #switch
 test_data = get_SHM2D_data(0.1, 1, 1e-4, [[np.random.uniform(-3,3)],[np.random.uniform(-3,3)]], [[np.random.uniform(-3,3)],[np.random.uniform(-3,3)]])
 for jitter in [2e-5]:
 #    print("current jitter %s" %jitter)
