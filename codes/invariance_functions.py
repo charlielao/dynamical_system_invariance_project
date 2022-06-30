@@ -68,7 +68,7 @@ def get_pendulum_data(time_step, total_time, noise, initial_angles, initial_angu
         x = r[0]
         v = r[1]
         return np.array([v+np.random.normal(0,noise), -w02*np.sin(x)+np.random.normal(0,noise)])
-    initial_conditions = np.array([initial_angles, initial_angular_velocities])
+    initial_conditions = np.radians(np.array([initial_angles, initial_angular_velocities]))
     X = np.apply_along_axis(lambda m: odeint(f, m, t, tfirst=True), 0, initial_conditions)
     Y = (X[2:,:,:] - X[:-2,:,:])/(2*time_step)
     X = X[1:-1,:,:]
@@ -87,7 +87,7 @@ def get_double_pendulum_data(time_step, total_time, noise, initial_angles_1, ini
         dv1 = (-g*(2*m1+m2)*np.sin(x1)-m2*g*np.sin(x1-2*x2)-2*np.sin(x1-x2)*m2*(v2**2*l2+v1**2*l1*np.cos(x1-x2)))/(l1*(2*m1+m2-m2*np.cos(2*x1-2*x2)))
         dv2 = (2*np.sin(x1-x2)*(v1**2*l1*(m1+m2)+g*(m1+m2)*np.cos(x1)+v2**2*l2*m2*np.cos(x1-x2)))/(l2*(2*m1+m2-m2*np.cos(2*x1-2*x2)))
         return np.array([v1+np.random.normal(0,noise), v2+np.random.normal(0,noise),dv1+np.random.normal(0,noise),dv2+np.random.normal(0,noise)])
-    initial_conditions = np.array([initial_angles_1, initial_angles_2, initial_angular_velocities_1, initial_angular_velocities_2])
+    initial_conditions = np.radians(np.array([initial_angles_1, initial_angles_2, initial_angular_velocities_1, initial_angular_velocities_2]))
     X = np.apply_along_axis(lambda m: odeint(f, m, t, tfirst=True), 0, initial_conditions)
     Y = (X[2:,:,:] - X[:-2,:,:])/(2*time_step)
     X = X[1:-1,:,:]
@@ -103,7 +103,7 @@ def get_damped_pendulum_data(gamma, time_step, total_time, noise, initial_angles
         x = r[0]
         v = r[1]
         return np.array([v+np.random.normal(0,noise), -2*gamma*v-w02*np.sin(x)+np.random.normal(0,noise)])
-    initial_conditions = np.array([initial_angles, initial_angular_velocities])
+    initial_conditions = np.radians(np.array([initial_angles, initial_angular_velocities]))
     X = np.apply_along_axis(lambda m: odeint(f, m, t, tfirst=True), 0, initial_conditions)
     Y = (X[2:,:,:] - X[:-2,:,:])/(2*time_step)
     X = X[1:-1,:,:]
@@ -132,33 +132,32 @@ def get_GPR_2Dmodel(kernel, mean_function, data, iterations):
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations))
     return m
 
-def evaluate_model(m, ground_truth, total_time, time_step):
+def evaluate_model(m, ground_truth, time_step):
     X, Y = ground_truth
     predicted = m.predict_f(X)[0]
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))))
-    def f(t, r):
-        x = r[0]
-        v = r[1]
-        pred = m.predict_f(to_default_float(np.array([x,v]).reshape(1,2)))[0]
-        return np.array([pred[1],pred[0]])
-    t = tf.linspace(0, total_time, int(total_time/time_step))
-    predicted_future = odeint(f, X[0,:] , t, tfirst=True)
+
+    predicted_future = np.zeros(X.shape)
+    predicted_future[0,:] = X[0,:]
+    for i in range(1, X.shape[0]):
+        pred = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,2)))[0]
+        predicted_future[i, 0] = predicted_future[i-1, 0] + pred[1]*time_step 
+        predicted_future[i, 1] = predicted_future[i-1, 1] + pred[0]*time_step 
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
     return (MSE.numpy(), MSE_future.numpy(), predicted_future)
 
-def evaluate_2Dmodel(m, ground_truth, total_time, time_step):
+def evaluate_2Dmodel(m, ground_truth, time_step):
     X, Y = ground_truth
     predicted = m.predict_f(X)[0]
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))))
-    def f(t, r):
-        x1 = r[0]
-        x2 = r[1]
-        v1 = r[2]
-        v2 = r[3]
-        pred = m.predict_f(to_default_float(np.array([x1,x2,v1,v2]).reshape(1,4)))[0]
-        return np.array([pred[2], pred[3], pred[0], pred[1]])
-    t = tf.linspace(0, total_time, int(total_time/time_step))
-    predicted_future = odeint(f, X[0,:] , t, tfirst=True)
+    predicted_future = np.zeros(X.shape)
+    predicted_future[0,:] = X[0,:]
+    for i in range(1, X.shape[0]):
+        pred = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,4)))[0]
+        predicted_future[i, 0] = predicted_future[i-1, 0] + pred[2]*time_step 
+        predicted_future[i, 1] = predicted_future[i-1, 1] + pred[3]*time_step 
+        predicted_future[i, 2] = predicted_future[i-1, 2] + pred[0]*time_step 
+        predicted_future[i, 3] = predicted_future[i-1, 3] + pred[1]*time_step 
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
     return (MSE.numpy(), MSE_future.numpy(), predicted_future)
 
