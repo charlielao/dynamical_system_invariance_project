@@ -157,7 +157,7 @@ def evaluate_2Dmodel(m, ground_truth, time_step):
     predicted_future_variance = np.zeros(X.shape)
     predicted_future[0,:] = X[0,:]
     for i in range(1, X.shape[0]):
-        pred = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,4)))[0]
+        pred, var = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,4)))
         predicted_future[i, 0] = predicted_future[i-1, 0] + pred[2]*time_step 
         predicted_future_variance[i, 0] = var[2]
         predicted_future[i, 1] = predicted_future[i-1, 1] + pred[3]*time_step 
