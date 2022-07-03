@@ -511,8 +511,8 @@ class Polynomial_Local_Invariance(gpflow.kernels.Kernel):
         super().__init__(active_dims=[0, 1])
         self.poly_f_d = poly_f_d
         self.poly_g_d = poly_g_d
-        self.f_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.poly_f_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-2.), to_default_float(2.)))
-        self.g_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.poly_g_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-2.), to_default_float(2.)))
+        self.f_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.poly_f_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
+        self.g_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.poly_g_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
 
         self.n_neighbours = n_neighbours
         self.invar_neighbourhood = invar_neighbourhood
@@ -630,10 +630,10 @@ class Polynomial_2D_Local_Invariance(gpflow.kernels.Kernel):
         self.Kv1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.poly_d = poly_d
-        self.f1_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-2.), to_default_float(2.)))
-        self.f2_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.number_of_coefficients(self.poly_d[1]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-2.), to_default_float(2.)))
-        self.g1_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.number_of_coefficients(self.poly_d[2]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-2.), to_default_float(2.)))
-        self.g2_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.number_of_coefficients(self.poly_d[3]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-2.), to_default_float(2.)))
+        self.f1_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
+        self.f2_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.number_of_coefficients(self.poly_d[1]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
+        self.g1_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.number_of_coefficients(self.poly_d[2]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
+        self.g2_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.number_of_coefficients(self.poly_d[3]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
         self.jitter = jitter_size
         self.invar_neighbourhood = invar_neighbourhood
         self.n_neighbours = n_neighbours
@@ -830,13 +830,13 @@ class Damped_Polynomial_Local_Invariance(gpflow.kernels.Kernel):
         super().__init__(active_dims=[0, 1])
         self.poly_f_d = poly_f_d
         self.poly_g_d = poly_g_d
-        self.f_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.poly_f_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-2.), to_default_float(2.)))
-        self.g_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.poly_g_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-2.), to_default_float(2.)))
+        self.f_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.poly_f_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
+        self.g_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.poly_g_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
 
         self.n_neighbours = n_neighbours
         self.invar_neighbourhood = invar_neighbourhood
         self.jitter =jitter_size
-        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(1.)))
+        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(2.)))
         self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.Kv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
 

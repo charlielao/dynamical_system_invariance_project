@@ -11,7 +11,7 @@ class Damped_SHM_Invariance(gpflow.kernels.Kernel):
         self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.Kv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.jitter = jitter_size
-        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(1.)))
+        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(2.)))
         invariance_xs = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_vs = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_xx, invariance_vv = tf.meshgrid(invariance_xs, invariance_vs)
@@ -104,7 +104,7 @@ class Damped_Pendulum_Invariance(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density, jitter_size):
         super().__init__(active_dims=[0, 1])
         self.jitter = jitter_size
-        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(1.)))
+        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(2.)))
         self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.Kv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
 
