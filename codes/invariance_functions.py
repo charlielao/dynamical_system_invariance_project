@@ -13,7 +13,7 @@ def degree_of_freedom(kernel, test_points):
 def get_SHM_data(time_step, total_time, noise, initial_positions, initial_velocities):
     m = k = 1
     w02 = k/m
-    t = tf.linspace(0, total_time, int(total_time/time_step))
+    t = tf.linspace(0., total_time, int(total_time/time_step))
     def f(t, r):
         x = r[0]
         v = r[1]
@@ -29,7 +29,7 @@ def get_SHM_data(time_step, total_time, noise, initial_positions, initial_veloci
 def get_SHM2D_data(time_step, total_time, noise, initial_positions_1,initial_positions_2, initial_velocities_1,initial_velocities_2):
     m = k = 1
     w02 = k/m
-    t = tf.linspace(0, total_time, int(total_time/time_step))
+    t = tf.linspace(0., total_time, int(total_time/time_step))
     def f(t, r):
         x1 = r[0]
         x2 = r[1]
@@ -47,7 +47,7 @@ def get_SHM2D_data(time_step, total_time, noise, initial_positions_1,initial_pos
 def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions, initial_velocities):
     m = k = 1
     w02 = k/m
-    t = tf.linspace(0, total_time, int(total_time/time_step))
+    t = tf.linspace(0., total_time, int(total_time/time_step))
     def f(t, r):
         x = r[0]
         v = r[1]
@@ -63,7 +63,7 @@ def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions, 
 def get_pendulum_data(time_step, total_time, noise, initial_angles, initial_angular_velocities):
     g = l = 1
     w02 = g/l
-    t = tf.linspace(0, total_time, int(total_time/time_step))
+    t = tf.linspace(0., total_time, int(total_time/time_step))
     def f(t, r):
         x = r[0]
         v = r[1]
@@ -78,7 +78,7 @@ def get_pendulum_data(time_step, total_time, noise, initial_angles, initial_angu
 
 def get_double_pendulum_data(time_step, total_time, noise, initial_angles_1, initial_angles_2, initial_angular_velocities_1, initial_angular_velocities_2):
     m1 = m2 = l1 = l2 = g = 1
-    t = tf.linspace(0, total_time, int(total_time/time_step))
+    t = tf.linspace(0., total_time, int(total_time/time_step))
     def f(t, r):
         x1 = r[0]
         x2 = r[1]
@@ -98,7 +98,7 @@ def get_double_pendulum_data(time_step, total_time, noise, initial_angles_1, ini
 def get_damped_pendulum_data(gamma, time_step, total_time, noise, initial_angles, initial_angular_velocities):
     g = l = 1
     w02 = g/l
-    t = tf.linspace(0, total_time, int(total_time/time_step))
+    t = tf.linspace(0., total_time, int(total_time/time_step))
     def f(t, r):
         x = r[0]
         v = r[1]
@@ -118,18 +118,21 @@ def get_grid_of_points(grid_range, grid_density):
     grid_points = tf.stack([tf.reshape(grid_xx,[-1]), tf.reshape(grid_vv,[-1])], axis=1)
     return grid_points
 
+def callback(step, variables, values):
+    print(step, end='\r')
+
 def get_GPR_model(kernel, mean_function, data, iterations):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
-    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations))
+    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
     return m
 
 def get_GPR_2Dmodel(kernel, mean_function, data, iterations):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
-    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations))
+    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
     return m
 
 def evaluate_model(m, ground_truth, time_step):

@@ -13,8 +13,9 @@ class Polynomial_Invariance(gpflow.kernels.Kernel):
         super().__init__(active_dims=[0, 1])
         self.poly_f_d = poly_f_d
         self.poly_g_d = poly_g_d
-        self.f_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.poly_f_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
-        self.g_poly = gpflow.Parameter(tf.Variable(0.5*tf.random.normal((self.poly_g_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
+        self.prior_variance = 0.01#gpflow.Parameter(tf.Variable(0.2,dtype=tf.float64), transform=tfp.bijectors.Sigmoid(to_default_float(1e-1), to_default_float(1.)))
+        self.f_poly = gpflow.Parameter(tf.Variable(0.05*tf.ones((self.poly_f_d,1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.g_poly = gpflow.Parameter(tf.Variable(0.05*tf.ones((self.poly_g_d,1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
 
         self.jitter =jitter_size
         self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
@@ -121,11 +122,12 @@ class Damped_Polynomial_Invariance(gpflow.kernels.Kernel):
         super().__init__(active_dims=[0, 1])
         self.poly_f_d = poly_f_d
         self.poly_g_d = poly_g_d
-        self.f_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.poly_f_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
-        self.g_poly = gpflow.Parameter(tf.Variable(1e-6*tf.ones((self.poly_g_d, 1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
+        self.prior_variance = 0.01#gpflow.Parameter(tf.Variable(0.2,dtype=tf.float64), transform=tfp.bijectors.Sigmoid(to_default_float(1e-1), to_default_float(1.)))
+        self.f_poly = gpflow.Parameter(tf.Variable(0.05*tf.ones((self.poly_f_d,1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.g_poly = gpflow.Parameter(tf.Variable(0.05*tf.ones((self.poly_g_d,1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
 
         self.jitter =jitter_size
-        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(5.)))
+        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(1.)))
         self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.Kv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         invariance_xs = tf.linspace(-invariance_range,invariance_range,invar_density)
@@ -234,10 +236,15 @@ class Polynomial_2D_Invariance(gpflow.kernels.Kernel):
         self.Kv1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.poly_d = poly_d
-        self.f1_poly = gpflow.Parameter(tf.Variable(1e-4*tf.random.normal((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
-        self.f2_poly = gpflow.Parameter(tf.Variable(1e-4*tf.random.normal((self.number_of_coefficients(self.poly_d[1]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
-        self.g1_poly = gpflow.Parameter(tf.Variable(1e-4*tf.random.normal((self.number_of_coefficients(self.poly_d[2]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
-        self.g2_poly = gpflow.Parameter(tf.Variable(1e-4*tf.random.normal((self.number_of_coefficients(self.poly_d[3]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)))
+        self.prior_variance = 0.05#gpflow.Parameter(tf.Variable(0.2,dtype=tf.float64), transform=tfp.bijectors.Sigmoid(to_default_float(1e-1), to_default_float(1.)))
+#        self.f1_poly = gpflow.Parameter(tf.Variable(1e-3*tf.ones((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+#        self.f2_poly = gpflow.Parameter(tf.Variable(1e-3*tf.ones((self.number_of_coefficients(self.poly_d[1]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+#        self.g1_poly = gpflow.Parameter(tf.Variable(1e-3*tf.ones((self.number_of_coefficients(self.poly_d[2]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+#        self.g2_poly = gpflow.Parameter(tf.Variable(1e-3*tf.ones((self.number_of_coefficients(self.poly_d[3]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.f1_poly = tf.Variable([0,1,0,0,0], dtype=tf.float64)[:,None]
+        self.f2_poly = tf.Variable([0,0,1,0,0], dtype=tf.float64)[:,None]
+        self.g1_poly = tf.Variable([0,0,0,1,0], dtype=tf.float64)[:,None]
+        self.g2_poly = tf.Variable([0,0,0,0,1], dtype=tf.float64)[:,None]
         self.jitter = jitter_size
         invariance_x1s = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_x2s = tf.linspace(-invariance_range,invariance_range,invar_density)
@@ -441,7 +448,7 @@ def get_Damped_Polynomial_Invariance(invar_range, invar_density, jitter_size, po
     return invariance_kernel
 
 def get_Polynomial_2D_Invariance(invar_range, invar_density, jitter_size, poly_d):
-    invariance_kernel =Polynomial_2D_Invariance(invar_range, invar_density, jitter_size, poly_d)
+    invariance_kernel = Polynomial_2D_Invariance(invar_range, invar_density, jitter_size, poly_d)
     invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
