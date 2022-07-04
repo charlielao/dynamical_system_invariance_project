@@ -527,10 +527,10 @@ def get_Double_Pendulum_Local_Invariance(invar_neighbourhood, n_neighbours, jitt
 
 def get_Polynomial_2D_Local_Invariance(invar_neighbourhood, n_neighbours, jitter_size, poly_d):
     invariance_kernel = Polynomial_2D_Local_Invariance(invar_neighbourhood, n_neighbours,jitter_size, poly_d)
-    invariance_kernel.f1_poly.prior = tfp.distributions.Normal(to_default_float(0),to_default_float(1e-1))
-    invariance_kernel.f2_poly.prior = tfp.distributions.Normal(to_default_float(0),to_default_float(1e-1))
-    invariance_kernel.g1_poly.prior = tfp.distributions.Normal(to_default_float(0),to_default_float(1e-1))
-    invariance_kernel.g2_poly.prior = tfp.distributions.Normal(to_default_float(0),to_default_float(1e-1))
+    invariance_kernel.f1_poly.prior = tfp.distributions.Normal(to_default_float(0),to_default_float(1e-2))
+    invariance_kernel.f2_poly.prior = tfp.distributions.Normal(to_default_float(0),to_default_float(1e-2))
+    invariance_kernel.g1_poly.prior = tfp.distributions.Normal(to_default_float(0),to_default_float(1e-2))
+    invariance_kernel.g2_poly.prior = tfp.distributions.Normal(to_default_float(0),to_default_float(1e-2))
     invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
