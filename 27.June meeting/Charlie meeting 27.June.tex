@@ -24,7 +24,7 @@
   postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
 }
 
-\title{\vspace{-3cm}Charlie meeting 20th June\vspace{-3em}}
+\title{\vspace{-3cm}Charlie meeting 27th June\vspace{-3em}}
 \author{}
 \date{}
 
@@ -35,5 +35,14 @@ In this meeting, we talked about how I should change my ODE data generator to a 
 We have also talked about using Laurent Series to represent the inverse term.
 We also talked about how to evaluate our metrics, by producing future predictions of the trajectory. 
 Or else, I should use a latent Markov GP, using Kalman filter or particle filter model that accounts for the noise instead.
+After I have added the future prediction thing, I found the invariance kernel does not actually do that well in terms of prediction, it is barely different from the original one, but with much better marginal likelihood, is that a positive sign assuming it means that it has lower uncertainity.
+It is the same with low damping but with higher damping the predictive power is same but with lower marginal likelihood.
+For example, see the pendulum in large angle, it is not able to learn to turn around.
+Either way, they can both learn the invariance equation fine. 
+For 2D, it is quite hard for the system to learn the correct invariance, it sort of does for 2D SHM but not really. 
+A problem is the limit of the training datasets. 
+Also the local invariance does not quite work well in paramertisation learning and it is a lot more stable with fixed grid. 
+However, the knowledge of invariance in double pendulum does seem quite help to predict the trajectory.
+Maybe I should switch to leap frog too.
 \end{document}
 
