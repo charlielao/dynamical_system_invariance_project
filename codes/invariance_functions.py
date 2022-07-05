@@ -121,6 +121,8 @@ def get_grid_of_points(grid_range, grid_density):
 def callback(step, variables, values):
     print(step, end='\r')
 
+    
+
 def get_GPR_model(kernel, mean_function, data, iterations):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=kernel, mean_function=mean_function)
@@ -128,12 +130,60 @@ def get_GPR_model(kernel, mean_function, data, iterations):
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
     return m
 
-def get_GPR_2Dmodel(kernel, mean_function, data, iterations):
+def get_GPR_2Dmodel(kernel, mean_function, data, optimiser, iterations, lr):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
-    opt = gpflow.optimizers.Scipy()
-    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
-    return m
+    if optimiser=="scipy":
+        opt = gpflow.optimizers.Scipy()
+        opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
+        return m
+    else:
+        opt = tf.optimizers.Adam(learning_rate=lr)
+        @tf.function
+        def optimization_step():
+            opt.minimize(m.training_loss, m.trainable_variables)
+        best = m.log_marginal_likelihood().numpy()
+        for _ in range(iterations):
+            optimization_step()
+            lml = m.log_marginal_likelihood().numpy()
+            if lml > best:
+                if lml-best<1e-6:
+                    break
+                best = lml
+                best_param = m.trainable_variables
+            print(round(lml)," ", _,end='\r')
+        return m, best_param
+
+class GPR_with_sparse(gpflow.models.GPR):
+    def __init__(self, reg, **kwargs):
+        super().__init__(**kwargs)
+        self.reg = reg
+    def maximum_log_likelihood_objective(self):
+        return self.log_marginal_likelihood()-self.reg*(tf.reduce_sum(tf.abs(self.kernel.f1_poly))+tf.reduce_sum(tf.abs(self.kernel.f2_poly))+tf.reduce_sum(tf.abs(self.kernel.g1_poly))+tf.reduce_sum(tf.abs(self.kernel.g2_poly)))
+
+def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, lr, reg):
+    X, Y = data
+    m = GPR_with_sparse(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function, reg=reg)
+    if optimiser=="scipy":
+        opt = gpflow.optimizers.Scipy()
+        opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
+        return m
+    else:
+        opt = tf.optimizers.Adam(learning_rate=lr)
+        @tf.function
+        def optimization_step():
+            opt.minimize(m.training_loss, m.trainable_variables)
+        best = m.log_marginal_likelihood().numpy()
+        for _ in range(iterations):
+            optimization_step()
+            lml = m.log_marginal_likelihood().numpy()
+            if lml > best:
+                if lml-best<1e-6:
+                    break
+                best = lml
+                best_param = m.trainable_variables
+            print(round(lml)," ", _,end='\r')
+        return m, best_param
 
 def evaluate_model(m, ground_truth, time_step):
     X, Y = ground_truth
