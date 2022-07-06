@@ -390,8 +390,8 @@ And the analytical solution would be of the form $q=A\sin(\omega_0t+\phi),$ wher
 For this case, we have 
 $$
 \mathbf{f}(X)=\begin{pmatrix}
-    a(X)\\
-    v(X)\\
+    \mathbf{a}(X)\\
+    \mathbf{v}(X)\\
 \end{pmatrix}
 $$
 We also have the energy, $E=\frac{kq^2}{2}+\frac{mp^2}{2},$
@@ -536,12 +536,108 @@ $$
 \end{pmatrix},
 $$
 derived in almost exactly the same way as the linear case. 
-
 \section{Damped System}
+Before we have considered a perfect system, i.e. a system in an ideal world without frictions and the conservation of energy is perfectly obeyed such that $L=0$ exactly.
+However, in a real world system, there will be dissipation where energy is lost in the form of heat etc.  
+Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero. 
+To do so, it is similar in spirit to when we add noise to the underlying GP to represent noise signal, where we have $K+\sigma_n^2 \mathbb{1}$.
+Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{1}$, where $\epsilon$ is a parameter to be learnt. 
 \section{2D System}
+A 2D system is not that different from an 1D system. The major difference being there are two more extra variables. 
+We again look at two simple examples, a linear 2D SHM, and a nonlinear double pendulum.
 \subsection{Linear}
+A simple extension to 1D SHM to 2D is just allowing the spring to be at an angle so that the system is now in a 2D space.
+Again, the equations are simple that we have two equations for the two coordinates.
+$$
+\begin{cases}
+    \frac{d^2{q_1}}{dt^2} = -\frac{k}{m}q_1\\
+    \frac{d^2{q_2}}{dt^2} = -\frac{k}{m}q_2\\
+\end{cases}
+$$
+The analytical solution is exactly the same, but now there are two of them with differing amplitudes and phases depending on the initial condition. 
+And now we have $$\mathbf{f}(X)=\begin{pmatrix}
+    \mathbf{a_1}(X)\\
+    \mathbf{a_2}(X)\\
+    \mathbf{v_1}(X)\\
+    \mathbf{v_2}(X)\\
+\end{pmatrix},$$
+where $\mathbf{a_1}$ and $\mathbf{a_2}$ are the dynamics or time derivative for $\mathbf{p_1}$ and $\mathbf{p_2}$ respectively; similarly $\mathbf{v_1}$ and $\mathbf{v_2}$ are the time derivative of $\mathbf{q_1}$ and $\mathbf{q_2}$.
+In this system, the energy is the sum of energy in the two directions so $E=\frac{m(p_1^2+p_2^2)}{2}+\frac{k(q_1^2+q_2^2)}{2}$ and so the invariance $L(a_1, a_2, v_1, v_2)=mp_1a_1+mp_2a_2+kq_1v_1+kq_2v_2=0.$
+Now our naive baseline GP has the kernel
+$$
+K(X,X')=\begin{pmatrix}
+K_{RBF,a_1}(X,X') & 0 & 0 & 0 \\
+0 & K_{RBF,a_2}(X,X') & 0 & 0 \\
+0 & 0 & K_{RBF,v_1}(X,X') & 0 \\
+0 & 0 & 0 & K_{RBF,v_2}(X,X') \\
+\end{pmatrix}.
+$$
+We will then have the joint distribution of
+$$
+\begin{pmatrix}
+    \mathbf{f}(X)\\L[\mathbf{f}(X_L)]\\
+\end{pmatrix}
+\sim\mathcal{N}
+\left(
+\begin{pmatrix}
+    0_{4n} \\ 0_{\ell}
+\end{pmatrix},
+\begin{pmatrix}
+    A & B \\
+    C & D\\
+\end{pmatrix}
+\right),
+$$
+with 
+
+\begin{align*}
+A&=K(X, X'), 
+B=\begin{pmatrix}
+    K_{RBF, a_1}\\
+    K_{RBF, a_2}\\
+    K_{RBF, v_1}\\
+    K_{RBF, v_2}\\
+\end{pmatrix}\odot
+\begin{pmatrix}
+P_{1L}  \\
+P_{2L}  \\
+Q_{1L}  \\
+Q_{2L}  \\
+\end{pmatrix},
+C=B^T,\\ 
+D&=K_{RBF,a_1}\odot(p_{1L}\otimes p_{1L}) +K_{RBF,a_2}\odot(p_{2L}\otimes p_{2L})+K_{RBF,v_1}\odot(q_{1L}\otimes q_{1L})+K_{RBF,v_2}\odot(q_{2L}\otimes p_{2L})
+\end{align*}
+where the terms are defined the exact same way as before, and the derivation are also the same.
+We will then again take the Schur Complement.
 \subsection{Non Linear}
+Now we will to introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
+It has two mass blobs $m_1$ and $m_2$ as well as two lengths for the pendlum stem $\ell_1$ and $\ell_2$.
+The defining equations are as follows:
+$$
+\begin{cases}
+\frac{d^2q_1}{dt^2}=\frac{-g\left(2 m_{1}+m_{2}\right) \sin q_1-m_{2} g \sin \left(q_1-2 q_2\right)-2 \sin \left(q_1-q_2\right) m_{2}\left(p_2^{2} l_{2}+p_1^{2} l_{1} \cos \left(q_1-q_2\right)\right)}{l_{1}\left(2 m_{1}+m_{2}-m_{2} \cos \left(2 q_1-2 q_2\right)\right)} \\
+\frac{d^2q_2}{dt^2}=\frac{2 \sin \left(q_1-q_2\right)\left(p_1^{2} l_{1}\left(m_{1}+m_{2}\right)+g\left(m_{1}+m_{2}\right) \cos q_1+p_2{ }^{2} l_{2} m_{2} \cos \left(q_1-q_2\right)\right)}{l_{2}\left(2 m_{1}+m_{2}-m_{2} \cos \left(2 q_1-2 q_2\right)\right)}
+\end{cases}
+$$
+As we can see, it is very complicated in term of the form.
+We also have form of energy 
+$$
+E = -(m_1+m_2)gl_1\cos q_1-m_2gl_2\cos q_2+ \frac{m_1l^2_1p_1^2}{2}+\frac{m_2}{2}(l^2_1p_1^2+l^2_2p_2^2+2l_1l_2p_1p_2\cos(q_1-q_2))
+$$
+again for simplicity, we set all constants to unity, so that $m_1=m_2=\ell_1=\ell_2=g=1.$
+While the form is more complicated, the underlying principle to construct the invariance kernel. 
+\section{Local Invariance}
 \chapter{Learning Invariance}
+Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which allowed us to derive the energy and thereafter the invariance equation. 
+However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then the system is pretty much solved that we can just use an ODE integrator to obtain the trajectories. 
+Therefore, we should find a way for the system to learn the form of invariance from data directly.
+One way to do so is to parameterise our invariance function and allow the system to learn the coefficients by maximising the log marginal likelihood.
+\section{1D system}
+A simple way to parameterise an unknown function, when the problem is relatively bounded is to use polynomial basis such that the unknown function $L(a,v)=\sum$
+In 1D cases, for our examples, they are simple enough so that $L(a,v)$ is a sum of a function of $a$ and $p$ only, $f_p(a)$ and a different function of $v$ and $q$ only, $g_q(v)$ so that $L(a,v)=f_p(a)+g_q(v)$.
+In the 1D SHM case, $f_p(a)=mpa$ and $g_q(v)=kqv$.
+For simple pendulum, we have $f_p(a)=\ell pa$ and $g_q(v)=\sin qv$ 
+\section{2D system}
 \chapter{Experiments}
 
 
