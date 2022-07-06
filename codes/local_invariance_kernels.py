@@ -306,18 +306,18 @@ class Polynomial_2D_Local_Invariance(gpflow.kernels.Kernel):
         self.Kv1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.poly_d = poly_d
-#        self.prior_variance = gpflow.Parameter(tf.Variable(0.1,dtype=tf.float64), transform=tfp.bijectors.Sigmoid(to_default_float(1e-4), to_default_float(1.)))
-        self.f1_poly = gpflow.Parameter(tf.Variable(1e-4*tf.random.normal((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.f2_poly = gpflow.Parameter(tf.Variable(1e-4*tf.random.normal((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.g1_poly = gpflow.Parameter(tf.Variable(1e-4*tf.random.normal((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.g2_poly = gpflow.Parameter(tf.Variable(1e-4*tf.random.normal((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.prior_variance = 0.05#gpflow.Parameter(tf.Variable(0.1,dtype=tf.float64), transform=tfp.bijectors.Sigmoid(to_default_float(1e-4), to_default_float(1.)))
+        self.f1_poly = gpflow.Parameter(tf.Variable(0.01*tf.ones((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.f2_poly = gpflow.Parameter(tf.Variable(0.01*tf.ones((self.number_of_coefficients(self.poly_d[1]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.g1_poly = gpflow.Parameter(tf.Variable(0.01*tf.ones((self.number_of_coefficients(self.poly_d[2]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.g2_poly = gpflow.Parameter(tf.Variable(0.01*tf.ones((self.number_of_coefficients(self.poly_d[3]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
         self.jitter = jitter_size
         self.invar_neighbourhood = invar_neighbourhood
         self.n_neighbours = n_neighbours
 
     def number_of_coefficients(self, d):
         c = 0
-        for m in range(d+1):
+        for m in range(1, d+1):
             c+=comb(4+m-1,m)
         return int(c)
 
@@ -331,7 +331,7 @@ class Polynomial_2D_Local_Invariance(gpflow.kernels.Kernel):
                     sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X, self.f1_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.f1_poly))
 
     def inv_f2(self, X):
         polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
@@ -343,7 +343,7 @@ class Polynomial_2D_Local_Invariance(gpflow.kernels.Kernel):
                     sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X, self.f2_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.f2_poly))
 
     def inv_g1(self, X):
         polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
@@ -355,7 +355,7 @@ class Polynomial_2D_Local_Invariance(gpflow.kernels.Kernel):
                     sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X, self.g1_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.g1_poly))
 
     def inv_g2(self, X):
         polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
@@ -367,7 +367,7 @@ class Polynomial_2D_Local_Invariance(gpflow.kernels.Kernel):
                     sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X, self.g2_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.g2_poly))
 
 
     def K(self, X, X2=None):
