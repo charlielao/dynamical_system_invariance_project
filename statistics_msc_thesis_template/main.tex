@@ -1,10 +1,62 @@
 \documentclass{statsmsc}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{mathtools}
+\usepackage{amsmath,amssymb}
+\usepackage{nccmath}
+\usepackage{siunitx}
+\usepackage{listings}
+\usepackage{physics}
+\usepackage{tikz}
+\usepackage[outline]{contour} % glow around text
+\usepackage{bbm}
+\usepackage[most]{tcolorbox}
+\newcommand{\e}[1]{{\mathbb E}\left[ #1 \right]}
+\definecolor{block-gray}{gray}{0.90}
+\newtcolorbox{code}{colback=block-gray,grow to right by=-1mm,grow to left by=-1mm,boxrule=0pt,boxsep=0pt,breakable}
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+}
+\usetikzlibrary{patterns,snakes}
+\usetikzlibrary{arrows.meta} % for arrow size
+\contourlength{0.4pt}
 
-\title{Title of the Thesis}
-\author{FIRSTNAME LASTNAME}
-\CID{01234567}
-\supervisor{SUPERVISORNAME and COSUPERVISORNAME}
-\date{1 May 2022}
+\colorlet{xcol}{blue!70!black}
+\colorlet{darkblue}{blue!40!black}
+\colorlet{myred}{red!65!black}
+\tikzstyle{mydashed}=[xcol,dashed,line width=0.25,dash pattern=on 2.2pt off 2.2pt]
+\tikzstyle{axis}=[->,thick] %line width=0.6
+\tikzstyle{ell}=[{Latex[length=3.3,width=2.2]}-{Latex[length=3.3,width=2.2]},line width=0.3]
+\tikzstyle{dx}=[-{Latex[length=3.3,width=2.2]},darkblue,line width=0.3]
+\tikzstyle{ground}=[preaction={fill,top color=black!10,bottom color=black!5,shading angle=20},
+                    fill,pattern=north east lines,draw=none,minimum width=0.3,minimum height=0.6]
+\tikzstyle{mass}=[line width=0.6,red!30!black,fill=red!40!black!10,rounded corners=1,
+                  top color=red!40!black!20,bottom color=red!40!black!10,shading angle=20]
+\tikzstyle{spring}=[line width=0.8,blue!7!black!80,snake=coil,segment amplitude=5,segment length=5,line cap=round]
+\tikzset{>=latex} % for LaTeX arrow head
+\tikzstyle{force}=[->,myred,very thick,line cap=round]
+\def\tick#1#2{\draw[thick] (#1)++(#2:0.1) --++ (#2-180:0.2)}
+\newsavebox{\overlongequation}
+\newenvironment{CentreLongEquation}
+ {\begin{displaymath}\begin{lrbox}{\overlongequation}$\displaystyle}
+ {$\end{lrbox}\makebox[0pt]{\usebox{\overlongequation}}\end{displaymath}}
+
+
+\title{Learning Invariances in Dynamical System}
+\author{Cheng-Cheng Lao}
+\CID{01353756}
+\supervisor{Dr. Andrew Duncan and Dr. Mark van der Wilk}
+\date{\today}
 %For today's date, use:
 %\date{\today}
 \logoimg{}
@@ -24,8 +76,8 @@
 
 
 % Generates plagiarism declaration
-\declarationname{STUDENT'S NAME}
-\declarationdate{DATE}
+\declarationname{Cheng-Cheng Lao}
+\declarationdate{\today}
 \declaration 
 
 
@@ -49,10 +101,12 @@
 The introduction section goes here\footnote{Tip: write this section last.}.
 
 \chapter{Background}
+Here we will cover the background knowledge required to understand the remaining thesis, including theortical foundation of Gaussian Process, dynamical systems and invariances. 
 
 Background chapter.
 
-\section{My section}
+\section{Gaussian Process}
+Gaussian Process (GP)
 
 Section content goes here. 
 
@@ -63,6 +117,11 @@ A subsection.
 \subsubsection{My subsubsection}
 
 A subsubsection.
+\section{Dynamical Systems}
+A dynamical system is simply a system that evolves with time under some kind of rules.
+\section{Invariances}
+Invariances are functions of the states that describe a dynamical system, and is unchanged throughout the evolution of the system over time. 
+An example would be from the field of physics, the conservation of energy, which will be unchanged throught out the trajectories of the system.
 
 \section{Figures}
 
@@ -219,6 +278,272 @@ and the third line follows from linearity of expectation:
     since $X \in \{0, 1\}$, $X$ is bounded between $0$ and $1$ and so
     $\mathrm{Var}[X] \leq \tfrac{1}{4}$.
 \end{example}
+
+\chapter{Invariance Kernel}
+In this chapter we will start with general theoretical construction of invariance kernel given the knowlwedge of the invariance of the system.
+We will then apply the construction to various systems, namely linear and nonlinear system in both one and two dimensions.
+\section{General Construction}
+If we are given a dynamical system of dimension d with variables $\mathbf{q}, \mathbf{p}$, where $\mathbf{q} = (q_1, q_2,\dots,q_d)$ is the vector of positional coordinates, and $\mathbf{p}=(p_1, p_2, \dots, p_d)$ is the vector of velocity coordinates of the states of the dynamical system.
+We are interested to predict the future trajectories of the state of the system.
+Therefore, we would like to know the time derivative of these coordinates so we can update them according to Euler's integrator. 
+These time derivatives are referred to as the dynamics of a dynamical system, which governs the evolution of the dynamical system, and is a function of the coordinates $\mathbf{q}$ and $\mathbf{p}$ 
+For our systems, we will denote the dynamics of $\mathbf{p}$ as $\frac{d\mathbf{p}}{dt}=\mathbf{a}(\mathbf{q}, \mathbf{p})$, and that of $\mathbf{q}$ as $\frac{d\mathbf{q}}{dt}=\mathbf{v}(\mathbf{q}, \mathbf{p})$.
+Once we have the dynamics, we can integrate up to obtain the future trajectories. 
+Notation wise, we will collect the two dynamics term and call them $$\mathbf{f(\mathbf{q}, \mathbf{p})}=\begin{pmatrix}
+    \mathbf{a(\mathbf{q}, \mathbf{p})}\\\mathbf{v(\mathbf{q}, \mathbf{p})}
+\end{pmatrix}$$
+For simplicity of notation, the dependence on $\mathbf{q}, \mathbf{p}$ is now implicit. 
+We will put independent GP prior on $\mathbf{a}$ and $\mathbf{v}$ since there are no reason we should assume they are correlated. 
+For the choice of kernel, we chose the standard smooth kernel, the squared exponential kernel, or RBF, and we denote this kernel to be $K_{RBF}$. 
+We will also denote any set of coordinates of length $n$ and dimension $d$ as $$X=\begin{pmatrix}
+    q_{11}& q_{21} &\dots& q_{d1} & p_{11} & p_{21} & \dots & p_{d1} \\
+    q_{12}& q_{22} &\dots& q_{d2} & p_{12} & p_{22} & \dots & p_{d2} \\
+    \vdots &\vdots &\ddots &\vdots &\vdots &\vdots &\ddots &\vdots \\
+    q_{1n}& q_{2n} &\dots& q_{dn} & p_{1n} & p_{2n} & \dots & p_{dn} \\
+\end{pmatrix}=\begin{pmatrix}
+    \mathbf{x}_1\\\mathbf{x}_2\\\vdots\\\mathbf{x}_n
+\end{pmatrix}.$$
+Without loss of generality, we will choose to stack the dynamics vertically in $\mathbf{f}$; for example in a d dimensional system, we have $$\mathbf{f}(X)=\begin{pmatrix}
+    a_1(\mathbf{x}_1)\\
+    \vdots\\
+    a_1(\mathbf{x}_n)\\
+    a_2(\mathbf{x}_1)\\
+    \vdots\\
+    a_2(\mathbf{x}_n)\\
+    \vdots\\
+    a_d(\mathbf{x}_1)\\
+    \vdots\\
+    a_d(\mathbf{x}_n)\\
+    v_1(\mathbf{x}_1)\\
+    \vdots\\
+    v_1(\mathbf{x}_n)\\
+    v_2(\mathbf{x}_1)\\
+    \vdots\\
+    v_2(\mathbf{x}_n)\\
+    \vdots\\
+    v_d(\mathbf{x}_1)\\
+    \vdots\\
+    v_d(\mathbf{x}_n)\\
+\end{pmatrix}$$
+For our naive independent RBF GP prior, we have 
+\begin{CentreLongEquation}
+$$
+K=\mathrm{Cov}(\mathbf{f}(X), \mathbf{f}(X'))=\begin{pmatrix}
+    K_{RBF,a_1}(X,X') & \dots  & \dots          & \dots         & 0\\
+    \vdots        & \ddots & \dots          & \ddots        & \vdots\\
+    0             & \dots  & K_{RBF,a_d}(X,X')  & \dots         & 0 \\
+    \vdots        & \ddots & \vdots         & K_{RBF,v_1}(X,X') & \vdots \\
+    0             & \dots  & 0              & \dots         & K_{RBF,v_d}(X,X')\\
+\end{pmatrix},
+$$
+\end{CentreLongEquation}
+
+with all the off diagonal terms being zero block matrix because of the independence prior assumption.
+This naive kernel will be our baseline to be compared to throughout the whole project.
+Now we can start considering the invariance. 
+If we assume the invariance is true throughout the input space $\mathbb{R}^{2d}$, then we can condition the GP on the a grid of points, which we referred to invariance points, $X_L$, and assume it has length $\ell$, and we will call the invariance constraints $L$.
+The form of $L$ will depend on the system as well as $X_L$, and examples will be described in the following sections.
+Since the invariance function will always be a linear function on the dynamics, if we apply this linear transformation $L$ on $\mathbf{f}(X_L)$, $L(\mathbf{f}(X_L))$ will again be a GP with a transformed kernel.
+Therefore, we have 
+$$\begin{pmatrix}
+\mathbf{f}(X)\\L[\mathbf{f}(X_L)]
+\end{pmatrix}
+\sim\mathcal{N}
+\left(\begin{pmatrix}0_{2nd}\\0_{\ell}\end{pmatrix}, \begin{pmatrix}
+    K & LK \\
+    KL^T & LKL^T\\
+\end{pmatrix}\right)
+$$
+
+\section{1D System}
+\subsection{Linear}
+We will first examine one of the most simple dynamical system, an 1D simple harmonic motion (SHM). 
+An example would be a mass spring system as shown in figure with mass $m$ and spring constant $k$. 
+
+% HORIZONTAL spring - axis, rest position
+\begin{figure}[H]
+    \centering
+\begin{tikzpicture}
+  \def\H{1.1}  % wall height
+  \def\T{0.3}  % wall thickness
+  \def\W{3.7}  % ground length
+  \def\D{0.25} % ground depth
+  \def\h{0.7}  % mass height
+  \def\w{0.8}  % mass width
+  \def\x{2.0}  % mass x position
+  \def\y{1.22*\H} % x axis y position
+  
+  % AXIS
+  \draw[ell] (0,1.3*\h) --++ (\x,0) node[midway,fill=white,inner sep=0] {$k$};
+  
+  % SPRING & MASS
+  \draw[spring] (0,\h/2) --++ (\x,0);
+  \draw[ground] (0,0) |-++ (-\T,\H) |-++ (\T+\W,-\H-\D) -- (\W,0) -- cycle;
+  \draw (0,\H) -- (0,0) -- (\W,0);
+  \draw[mass] (\x,0) rectangle++ (\w,\h) node[midway] {$m$};
+  
+\end{tikzpicture}
+\end{figure}
+
+The defining equation is $$m\frac{d^2q}{dt^2}=-kq$$, where $q$ is the displacement.
+And the analytical solution would be of the form $q=A\sin(\omega_0t+\phi),$ where $\omega=\frac{k}{m}$ and $A, \phi$ depends on the initial condition, which dictates the amplitude and phase of the motion. 
+For this case, we have 
+$$
+\mathbf{f}(X)=\begin{pmatrix}
+    a(X)\\
+    v(X)\\
+\end{pmatrix}
+$$
+We also have the energy, $E=\frac{kq^2}{2}+\frac{mp^2}{2},$
+Therefore, to obtain our invariance $L$, we use the conservation of energy $\frac{dE}{dt}=0$ so we finally have $$L(a, v)=kqv+mpa=0$$
+In our system, since the only parameters that control the periodicity of the oscillation is $k$ and $m$, but they only come in as the ratio between them. 
+For simplicity, I will assume $k=m=1$ so $\omega_0=1.$ 
+While $L$ is not able to be into a matrix form, it is an linear operator as shown below. 
+If we have $$X_L=\begin{pmatrix}
+    q_{L,1} & p_{L,1}\\
+    \vdots & \vdots \\
+    q_{L,\ell} & p_{L,\ell}\\
+\end{pmatrix}=\begin{pmatrix}
+    \vdots & \vdots\\
+    q_L & p_L\\
+    \vdots & \vdots\\
+\end{pmatrix}=\begin{pmatrix}
+    \mathbf{x}_{L,1}\\
+    \vdots\\
+    \mathbf{x}_{L,\ell}\\
+\end{pmatrix},$$
+then we have 
+$$
+L([\mathbf{f}(X_L)]) = \begin{pmatrix}
+   p_{L,1}a(q_{L,1},p_{L,1}) + q_{L,1}v(q_{L,1},p_{L,1})\\ 
+   \vdots \\
+   p_{L,\ell}a(q_{L,\ell},p_{L,\ell}) + q_{L,\ell}v(q_{L,\ell},p_{L,\ell})\\ 
+\end{pmatrix}.
+$$
+Combine with original GP prior assumption, we will have 
+$$
+\begin{pmatrix}
+    \mathbf{f}(X)\\
+    L([\mathbf{f}(X_L)])\\
+\end{pmatrix}
+\sim\mathcal{N}
+\left(\begin{pmatrix}
+    0_{2nd}\\0_{\ell}
+\end{pmatrix},\begin{pmatrix}
+   A & B \\
+   C & D\\ 
+\end{pmatrix}\right),
+$$
+where
+$$
+A=K(X,X), B=\begin{pmatrix}
+    K_{RBF,a} \\ K_{RBF,v} \\
+\end{pmatrix}\odot \begin{pmatrix}
+    P_L \\ Q_L
+\end{pmatrix}, C=B^T, D=K_{RBF,a}\odot (p_L\otimes p_L) + K_{RBF,v}\odot (q_L\otimes q_L),
+$$
+where $\odot$ is the element wise product and $\otimes$ is the Kronecker product so that 
+$$
+P_L=\begin{pmatrix}
+  p_{L,1}  & \dots & p_{L,\ell}  \\
+  \vdots & \text{repeats n rows} &  \vdots\\
+  p_{L,1}  & \dots & p_{L,\ell}  \\
+\end{pmatrix},
+Q_L=\begin{pmatrix}
+  q_{L,1}  & \dots & q_{L,\ell}  \\
+  \vdots & \text{reqeats n rows} &  \vdots\\
+  q_{L,1}  & \dots & q_{L,\ell}  \\
+\end{pmatrix}
+$$
+and we have 
+$$
+p_L\otimes p_L=\begin{pmatrix}
+  p_{L,1}^2 & p_{L,1}p_{L,2} & \dots & p_{L,1}p_{L,\ell} \\
+  \vdots & \vdots & \vdots & \vdots \\
+  p_{L,\ell}p_{L,1} & p_{L,\ell}p_{L,2} & \dots & p_{L,\ell}^2 \\
+\end{pmatrix},
+q_L\otimes q_L=\begin{pmatrix}
+  q_{L,1}^2 & q_{L,1}q_{L,2} & \dots & q_{L,1}q_{L,\ell} \\
+  \vdots & \vdots & \vdots & \vdots \\
+  q_{L,\ell}q_{L,1} & q_{L,\ell}q_{L,2} & \dots & q_{L,\ell}^2 \\
+\end{pmatrix},
+$$ 
+These matrices can be obtained if we try to compute the covariance manually. 
+For $B$, we wish to calculate 
+
+\begin{align*}
+B_{ij} &= \mathrm{Cov}(\mathbf{f}(X), L[\mathbf{f}(X_L)])_{ij} \\
+       &= \mathrm{Cov}(\mathbf{f}(X)_i, L\mathbf{f}(X_L)_j) \\ 
+       &= \begin{cases}
+        \mathrm{Cov}(a(q_i, p_i), p_{L,j}a(q_{L,j},p_{L,j}) + q_{L,j}v(q_{L,j},p_{L,j})) & i\le n \\ 
+        \mathrm{Cov}(v(q_i, p_i), p_{L,j}a(q_{L,j},p_{L,j}) + q_{L,j}v(q_{L,j},p_{L,j})) & i>n \\ 
+       \end{cases} \\
+       &= \begin{cases}
+        K_{RBF,a}(\mathbf{x}_i, \mathbf{x}_{L,j}) p_{L,j} & i\le n \\ 
+        K_{RBF,v}(\mathbf{x}_i, \mathbf{x}_{L,j}) q_{L,j} & i>n \\ 
+       \end{cases}, \\
+\end{align*}
+and hence we have the form above. 
+For $D$, we have
+\begin{align*}
+D_{ij} &= \mathrm{Cov}(L[\mathbf{f}(X_L)], L[\mathbf{f}(X_L)])_{ij} \\
+       &= \mathrm{Cov}(p_{L,i}a(q_{L,i},p_{L,i}) + q_{L,i}v(q_{L,i},p_{L,i}), p_{L,i}a(q_{L,i},p_{L,i}) + q_{L,i}v(q_{L,i},p_{L,i})) \\
+       &= p_{L,i}p_{L,j}K_{RBF,a}(\mathbf{x}_{L,i},\mathbf{x}_{L,j}) + q_{L,i}q_{L,j}K_{RBF,v}(\mathbf{x}_{L,i},\mathbf{x}_{L,j})
+\end{align*}
+using the bilnear property of the covariance operator and the fact that $v$ and $a$ are independent.
+Since we assume invariance on these invariance points, we will condition on $L([\mathbf{f}(X_L)])=0.$
+Now we can simply use the Gaussian conditional formula to obtain the Schur Complement
+$$
+\mathbf{f}(X)|L[\mathbf{f}(X_L)]=0\sim\mathcal{N}(0_{2n},A-BD^{-1}C),
+$$
+we will then call the covariance part our Invariance Kernel for 1D SHM, $K_L$.
+\subsection{Non Linear}
+The story is pretty much the same for nonlinear system, it is just the fitting would be expected to be more difficult.
+A simple nonlinear system in every day life is a simple pendulum as shown in figure below.
+The governing equation is 
+$$
+\frac{d^2q}{dt^2}=-\frac{g}{\ell}\sin q, 
+$$
+where $q$ is the angle of displacement this time. 
+The nonlinear dynamics bit occurs because of the sine term, which will complicate things slightly. 
+However, since $\sin x \approx x$ at small angle, this system is approximately linear under small displacement. 
+For simplicity, I will again set $g=\ell=1$.
+There is no analytical solution to this nonlinear problem.
+This time we have energy, $E=\frac{m\ell^2p^2}{2}+mg\ell(1-\cos q)$, and by setting the time derivative to 0, we have $$L(a, v)=\frac{dE}{dt}=m\ell^2pa+mg\ell\sin qv=0.$$
+If we cancel out the common term $m\ell$ since their product cannot be zero, we have $$L(a,v)=\ell pa+g\sin qv=0$$
+Most of the terms are unchanged from the linear case. 
+However, this time, 
+$$
+B=\begin{pmatrix}
+    K_{RBF,a} \\ K_{RBF,v} \\
+\end{pmatrix}\odot \begin{pmatrix}
+    P_L \\ \sin(Q_L)
+\end{pmatrix}, D=K_{RBF,a}\odot (p_L\otimes p_L) + K_{RBF,v}\odot (\sin(q_L)\otimes \sin(q_L)),
+$$
+where 
+$$
+\sin(Q_L) = \begin{pmatrix}
+  \sin(q_{L,1})  & \dots & \sin(q_{L,\ell})  \\
+  \vdots & \text{reqeats n rows} &  \vdots\\
+  \sin(q_{L,1})  & \dots & \sin(q_{L,\ell})  \\
+\end{pmatrix},
+$$
+$$
+\sin(q_L)\otimes \sin(q_L)=\begin{pmatrix}
+  \sin(q_{L,1})^2 & \sin(q_{L,1})\sin(q_{L,2}) & \dots & \sin(q_{L,1})\sin(q_{L,\ell}) \\
+  \vdots & \vdots & \vdots & \vdots \\
+  \sin(q_{L,\ell})\sin(q_{L,1}) & \sin(q_{L,\ell})\sin(q_{L,2}) & \dots & \sin(q_{L,\ell})^2 \\
+\end{pmatrix},
+$$
+derived in almost exactly the same way as the linear case. 
+
+\section{Damped System}
+\section{2D System}
+\subsection{Linear}
+\subsection{Non Linear}
+\chapter{Learning Invariance}
+\chapter{Experiments}
+
 
 
 
