@@ -161,8 +161,9 @@ class GPR_with_sparse(gpflow.models.GPR):
     def maximum_log_likelihood_objective(self):
         return self.log_marginal_likelihood()-self.reg*(tf.reduce_sum(tf.abs(self.kernel.f1_poly))+tf.reduce_sum(tf.abs(self.kernel.f2_poly))+tf.reduce_sum(tf.abs(self.kernel.g1_poly))+tf.reduce_sum(tf.abs(self.kernel.g2_poly)))
 
-def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, lr, reg):
+def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, lr, reg, drop_rate):
     X, Y = data
+    
     m = GPR_with_sparse(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function, reg=reg)
     if optimiser=="scipy":
         opt = gpflow.optimizers.Scipy()
@@ -178,11 +179,35 @@ def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, l
             optimization_step()
             lml = m.log_marginal_likelihood().numpy()
             if lml > best:
-                if lml-best<1e-6:
+                if lml-best<1e-8:
                     break
                 best = lml
                 best_param = m.trainable_variables
-            print(round(lml)," ", _,end='\r')
+            for i,_ in enumerate(m.kernel.f1_poly):
+                if np.random.uniform()<drop_rate:
+                    drop = m.kernel.f1_poly.numpy()
+                    drop[i] = 0
+                    m.kernel.f1_poly.assign(drop)
+            for i,_ in enumerate(m.kernel.f2_poly):
+                if np.random.uniform()<drop_rate:
+                    drop = m.kernel.f2_poly.numpy()
+                    drop[i] = 0
+                    m.kernel.f2_poly.assign(drop)
+            for i,_ in enumerate(m.kernel.g1_poly):
+                if np.random.uniform()<drop_rate:
+                    drop = m.kernel.g1_poly.numpy()
+                    drop[i] = 0
+                    m.kernel.g1_poly.assign(drop)
+            for i,_ in enumerate(m.kernel.g2_poly):
+                if np.random.uniform()<drop_rate:
+                    drop = m.kernel.g2_poly.numpy()
+                    drop[i] = 0
+                    m.kernel.g2_poly.assign(drop)
+            try:
+                print(round(lml)," ", _)
+            except ValueError:
+                print("bad coefficients")
+            print(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy())
         return m, best_param
 
 def evaluate_model(m, ground_truth, time_step):
