@@ -163,7 +163,6 @@ class GPR_with_sparse(gpflow.models.GPR):
 
 def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, lr, reg, drop_rate):
     X, Y = data
-    
     m = GPR_with_sparse(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function, reg=reg)
     if optimiser=="scipy":
         opt = gpflow.optimizers.Scipy()
@@ -175,7 +174,7 @@ def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, l
         def optimization_step():
             opt.minimize(m.training_loss, m.trainable_variables)
         best = m.log_marginal_likelihood().numpy()
-        for _ in range(iterations):
+        for j in range(iterations):
             optimization_step()
             lml = m.log_marginal_likelihood().numpy()
             if lml > best:
@@ -204,10 +203,9 @@ def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, l
                     drop[i] = 0
                     m.kernel.g2_poly.assign(drop)
             try:
-                print(round(lml)," ", _)
+                print(round(lml)," ", j,'\n',np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
             except ValueError:
                 print("bad coefficients")
-            print(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy())
         return m, best_param
 
 def evaluate_model(m, ground_truth, time_step):
