@@ -1,23 +1,8 @@
-\begin{thebibliography}{3}
+\begin{thebibliography}{0}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
-
-\bibitem[Dickens(1859)]{dickens1859}
-Charles Dickens.
-\newblock \emph{A Tale of Two Cities}.
-\newblock Chapman \& Hall, 1859.
-
-\bibitem[Efron(1979)]{efron1979}
-Bradley Efron.
-\newblock Bootstrap methods: Another look at the jackknife.
-\newblock \emph{Annals of Statistics}, 7\penalty0 (1):\penalty0 1--26, 1979.
-
-\bibitem[Efron and Tibshirani(1994)]{efrontib}
-Bradley Efron and Robert~J Tibshirani.
-\newblock \emph{An introduction to the bootstrap}.
-\newblock CRC press, 1994.
 
 \end{thebibliography}
