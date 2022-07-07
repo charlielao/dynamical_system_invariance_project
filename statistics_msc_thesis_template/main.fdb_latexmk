@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex main"] 1657136272 "main.aux" "main.bbl" "main" 1657136299
+["bibtex main"] 1657231946 "main.aux" "main.bbl" "main" 1657231960
   "c:/texlive/2021/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1643575256 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "main.aux" 1657136296 12736 085a927711d589f18734cb7bb0f1c8a4 "pdflatex"
+  "main.aux" 1657231957 19580 25e69c31e457af5c3a53eee011569d22 "pdflatex"
   "refs.bib" 1652874704 485 9b05a1ed4dec7c3fdb6aeb62f7ceb3ba ""
   (generated)
   "main.bbl"
   "main.blg"
-["pdflatex"] 1657136287 "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/main.tex" "main.pdf" "main" 1657136299
-  "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/main.tex" 1657136284 26798 64a99e06cb66372653c4f58a6367318d ""
+["pdflatex"] 1657231948 "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/main.tex" "main.pdf" "main" 1657231960
+  "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/main.tex" 1657231930 31317 506c3d90417e68304a81d2f765d81e82 ""
   "c:/texlive/2021/texmf-dist/fonts/map/fontname/texfonts.map" 1643573932 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "c:/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1643572477 1004 54797486969f23fa377b128694d548df ""
   "c:/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1643572477 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -269,10 +269,10 @@
   "c:/texlive/2021/texmf.cnf" 1643577561 713 614551405fc44b98efbf516466e3c909 ""
   "fig1.pdf" 1652874704 11306 a9c8ec011bd89c7a1149657c2384158d ""
   "imperial_logo.pdf" 1652874704 7654 c7bb8e49d84d63185a4551e748ff5ccd ""
-  "main.aux" 1657136296 12736 085a927711d589f18734cb7bb0f1c8a4 "pdflatex"
-  "main.bbl" 1657136274 753 07948212acd3d6dbf937ad597f471ed9 "bibtex main"
-  "main.out" 1657136295 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "main.tex" 1657136284 26798 64a99e06cb66372653c4f58a6367318d ""
+  "main.aux" 1657231957 19580 25e69c31e457af5c3a53eee011569d22 "pdflatex"
+  "main.bbl" 1657231948 753 07948212acd3d6dbf937ad597f471ed9 "bibtex main"
+  "main.out" 1657231956 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "main.tex" 1657231930 31317 506c3d90417e68304a81d2f765d81e82 ""
   "statsmsc.cls" 1652874704 5731 87c86afe53417e4eb65d5bfdf221d01c ""
   (generated)
   "main.aux"

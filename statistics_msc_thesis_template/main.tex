@@ -104,6 +104,10 @@ The introduction section goes here\footnote{Tip: write this section last.}.
 Here we will cover the background knowledge required to understand the remaining thesis, including theortical foundation of Gaussian Process, dynamical systems and invariances. 
 
 Background chapter.
+\section{Related Work}
+\subsection{Physics Informed Machine Learning}
+\subsection{Learning Invariance using Marginal Likelihood}
+\subsection{Symmetry and Invariances}
 
 \section{Gaussian Process}
 Gaussian Process (GP)
@@ -122,6 +126,7 @@ A dynamical system is simply a system that evolves with time under some kind of 
 \section{Invariances}
 Invariances are functions of the states that describe a dynamical system, and is unchanged throughout the evolution of the system over time. 
 An example would be from the field of physics, the conservation of energy, which will be unchanged throught out the trajectories of the system.
+\section{GPflow}
 
 \section{Figures}
 
@@ -307,9 +312,6 @@ Without loss of generality, we will choose to stack the dynamics vertically in $
     a_1(\mathbf{x}_1)\\
     \vdots\\
     a_1(\mathbf{x}_n)\\
-    a_2(\mathbf{x}_1)\\
-    \vdots\\
-    a_2(\mathbf{x}_n)\\
     \vdots\\
     a_d(\mathbf{x}_1)\\
     \vdots\\
@@ -317,9 +319,6 @@ Without loss of generality, we will choose to stack the dynamics vertically in $
     v_1(\mathbf{x}_1)\\
     \vdots\\
     v_1(\mathbf{x}_n)\\
-    v_2(\mathbf{x}_1)\\
-    \vdots\\
-    v_2(\mathbf{x}_n)\\
     \vdots\\
     v_d(\mathbf{x}_1)\\
     \vdots\\
@@ -394,10 +393,8 @@ $$
     \mathbf{v}(X)\\
 \end{pmatrix}
 $$
-We also have the energy, $E=\frac{kq^2}{2}+\frac{mp^2}{2},$
-Therefore, to obtain our invariance $L$, we use the conservation of energy $\frac{dE}{dt}=0$ so we finally have $$L(a, v)=kqv+mpa=0$$
-In our system, since the only parameters that control the periodicity of the oscillation is $k$ and $m$, but they only come in as the ratio between them. 
-For simplicity, I will assume $k=m=1$ so $\omega_0=1.$ 
+We also have the energy, $E=\frac{mp^2}{2}+\frac{kq^2}{2},$
+Therefore, to obtain our invariance $L$, we use the conservation of energy $\frac{dE}{dt}=0$ so we finally have $$L(a, v)=mpa+kqv=0$$
 While $L$ is not able to be into a matrix form, it is an linear operator as shown below. 
 If we have $$X_L=\begin{pmatrix}
     q_{L,1} & p_{L,1}\\
@@ -415,9 +412,9 @@ If we have $$X_L=\begin{pmatrix}
 then we have 
 $$
 L([\mathbf{f}(X_L)]) = \begin{pmatrix}
-   p_{L,1}a(q_{L,1},p_{L,1}) + q_{L,1}v(q_{L,1},p_{L,1})\\ 
+   mp_{L,1}a(q_{L,1},p_{L,1}) + kq_{L,1}v(q_{L,1},p_{L,1})\\ 
    \vdots \\
-   p_{L,\ell}a(q_{L,\ell},p_{L,\ell}) + q_{L,\ell}v(q_{L,\ell},p_{L,\ell})\\ 
+   mp_{L,\ell}a(q_{L,\ell},p_{L,\ell}) + kq_{L,\ell}v(q_{L,\ell},p_{L,\ell})\\ 
 \end{pmatrix}.
 $$
 Combine with original GP prior assumption, we will have 
@@ -428,7 +425,7 @@ $$
 \end{pmatrix}
 \sim\mathcal{N}
 \left(\begin{pmatrix}
-    0_{2nd}\\0_{\ell}
+    0_{2n}\\0_{\ell}
 \end{pmatrix},\begin{pmatrix}
    A & B \\
    C & D\\ 
@@ -439,8 +436,8 @@ $$
 A=K(X,X), B=\begin{pmatrix}
     K_{RBF,a} \\ K_{RBF,v} \\
 \end{pmatrix}\odot \begin{pmatrix}
-    P_L \\ Q_L
-\end{pmatrix}, C=B^T, D=K_{RBF,a}\odot (p_L\otimes p_L) + K_{RBF,v}\odot (q_L\otimes q_L),
+    mP_L \\ kQ_L
+\end{pmatrix}, C=B^T, D=K_{RBF,a}\odot m^2(p_L\otimes p_L) + K_{RBF,v}\odot k^2(q_L\otimes q_L),
 $$
 where $\odot$ is the element wise product and $\otimes$ is the Kronecker product so that 
 $$
@@ -475,20 +472,20 @@ For $B$, we wish to calculate
 B_{ij} &= \mathrm{Cov}(\mathbf{f}(X), L[\mathbf{f}(X_L)])_{ij} \\
        &= \mathrm{Cov}(\mathbf{f}(X)_i, L\mathbf{f}(X_L)_j) \\ 
        &= \begin{cases}
-        \mathrm{Cov}(a(q_i, p_i), p_{L,j}a(q_{L,j},p_{L,j}) + q_{L,j}v(q_{L,j},p_{L,j})) & i\le n \\ 
-        \mathrm{Cov}(v(q_i, p_i), p_{L,j}a(q_{L,j},p_{L,j}) + q_{L,j}v(q_{L,j},p_{L,j})) & i>n \\ 
+        \mathrm{Cov}(a(q_i, p_i), mp_{L,j}a(q_{L,j},p_{L,j}) + kq_{L,j}v(q_{L,j},p_{L,j})) & i\le n \\ 
+        \mathrm{Cov}(v(q_i, p_i), mp_{L,j}a(q_{L,j},p_{L,j}) + kq_{L,j}v(q_{L,j},p_{L,j})) & i>n \\ 
        \end{cases} \\
        &= \begin{cases}
-        K_{RBF,a}(\mathbf{x}_i, \mathbf{x}_{L,j}) p_{L,j} & i\le n \\ 
-        K_{RBF,v}(\mathbf{x}_i, \mathbf{x}_{L,j}) q_{L,j} & i>n \\ 
+        K_{RBF,a}(\mathbf{x}_i, \mathbf{x}_{L,j}) mp_{L,j} & i\le n \\ 
+        K_{RBF,v}(\mathbf{x}_i, \mathbf{x}_{L,j}) kq_{L,j} & i>n \\ 
        \end{cases}, \\
 \end{align*}
 and hence we have the form above. 
 For $D$, we have
 \begin{align*}
 D_{ij} &= \mathrm{Cov}(L[\mathbf{f}(X_L)], L[\mathbf{f}(X_L)])_{ij} \\
-       &= \mathrm{Cov}(p_{L,i}a(q_{L,i},p_{L,i}) + q_{L,i}v(q_{L,i},p_{L,i}), p_{L,i}a(q_{L,i},p_{L,i}) + q_{L,i}v(q_{L,i},p_{L,i})) \\
-       &= p_{L,i}p_{L,j}K_{RBF,a}(\mathbf{x}_{L,i},\mathbf{x}_{L,j}) + q_{L,i}q_{L,j}K_{RBF,v}(\mathbf{x}_{L,i},\mathbf{x}_{L,j})
+       &= \mathrm{Cov}(mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i}), mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i})) \\
+       &= m^2p_{L,i}p_{L,j}K_{RBF,a}(\mathbf{x}_{L,i},\mathbf{x}_{L,j}) + k^2q_{L,i}q_{L,j}K_{RBF,v}(\mathbf{x}_{L,i},\mathbf{x}_{L,j})
 \end{align*}
 using the bilnear property of the covariance operator and the fact that $v$ and $a$ are independent.
 Since we assume invariance on these invariance points, we will condition on $L([\mathbf{f}(X_L)])=0.$
@@ -507,22 +504,22 @@ $$
 where $q$ is the angle of displacement this time. 
 The nonlinear dynamics bit occurs because of the sine term, which will complicate things slightly. 
 However, since $\sin x \approx x$ at small angle, this system is approximately linear under small displacement. 
-For simplicity, I will again set $g=\ell=1$.
 There is no analytical solution to this nonlinear problem.
-This time we have energy, $E=\frac{m\ell^2p^2}{2}+mg\ell(1-\cos q)$, and by setting the time derivative to 0, we have $$L(a, v)=\frac{dE}{dt}=m\ell^2pa+mg\ell\sin qv=0.$$
-If we cancel out the common term $m\ell$ since their product cannot be zero, we have $$L(a,v)=\ell pa+g\sin qv=0$$
+This time we have energy, $E=\frac{m\ell^2p^2}{2}+mg\ell(1-\cos q)$, and by setting the time derivative to 0, we have 
+$$L(a, v)=\frac{dE}{dt}=m\ell^2pa+mg\ell(\sin q)v=0.$$
+If we cancel out the common term $m\ell$ since their product cannot be zero, we have $$L(a,v)=\ell pa+g(\sin q)v=0$$
 Most of the terms are unchanged from the linear case. 
 However, this time, 
 $$
 B=\begin{pmatrix}
     K_{RBF,a} \\ K_{RBF,v} \\
 \end{pmatrix}\odot \begin{pmatrix}
-    P_L \\ \sin(Q_L)
-\end{pmatrix}, D=K_{RBF,a}\odot (p_L\otimes p_L) + K_{RBF,v}\odot (\sin(q_L)\otimes \sin(q_L)),
+    \ell P_L \\ g\sin(Q_L)
+\end{pmatrix}, D=K_{RBF,a}\odot \ell^2(p_L\otimes p_L) + K_{RBF,v}\odot g^2(\sin(q_L)\otimes \sin(q_L)),
 $$
 where 
 $$
-\sin(Q_L) = \begin{pmatrix}
+\sin(Q_L) = g\begin{pmatrix}
   \sin(q_{L,1})  & \dots & \sin(q_{L,\ell})  \\
   \vdots & \text{reqeats n rows} &  \vdots\\
   \sin(q_{L,1})  & \dots & \sin(q_{L,\ell})  \\
@@ -540,8 +537,8 @@ derived in almost exactly the same way as the linear case.
 Before we have considered a perfect system, i.e. a system in an ideal world without frictions and the conservation of energy is perfectly obeyed such that $L=0$ exactly.
 However, in a real world system, there will be dissipation where energy is lost in the form of heat etc.  
 Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero. 
-To do so, it is similar in spirit to when we add noise to the underlying GP to represent noise signal, where we have $K+\sigma_n^2 \mathbb{1}$.
-Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{1}$, where $\epsilon$ is a parameter to be learnt. 
+To do so, it is similar in spirit to when we add noise to the underlying GP to represent noise signal, where we have $K+\sigma_n^2 \mathbb{I}$.
+Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
 \section{2D System}
 A 2D system is not that different from an 1D system. The major difference being there are two more extra variables. 
 We again look at two simple examples, a linear 2D SHM, and a nonlinear double pendulum.
@@ -590,8 +587,8 @@ $$
 $$
 with 
 
-\begin{align*}
-A&=K(X, X'), 
+$$
+A=K(X, X'), 
 B=\begin{pmatrix}
     K_{RBF, a_1}\\
     K_{RBF, a_2}\\
@@ -599,15 +596,19 @@ B=\begin{pmatrix}
     K_{RBF, v_2}\\
 \end{pmatrix}\odot
 \begin{pmatrix}
-P_{1L}  \\
-P_{2L}  \\
-Q_{1L}  \\
-Q_{2L}  \\
+mP_{1L}  \\
+mP_{2L}  \\
+kQ_{1L}  \\
+kQ_{2L}  \\
 \end{pmatrix},
-C=B^T,\\ 
-D&=K_{RBF,a_1}\odot(p_{1L}\otimes p_{1L}) +K_{RBF,a_2}\odot(p_{2L}\otimes p_{2L})+K_{RBF,v_1}\odot(q_{1L}\otimes q_{1L})+K_{RBF,v_2}\odot(q_{2L}\otimes p_{2L})
-\end{align*}
-where the terms are defined the exact same way as before, and the derivation are also the same.
+C=B^T 
+$$
+
+\begin{gather*}
+D=K_{RBF,a_1}m^2\odot(p_{1L}\otimes p_{1L}) + K_{RBF,a_2}m^2\odot(p_{2L}\otimes p_{2L})\\+K_{RBF,v_1}k^2\odot(q_{1L}\otimes q_{1L})+K_{RBF,v_2}k^2\odot(q_{2L}\otimes p_{2L})
+\end{gather*}
+
+where the terms are defined the exact same way as before, but now with respect to different coordinates, and the derivation are also the same.
 We will then again take the Schur Complement.
 \subsection{Non Linear}
 Now we will to introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
@@ -624,21 +625,86 @@ We also have form of energy
 $$
 E = -(m_1+m_2)gl_1\cos q_1-m_2gl_2\cos q_2+ \frac{m_1l^2_1p_1^2}{2}+\frac{m_2}{2}(l^2_1p_1^2+l^2_2p_2^2+2l_1l_2p_1p_2\cos(q_1-q_2))
 $$
-again for simplicity, we set all constants to unity, so that $m_1=m_2=\ell_1=\ell_2=g=1.$
 While the form is more complicated, the underlying principle to construct the invariance kernel. 
+We again differentiate with respect to time and set it to zero to obtain the invariance equation to obtain 
+\begin{gather*}
+L(a_1, a_2, v_1, v_2)=\frac{dE}{dt} = (m_1+m_2)gl_1\sin\theta_1v_1+m_2gl_2\sin\theta_2v_2+m_1l_1^2\dot{\theta}_1a_1+\\m_2(l_1^2\dot{\theta}_1a_1+l_2^2\dot{\theta}_2a_2+l_1l_2(\dot{\theta}_2\cos(\theta_1-\theta_2)a_1+\dot{\theta}_1\cos(\theta_1-\theta_2)a_2-\dot{\theta_1}\dot{\theta_2}\sin(\theta_1-\theta_2)(v_1-v_2)))=0
+\end{gather*}
+The form of the invariance matrix is too cubersome to write down, but the derivation is as straightforward as before. 
+
 \section{Local Invariance}
+Conditioning on a grid of invariance points is simply not scalable in high dimensions. 
+If we have an invariance density of 1 in a $\pm 5$ range for 2D SHM, then we will have 10000 points. 
+We will easily run out of memory and also taking the matrix inverse are very difficult and time consuming.
+As a result, to make the approach scalable to 2D space, we will use the idea of local invariance. 
+Which is to take samples in the local region around training and testing points and condition on these points.
+Hopefully that will constraint our results enough. 
+
+
 \chapter{Learning Invariance}
 Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which allowed us to derive the energy and thereafter the invariance equation. 
 However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then the system is pretty much solved that we can just use an ODE integrator to obtain the trajectories. 
 Therefore, we should find a way for the system to learn the form of invariance from data directly.
 One way to do so is to parameterise our invariance function and allow the system to learn the coefficients by maximising the log marginal likelihood.
 \section{1D system}
-A simple way to parameterise an unknown function, when the problem is relatively bounded is to use polynomial basis such that the unknown function $L(a,v)=\sum$
-In 1D cases, for our examples, they are simple enough so that $L(a,v)$ is a sum of a function of $a$ and $p$ only, $f_p(a)$ and a different function of $v$ and $q$ only, $g_q(v)$ so that $L(a,v)=f_p(a)+g_q(v)$.
+A simple way to parameterise an unknown function, when the problem is relatively bounded is to use polynomial basis to paramertise the unknown function $L(a,v)$.
+In 1D cases, for our examples, they are simple enough so that $L(a,v)$ is a sum of a function of $a$ and $p$ only, $f_pa$ and a different function of $v$ and $q$ only, $g_q(v)$ so that $L(a,v)=f_p(a)+g_q(v)$.
 In the 1D SHM case, $f_p(a)=mpa$ and $g_q(v)=kqv$.
-For simple pendulum, we have $f_p(a)=\ell pa$ and $g_q(v)=\sin qv$ 
+For simple pendulum, we have $f_p(a)=\ell pa$ and $g_q(v)=\sin qv$.
+We will therefore set $$f_p(a)=\sum_{i=0}^{n_f}c_{f,i}p^i,g_q(a)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
+where $c_{f,i}, c_{g,i}$ are the parameter we will optimise based on marginal likelihood and we will evaluate different degree of polynomial $n_f, n_g$ and see which gives the best results. 
+
 \section{2D system}
+In 2D, things are a bit more complicated. For example, it is very clear that in double pendulum, the invariance function is not seperable.
+Instead, we need to consider all combinations of polynomials; i.e. multivariate polynomial.
+Therefore, for 2D we have $L(a,v)=f_1a_1+f_2a_2+g_1v_1+g_2v_2.$
+We will paramertise each of $f_1, f_2, g_1, g_2$ with $$\sum_{i,j,k,l=0}^{n}c_{ijkl}p_1^ip_2^jq_1^kq_2^l$$
+Therefore, there will be many more coefficients.
+
 \chapter{Experiments}
+\section{Data Generation}
+To generate the data, we use RK4 integrator to generate data using the ODEs for each problem. 
+We will also add some small Gaussian noise $10^{-8}$ to the dynamics to reflect the real world better.
+Since we aim to predict the value of dynamics at any point in the input space, we will need the dynamics as targets. 
+This is done by combing forward and backward difference to compute the finite gradient. 
+We also choose the time step to be $0.01$ to ensure sufficient accuracy for the integrator.
+For training data, we will choose a few random starting point within a range(exact details depends on the task as will be explained later) in the input space and generate data from the point for a number of timesteps. 
+For testing data, we will do the same both in the same range and outside the range.
+Without loss of generality, we choose $m=k=1$ and $g=\ell=1$ for 1D and 2D SHM and simple pendulum for simplicity. For the damping, we will choose $\gamma=0.01, 0.05, 0.1$. 
+For double pendulum, we also let $m_1=m_2=\ell_1=\ell_2=g=1.$
+
+\section{Evaluation Method}
+We will use a few different evaluation metrics. 
+\begin{enumerate}
+    \item Generate future trajectories from a random starting point and compare to true trajectories
+    \item Evaluate the difference between the true analytical dynamics and the predicted dynamics on a grid
+    \item Log marginal likelihood
+\end{enumerate}
+If we are learning the invariance, we can also further compare the true invariance and the learnt invariance.
+
+\section{Implementation Technicalities}
+Jitter, range of search
+
+\section{1D}
+We will illustrate a lot of examples in 1D cases since the results are easy to visualise, but the principle readily extend to high dimensional spaces. 
+
+\subsection{SHM}
+We start with the 1D SHM case, we will have only one trajectory starting randomly $-3\le q\le3$ and $p$ to be between a fifth of that so it does not overshoot the boundary, and we allow it to run for $0.1$ seconds so there will be in total 10 training points. 
+We will then draw a test point from $q$ between $\pm 3$ and another between 3 and 5, to test the performance of the future predictive power. 
+We will then evaluate the the recovery of true trajectory of $q$ between $\pm 5$.
+From figure below, we can see the prior of the naive baseline vs invariance kernel.
+This is using invariance points density of evenly spaced 40 by 40 grids. 
+\subsection{Pendulum}
+The procedure is pretty much the same here that we will draw a single training example between $q=\pm 170^{\circ}$ and again one fifth the range for $p$.
+The rest is the same.
+\subsection{Damped SHM}
+
+\section{Invariance Density}
+\section{Degree of Freedom}
+\section{Effect of Jitter}
+\section{2D}
+\section{Learning 1D invariance}
+\section{Learning 2D invariance}
 
 
 
