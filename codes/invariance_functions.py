@@ -24,7 +24,7 @@ def get_SHM_data(time_step, total_time, noise, initial_positions, initial_veloci
     X = X.transpose(2,0,1).reshape(-1,2)
     Y = Y.transpose(2,0,1).reshape(-1,2)
     return (X, Y)
-#%%
+
 def get_SHM_data_2D(time_step, total_time, noise, initial_positions_1,initial_positions_2, initial_velocities_1,initial_velocities_2):
     m = k = 1
     w02 = k/m
@@ -167,7 +167,7 @@ class GPR_with_sparse(gpflow.models.GPR):
     def maximum_log_likelihood_objective(self):
         return self.log_marginal_likelihood()-self.reg*(tf.reduce_sum(tf.abs(self.kernel.f1_poly))+tf.reduce_sum(tf.abs(self.kernel.f2_poly))+tf.reduce_sum(tf.abs(self.kernel.g1_poly))+tf.reduce_sum(tf.abs(self.kernel.g2_poly)))
 
-def get_GPR_model_2D_sparse(kernel, mean_function, data, optimiser, iterations, lr, reg, drop_rate):
+def get_GPR_model_sparse_2D(kernel, mean_function, data, optimiser, iterations, lr, reg, drop_rate):
     X, Y = data
     m = GPR_with_sparse(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function, reg=reg)
     if optimiser=="scipy":
@@ -235,7 +235,6 @@ def evaluate_model_grid(m, grid_range, grid_density, dynamics):
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,None],X[:,1,None]],1)),(Y.shape[0]*2,1))))
     return MSE.numpy()
 
-
 def evaluate_model_future_2D(m, ground_truth, time_step):
     X, Y = ground_truth
     predicted_future = np.zeros(X.shape)
@@ -252,7 +251,7 @@ def evaluate_model_future_2D(m, ground_truth, time_step):
         predicted_future[i, 3] = predicted_future[i-1, 3] + pred[1]*time_step 
         predicted_future_variance[i, 3] = var[1]
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
-    return (MSE.numpy(), MSE_future.numpy(), predicted_future, predicted_future_variance)
+    return (MSE_future.numpy(), predicted_future, predicted_future_variance)
 
 def evaluate_model_grid_2D(m, grid_range, grid_density, dynamics1, dynamics2):
     X = get_grid_of_points_2D(grid_range, grid_density)
@@ -263,44 +262,12 @@ def evaluate_model_grid_2D(m, grid_range, grid_density, dynamics1, dynamics2):
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,None],X[:,1,None]],1)),(Y.shape[0]*2,1))))
     return MSE.numpy()
 
+def SHM_dynamics(X):
+    return -X[:,0]
 
+def SHM_dynamics1_2D(X):
+    return -X[:,0]
 
-'''
-def plotting(pred, var, test_points, data, save, name, angle1, angle2, acc, lml):
-    X, Y = data
-    test_xx, test_vv = test_points
-    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-    surf = ax.plot_surface(test_xx, test_vv, tf.reshape(pred, test_xx.shape), cmap="viridis",linewidth=0, antialiased=False, alpha=0.5)
-    surf = ax.plot_surface(test_xx, test_vv, tf.reshape(pred, test_xx.shape)+1.96*tf.math.sqrt(tf.reshape(var, test_xx.shape)), color="grey",linewidth=0, antialiased=False, alpha=0.1)
-    surf = ax.plot_surface(test_xx, test_vv, tf.reshape(pred, test_xx.shape)-1.96*tf.math.sqrt(tf.reshape(var, test_xx.shape)), color="grey",linewidth=0, antialiased=False, alpha=0.1)
-    if acc:
-        ax.scatter(X[:,0], X[:,1],Y[:,1,None], color="black", marker="o", s=3) #data
-    else:
-        ax.scatter(X[:,0], X[:,1],Y[:,0,None], color="black", marker="o", s=3) #data
-    ax.view_init(angle1,angle2)
-    ax.set_xlabel("position")
-    ax.set_ylabel("velocity")
-    if acc:
-        ax.set_zlabel("acceleration")
-    else:
-        ax.set_zlabel("velocity")
-    ax.annotate("log marginal likelihood: {0:0.2f}".format(lml), xy=(0.5, 0.9), xycoords='axes fraction')
-    if save:
-        plt.savefig(name+"_3D.pdf")
-    plt.figure(figsize=(5, 3))
-    contours = plt.contourf(test_xx, test_vv, tf.reshape(pred,(test_xx.shape)), levels=100, cmap="viridis", alpha=0.3)
-    plt.colorbar(contours)
-    if acc:
-        contours = plt.scatter(X[:,0],X[:,1],c=Y[:,1,None],cmap="viridis", alpha=0.2)
-    else:
-        contours = plt.scatter(X[:,0],X[:,1],c=Y[:,0,None],cmap="viridis", alpha=0.2)
-    plt.xlim((-test_range, test_range))
-    plt.ylim((-test_range, test_range))
-    plt.xlabel("position")
-    plt.ylabel("velocity")
-    if save:
-        plt.savefig(name+"_contour.pdf")
-'''
+def SHM_dynamics2_2D(X):
+    return -X[:,1]
 
-
-# %%
