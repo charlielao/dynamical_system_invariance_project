@@ -1,11 +1,10 @@
-# %%
 import gpflow
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
-#from sklearn.metrics import mean_squared_error
+
 def degree_of_freedom(kernel, test_points):
     K = kernel(test_points)
     return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+1e-6*tf.eye(K.shape[0], dtype=tf.float64)), 1)).numpy()
@@ -26,7 +25,7 @@ def get_SHM_data(time_step, total_time, noise, initial_positions, initial_veloci
     Y = Y.transpose(2,0,1).reshape(-1,2)
     return (X, Y)
 #%%
-def get_SHM2D_data(time_step, total_time, noise, initial_positions_1,initial_positions_2, initial_velocities_1,initial_velocities_2):
+def get_SHM_data_2D(time_step, total_time, noise, initial_positions_1,initial_positions_2, initial_velocities_1,initial_velocities_2):
     m = k = 1
     w02 = k/m
     t = tf.linspace(0., total_time, int(total_time/time_step))
@@ -111,17 +110,24 @@ def get_damped_pendulum_data(gamma, time_step, total_time, noise, initial_angles
     Y = Y.transpose(2,0,1).reshape(-1,2)
     return (X, Y)
 
-def get_grid_of_points(grid_range, grid_density):
+def get_grid_of_points_1D(grid_range, grid_density):
     grid_xs = tf.linspace(-grid_range,grid_range,grid_density)
     grid_vs = tf.linspace(-grid_range,grid_range,grid_density)
     grid_xx, grid_vv = tf.meshgrid(grid_xs, grid_vs)
     grid_points = tf.stack([tf.reshape(grid_xx,[-1]), tf.reshape(grid_vv,[-1])], axis=1)
     return grid_points
 
+def get_grid_of_points_2D(grid_range, grid_density):
+    grid_x1s = tf.linspace(-grid_range,grid_range,grid_density)
+    grid_x2s = tf.linspace(-grid_range,grid_range,grid_density)
+    grid_v1s = tf.linspace(-grid_range,grid_range,grid_density)
+    grid_v2s = tf.linspace(-grid_range,grid_range,grid_density)
+    grid_xx1, grid_xx2, grid_vv1, grid_vv2 = tf.meshgrid(grid_x1s, grid_x2s, grid_v1s, grid_v2s)
+    grid_points = tf.stack([tf.reshape(grid_xx1,[-1]),tf.reshape(grid_xx2,[-1]),tf.reshape(grid_vv1,[-1]), tf.reshape(grid_vv2,[-1])], axis=1)
+    return grid_points
+
 def callback(step, variables, values):
     print(step, end='\r')
-
-    
 
 def get_GPR_model(kernel, mean_function, data, iterations):
     X, Y = data
@@ -130,7 +136,7 @@ def get_GPR_model(kernel, mean_function, data, iterations):
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
     return m
 
-def get_GPR_2Dmodel(kernel, mean_function, data, optimiser, iterations, lr):
+def get_GPR_model_2D(kernel, mean_function, data, optimiser, iterations, lr):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
     if optimiser=="scipy":
@@ -161,9 +167,8 @@ class GPR_with_sparse(gpflow.models.GPR):
     def maximum_log_likelihood_objective(self):
         return self.log_marginal_likelihood()-self.reg*(tf.reduce_sum(tf.abs(self.kernel.f1_poly))+tf.reduce_sum(tf.abs(self.kernel.f2_poly))+tf.reduce_sum(tf.abs(self.kernel.g1_poly))+tf.reduce_sum(tf.abs(self.kernel.g2_poly)))
 
-def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, lr, reg, drop_rate):
+def get_GPR_model_2D_sparse(kernel, mean_function, data, optimiser, iterations, lr, reg, drop_rate):
     X, Y = data
-    
     m = GPR_with_sparse(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function, reg=reg)
     if optimiser=="scipy":
         opt = gpflow.optimizers.Scipy()
@@ -175,7 +180,7 @@ def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, l
         def optimization_step():
             opt.minimize(m.training_loss, m.trainable_variables)
         best = m.log_marginal_likelihood().numpy()
-        for _ in range(iterations):
+        for j in range(iterations):
             optimization_step()
             lml = m.log_marginal_likelihood().numpy()
             if lml > best:
@@ -204,17 +209,13 @@ def get_GPR_2Dmodel_sparse(kernel, mean_function, data, optimiser, iterations, l
                     drop[i] = 0
                     m.kernel.g2_poly.assign(drop)
             try:
-                print(round(lml)," ", _)
+                print(round(lml)," ", j,'\n',np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
             except ValueError:
                 print("bad coefficients")
-            print(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy())
         return m, best_param
 
-def evaluate_model(m, ground_truth, time_step):
+def evaluate_model_future(m, ground_truth, time_step):
     X, Y = ground_truth
-    predicted = m.predict_f(X)[0]
-    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))))
-
     predicted_future = np.zeros(X.shape)
     predicted_future_variance = np.zeros(X.shape)
     predicted_future[0,:] = X[0,:]
@@ -225,12 +226,18 @@ def evaluate_model(m, ground_truth, time_step):
         predicted_future[i, 1] = predicted_future[i-1, 1] + pred[0]*time_step 
         predicted_future_variance[i, 1] = var[0]
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
-    return (MSE.numpy(), MSE_future.numpy(), predicted_future, predicted_future_variance)
+    return (MSE_future.numpy(), predicted_future, predicted_future_variance)
 
-def evaluate_2Dmodel(m, ground_truth, time_step):
-    X, Y = ground_truth
+def evaluate_model_grid(m, grid_range, grid_density, dynamics):
+    X = get_grid_of_points_1D(grid_range, grid_density)
     predicted = m.predict_f(X)[0]
-    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))))
+    Y = dynamics(X) #acceleration
+    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,None],X[:,1,None]],1)),(Y.shape[0]*2,1))))
+    return MSE.numpy()
+
+
+def evaluate_model_future_2D(m, ground_truth, time_step):
+    X, Y = ground_truth
     predicted_future = np.zeros(X.shape)
     predicted_future_variance = np.zeros(X.shape)
     predicted_future[0,:] = X[0,:]
@@ -246,6 +253,17 @@ def evaluate_2Dmodel(m, ground_truth, time_step):
         predicted_future_variance[i, 3] = var[1]
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
     return (MSE.numpy(), MSE_future.numpy(), predicted_future, predicted_future_variance)
+
+def evaluate_model_grid_2D(m, grid_range, grid_density, dynamics1, dynamics2):
+    X = get_grid_of_points_2D(grid_range, grid_density)
+    Y1 = dynamics1(X) #acceleration
+    Y2 = dynamics2(X) #acceleration
+    predicted = m.predict_f(X)[0]
+    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y1[:,None],Y2[:,None],X[:,2,None],X[:,3,None]],1)),(Y.shape[0]*4,1))))
+    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,None],X[:,1,None]],1)),(Y.shape[0]*2,1))))
+    return MSE.numpy()
+
+
 
 '''
 def plotting(pred, var, test_points, data, save, name, angle1, angle2, acc, lml):

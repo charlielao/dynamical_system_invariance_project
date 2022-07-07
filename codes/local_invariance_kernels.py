@@ -8,7 +8,7 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from itertools import combinations_with_replacement
 
 
-class SHM2D_Local_Invariance(gpflow.kernels.Kernel):
+class SHMLocalInvariance2D(gpflow.kernels.Kernel):
     def __init__(self, invar_neighbourhood, n_neighbours, jitter_size):
         super().__init__(active_dims=[0, 1, 2, 3])
         self.Ka1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
@@ -145,7 +145,7 @@ class SHM2D_Local_Invariance(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
-class Double_Pendulum_Local_Invariance(gpflow.kernels.Kernel):
+class DoublePendulumLocalInvariance(gpflow.kernels.Kernel):
     def __init__(self, invar_neighbourhood, n_neighbours, jitter_size):
         super().__init__(active_dims=[0, 1, 2, 3])
         self.Ka1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
@@ -297,7 +297,7 @@ class Double_Pendulum_Local_Invariance(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
-class Polynomial_2D_Local_Invariance(gpflow.kernels.Kernel):
+class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
     def __init__(self, invar_neighbourhood, n_neighbours, jitter_size, poly_d):
         super().__init__(active_dims=[0, 1, 2, 3])
         #poly_d = [d, d, d, d]
@@ -307,10 +307,10 @@ class Polynomial_2D_Local_Invariance(gpflow.kernels.Kernel):
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.poly_d = poly_d
         self.prior_variance = 0.05#gpflow.Parameter(tf.Variable(0.1,dtype=tf.float64), transform=tfp.bijectors.Sigmoid(to_default_float(1e-4), to_default_float(1.)))
-        self.f1_poly = gpflow.Parameter(tf.Variable(0.01*tf.ones((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.f2_poly = gpflow.Parameter(tf.Variable(0.01*tf.ones((self.number_of_coefficients(self.poly_d[1]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.g1_poly = gpflow.Parameter(tf.Variable(0.01*tf.ones((self.number_of_coefficients(self.poly_d[2]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.g2_poly = gpflow.Parameter(tf.Variable(0.01*tf.ones((self.number_of_coefficients(self.poly_d[3]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.f1_poly = gpflow.Parameter(tf.Variable(1.*tf.ones((self.number_of_coefficients(self.poly_d[0]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))#, prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.f2_poly = gpflow.Parameter(tf.Variable(1.*tf.ones((self.number_of_coefficients(self.poly_d[1]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))#, prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.g1_poly = gpflow.Parameter(tf.Variable(1.*tf.ones((self.number_of_coefficients(self.poly_d[2]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))#, prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.g2_poly = gpflow.Parameter(tf.Variable(1.*tf.ones((self.number_of_coefficients(self.poly_d[3]),1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)))#, prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
         self.jitter = jitter_size
         self.invar_neighbourhood = invar_neighbourhood
         self.n_neighbours = n_neighbours
@@ -502,8 +502,8 @@ class Polynomial_2D_Local_Invariance(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
-def get_SHM2D_Local_Invariance(invar_neighbourhood, n_neighbours, jitter_size):
-    invariance_kernel = SHM2D_Local_Invariance(invar_neighbourhood, n_neighbours,jitter_size)
+def get_SHM_local_invariance_2D(invar_neighbourhood, n_neighbours, jitter_size):
+    invariance_kernel = SHMLocalInvariance2D(invar_neighbourhood, n_neighbours,jitter_size)
     invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
@@ -514,8 +514,8 @@ def get_SHM2D_Local_Invariance(invar_neighbourhood, n_neighbours, jitter_size):
     invariance_kernel.Kv2.lengthscales = gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     return invariance_kernel
 
-def get_Double_Pendulum_Local_Invariance(invar_neighbourhood, n_neighbours, jitter_size):
-    invariance_kernel = Double_Pendulum_Local_Invariance(invar_neighbourhood, n_neighbours,jitter_size)
+def get_double_pendulum_local_invariance(invar_neighbourhood, n_neighbours, jitter_size):
+    invariance_kernel = DoublePendulumLocalInvariance(invar_neighbourhood, n_neighbours,jitter_size)
     invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
@@ -526,14 +526,14 @@ def get_Double_Pendulum_Local_Invariance(invar_neighbourhood, n_neighbours, jitt
     invariance_kernel.Kv2.lengthscales = gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
     return invariance_kernel
 
-def get_Polynomial_2D_Local_Invariance(invar_neighbourhood, n_neighbours, jitter_size, poly_d):
-    invariance_kernel = Polynomial_2D_Local_Invariance(invar_neighbourhood, n_neighbours,jitter_size, poly_d)
-    invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Kv2.variance = gpflow.Parameter(invariance_kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Ka1.lengthscales = gpflow.Parameter(invariance_kernel.Ka1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Ka2.lengthscales = gpflow.Parameter(invariance_kernel.Ka2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Kv1.lengthscales = gpflow.Parameter(invariance_kernel.Kv1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Kv2.lengthscales = gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
+def get_polynomial_local_invariance_2D(invar_neighbourhood, n_neighbours, jitter_size, poly_d):
+    invariance_kernel = PolynomialLocalInvariance2D(invar_neighbourhood, n_neighbours,jitter_size, poly_d)
+    invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv2.variance = gpflow.Parameter(invariance_kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka1.lengthscales = gpflow.Parameter(invariance_kernel.Ka1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka2.lengthscales = gpflow.Parameter(invariance_kernel.Ka2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv1.lengthscales = gpflow.Parameter(invariance_kernel.Kv1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv2.lengthscales = gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     return invariance_kernel
