@@ -16,8 +16,8 @@ time_step = 0.01
 training_time = 0.1
 testing_time = 0.1
 
-max_x = 5
-n_train = 5
+max_x = 4
+n_train = 3
 train_starting_position1 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_position2 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_velocity1 = np.random.uniform(-max_x/5, max_x/5, (n_train))
@@ -44,10 +44,10 @@ for jitter in [1e-5]:
     print("%s, "%round(moi.log_marginal_likelihood().numpy()))
     evaluate_moi = evaluate_2Dmodel(moi, test_data, time_step)
     print(evaluate_moi[:2])
-    for invar_density in [6]: #np.arange(10, 30, 10):
+    for invar_density in [8]: #np.arange(10, 30, 10):
             try:
                 print("SHM")
-                kernel = get_SHM2D_Invariance(5, invar_density, jitter) #switch
+                kernel = get_SHM2D_Invariance(4, invar_density, jitter) #switch
                 m = get_GPR_2Dmodel(kernel, mean, data, "scipy", iterations=1000, lr=0.1)
                 print(round(m.log_marginal_likelihood().numpy()))
                 evaluate_invariance = evaluate_2Dmodel(m, test_data, time_step)
@@ -55,8 +55,8 @@ for jitter in [1e-5]:
                 polynomial_degree = 1
 #                kernel = get_Polynomial_2D_Local_Invariance(4, 200, jitter, [polynomial_degree,polynomial_degree,polynomial_degree,polynomial_degree]) #switch
                 print("polynomial")
-                kernel = get_Polynomial_2D_Invariance(5, invar_density, jitter, [polynomial_degree,polynomial_degree,polynomial_degree,polynomial_degree]) #switch
-                m, best = get_GPR_2Dmodel_sparse(kernel, mean, data, "adam", iterations=20000, lr=0.001, reg=1, drop_rate=0)
+                kernel = get_Polynomial_2D_Invariance(3, invar_density, jitter, [polynomial_degree,polynomial_degree,polynomial_degree,polynomial_degree]) #switch
+                m, best = get_GPR_2Dmodel_sparse(kernel, mean, data, "adam", iterations=20000, lr=0.001, reg=10, drop_rate=0)
                 print(round(m.log_marginal_likelihood().numpy()))
                 evaluate_invariance = evaluate_2Dmodel(m, test_data, time_step)
                 print(evaluate_invariance[:2])
@@ -64,8 +64,6 @@ for jitter in [1e-5]:
                 print(kernel.f2_poly)
                 print(kernel.g1_poly)
                 print(kernel.g2_poly)
-                with open('final_poly.npy', 'wb') as f:
-                    np.save(f, np.concatenate([kernel.f1_poly,kernel.f2_poly, kernel.g1_poly, kernel.g2_poly],1))
                 
 
             except tf.errors.InvalidArgumentError:
