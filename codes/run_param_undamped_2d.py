@@ -7,7 +7,7 @@ from gpflow.utilities import print_summary, positive, to_default_float, set_trai
 from invariance_kernels import zero_mean, get_MOI, get_MOI2D, get_Pendulum_Invariance, get_SHM_Invariance, get_SHM2D_Invariance, get_Double_Pendulum_Invariance
 from invariance_functions import degree_of_freedom, get_GPR_2Dmodel, get_SHM2D_data, evaluate_2Dmodel, get_double_pendulum_data, get_GPR_2Dmodel_sparse
 from local_invariance_kernels import  get_Polynomial_2D_Local_Invariance
-from parameterised_invariance_kernels import get_Polynomial_2D_Invariance, get_Polynomial_2D_Invariance_fixed
+from parameterised_invariance_kernels import get_Polynomial_2D_Invariance
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 mean = zero_mean(4)
@@ -44,7 +44,7 @@ for jitter in [1e-5]:
     print("%s, "%round(moi.log_marginal_likelihood().numpy()))
     evaluate_moi = evaluate_2Dmodel(moi, test_data, time_step)
     print(evaluate_moi[:2])
-    for invar_density in [8]: #np.arange(10, 30, 10):
+    for invar_density in [6]: #np.arange(10, 30, 10):
             try:
                 print("SHM")
                 kernel = get_SHM2D_Invariance(4, invar_density, jitter) #switch
@@ -55,8 +55,8 @@ for jitter in [1e-5]:
                 polynomial_degree = 1
 #                kernel = get_Polynomial_2D_Local_Invariance(4, 200, jitter, [polynomial_degree,polynomial_degree,polynomial_degree,polynomial_degree]) #switch
                 print("polynomial")
-                kernel = get_Polynomial_2D_Invariance(3, invar_density, jitter, [polynomial_degree,polynomial_degree,polynomial_degree,polynomial_degree]) #switch
-                m, best = get_GPR_2Dmodel_sparse(kernel, mean, data, "adam", iterations=20000, lr=0.001, reg=10, drop_rate=0)
+                kernel = get_Polynomial_2D_Invariance(4, invar_density, jitter, [polynomial_degree,polynomial_degree,polynomial_degree,polynomial_degree]) #switch
+                m, best = get_GPR_2Dmodel_sparse(kernel, mean, data, "adam", iterations=20000, lr=0.001, reg=1, drop_rate=0)
                 print(round(m.log_marginal_likelihood().numpy()))
                 evaluate_invariance = evaluate_2Dmodel(m, test_data, time_step)
                 print(evaluate_invariance[:2])
