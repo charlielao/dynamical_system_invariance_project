@@ -259,7 +259,6 @@ def evaluate_model_grid_2D(m, grid_range, grid_density, dynamics1, dynamics2):
     Y2 = dynamics2(X) #acceleration
     predicted = m.predict_f(X)[0]
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y1[:,None],Y2[:,None],X[:,2,None],X[:,3,None]],1)),(Y.shape[0]*4,1))))
-    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,None],X[:,1,None]],1)),(Y.shape[0]*2,1))))
     return MSE.numpy()
 
 def SHM_dynamics(X):
