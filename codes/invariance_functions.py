@@ -209,7 +209,7 @@ def get_GPR_model_sparse_2D(kernel, mean_function, data, optimiser, iterations, 
                     drop[i] = 0
                     m.kernel.g2_poly.assign(drop)
             try:
-                print(round(lml)," ", j,'\n',np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
+                print(round(lml)," ", j,end='\r')#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
             except ValueError:
                 print("bad coefficients")
         return m, best_param
