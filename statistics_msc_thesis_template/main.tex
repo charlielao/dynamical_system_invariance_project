@@ -380,6 +380,16 @@ However, in a real world system, there will be dissipation where energy is lost 
 Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero. 
 To do so, it is similar in spirit to when we add noise to the underlying GP to represent noise signal, where we have $K+\sigma_n^2 \mathbb{I}$.
 Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
+For the data, we will model the system as a damped SHM or pendulum with linear velocity dependent force.
+If we denote $\omega_0^2=k/m$ or $\omega0^2=g/\ell$
+We will have the equation of motion 
+$$
+\frac{d^q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2q=0,
+$$
+and the $\gamma$ is the damping factor that controls how much frictional force there is. 
+Note that we will only focus on underdamping case so that the system still oscillate but with gradually reduced amplitude instead of critical damped or overdamped case where the system simply slowly decays to still.
+A simple trajectory for damped SHM and damped pendulum is shown below.
+
 \section{2D System}
 A 2D system is not that different from an 1D system. The major difference being there are two more extra variables. 
 We again look at two simple examples, a linear 2D SHM, and a nonlinear double pendulum.
@@ -510,7 +520,7 @@ Since we aim to predict the value of dynamics at any point in the input space, w
 This is done by combing forward and backward difference to compute the finite gradient. 
 We also choose the time step to be $0.01$ to ensure sufficient accuracy for the integrator.
 For training data, we will choose a few random starting point within a range(exact details depends on the task as will be explained later) in the input space and generate data from the point for a number of timesteps. 
-For testing data, we will do the same both in the same range and outside the range.
+For testing data, we will do the same both in the same range and outside the range, we will pick a few starting points and then average the result.
 Without loss of generality, we choose $m=k=1$ and $g=\ell=1$ for 1D and 2D SHM and simple pendulum for simplicity. For the damping, we will choose $\gamma=0.01, 0.05, 0.1$. 
 For double pendulum, we also let $m_1=m_2=\ell_1=\ell_2=g=1.$
 
@@ -524,7 +534,9 @@ We will use a few different evaluation metrics.
 If we are learning the invariance, we can also further compare the true invariance and the learnt invariance.
 
 \section{Implementation Technicalities}
-Jitter, range of search
+We need to add jitter to the $D$ matrix in computation due to the fact that we need the invert it and because of numerical issues, it will be more stable if we add a little bit of jitter in the range of $10^{-6}$ and its effect will be explained in the sections below.
+Similarly, to stabilise the algorithm, when backpropagating the hyperparameters, we need to narrow range of search so it's not too crazy. 
+For example, we wouldn't expect a lengthscale of 100 in our example with maximum range of 5; therefore, we will set for example, the maximum range of search is $10^{-3}$ to $10$ for the length scale and similarly for the variance term.
 
 \section{1D}
 We will illustrate a lot of examples in 1D cases since the results are easy to visualise, but the principle readily extend to high dimensional spaces. 
@@ -535,14 +547,19 @@ We will then draw a test point from $q$ between $\pm 3$ and another between 3 an
 We will then evaluate the the recovery of true trajectory of $q$ between $\pm 5$.
 From figure below, we can see the prior of the naive baseline vs invariance kernel.
 This is using invariance points density of evenly spaced 40 by 40 grids. 
+We can see the prior kernel as well as posterior shape as shown in figure b.
+The performance is summariesed in table 
 \subsection{Pendulum}
-The procedure is pretty much the same here that we will draw a single training example between $q=\pm 170^{\circ}$ and again one fifth the range for $p$.
-The rest is the same.
+The procedure is pretty much the same here that we will draw a single training example between $q=\pm 120^{\circ}$ and again one fifth the range for $p$.
+The rest is the same and we will do a test from $120^{\circ} to 160^{\circ}$ too.
 \subsection{Damped SHM}
+The results is the same, and the learnt $\epsilon$ is summarised in table. 
 
 \section{Invariance Density}
-\section{Degree of Freedom}
+Here we will to explore how the change of invariance density could affect the performance of the kernel as well as degree of freedom.
+Since 1D SHM is rather trival, I will test it on the nonlinear pendulum case. 
 \section{Effect of Jitter}
+Since we need a little bit of jitter to stabilise the computation of our invariance kernel, since adding jitter is the same as adding noise to the invariance (since we are adding it on the $D$ submatrix) so that we need to make sure it is not too much. So we will again assess the performance 
 \section{2D}
 \section{Learning 1D invariance}
 \section{Learning 2D invariance}
