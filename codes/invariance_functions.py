@@ -259,7 +259,7 @@ def evaluate_model_grid(m, grid_range, grid_density, dynamics):
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,None],X[:,1,None]],1)),(Y.shape[0]*2,1))))
     return MSE.numpy()
 
-def evaluate_model_future_2D(m,,test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2, dynamics1, dynamics2, total_time, time_step):
+def evaluate_model_future_2D(m,test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2, dynamics1, dynamics2, total_time, time_step):
     X, Y = ground_truth
     likelihood = m.likelihood.variance.numpy()
 
