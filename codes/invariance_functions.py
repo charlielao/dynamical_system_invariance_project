@@ -5,9 +5,10 @@ import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 
-def degree_of_freedom(kernel, test_points):
+def degree_of_freedom(kernel, grid_range, grid_density, likelihood):
+    test_points = get_grid_of_points_1D(grid_range, grid_density)
     K = kernel(test_points)
-    return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+1e-6*tf.eye(K.shape[0], dtype=tf.float64)), 1)).numpy()
+    return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+likelihood*tf.eye(K.shape[0], dtype=tf.float64)), 1)).numpy()
 
 def get_SHM_data(time_step, total_time, noise, initial_positions, initial_velocities):
     m = k = 1
@@ -341,10 +342,10 @@ def SHM_dynamics2_2D(X):
 def pendulum_dynamics(X):
     return -np.sin(X[:,0])
 
-def damped_SHM_dynamics(X, gamma):
+def damped_SHM_dynamics(X, gamma=0.1):
     return -X[:,0]-2*gamma*X[:,1]
 
-def damped_pendulum_dynamics(X, gamma):
+def damped_pendulum_dynamics(X, gamma=0.1):
     return -np.sin(X[:,0])-2*gamma*X[:,1]
 
 

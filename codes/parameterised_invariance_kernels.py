@@ -14,8 +14,8 @@ class PolynomialInvariance(gpflow.kernels.Kernel):
         self.poly_f_d = poly_f_d
         self.poly_g_d = poly_g_d
         self.prior_variance = 0.01#gpflow.Parameter(tf.Variable(0.2,dtype=tf.float64), transform=tfp.bijectors.Sigmoid(to_default_float(1e-1), to_default_float(1.)))
-        self.f_poly = gpflow.Parameter(tf.Variable(0.05*tf.ones((self.poly_f_d,1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.g_poly = gpflow.Parameter(tf.Variable(0.05*tf.ones((self.poly_g_d,1), dtype=tf.float64)), transform =tfp.bijectors.Sigmoid(to_default_float(-0.1), to_default_float(0.1)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.f_poly = gpflow.Parameter(tf.Variable(1e-3*np.random.normal(size=(self.poly_f_d,1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.g_poly = gpflow.Parameter(tf.Variable(1e-3*np.random.normal(size=(self.poly_g_d,1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
 
         self.jitter =jitter_size
         self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
@@ -426,22 +426,20 @@ class PolynomialInvariance2D(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
-
-
 def get_polynomial_invariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d):
     invariance_kernel = PolynomialInvariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d)
-    invariance_kernel.Ka.variance = gpflow.Parameter(invariance_kernel.Ka.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Kv.variance = gpflow.Parameter(invariance_kernel.Kv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Ka.lengthscales = gpflow.Parameter(invariance_kernel.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Kv.lengthscales = gpflow.Parameter(invariance_kernel.Kv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
+    invariance_kernel.Ka.variance = gpflow.Parameter(invariance_kernel.Ka.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv.variance = gpflow.Parameter(invariance_kernel.Kv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka.lengthscales = gpflow.Parameter(invariance_kernel.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv.lengthscales = gpflow.Parameter(invariance_kernel.Kv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     return invariance_kernel
 
 def get_damped_polynomial_invariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d):
     invariance_kernel = DampedPolynomialInvariance(invar_range, invar_density, jitter_size, poly_f_d, poly_g_d)
-    invariance_kernel.Ka.variance = gpflow.Parameter(invariance_kernel.Ka.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Kv.variance = gpflow.Parameter(invariance_kernel.Kv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Ka.lengthscales = gpflow.Parameter(invariance_kernel.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
-    invariance_kernel.Kv.lengthscales = gpflow.Parameter(invariance_kernel.Kv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(0.1), to_default_float(5.))) 
+    invariance_kernel.Ka.variance = gpflow.Parameter(invariance_kernel.Ka.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv.variance = gpflow.Parameter(invariance_kernel.Kv.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka.lengthscales = gpflow.Parameter(invariance_kernel.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv.lengthscales = gpflow.Parameter(invariance_kernel.Kv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     return invariance_kernel
 
 def get_polynomial_invariance_2D(invar_range, invar_density, jitter_size, poly_d):
