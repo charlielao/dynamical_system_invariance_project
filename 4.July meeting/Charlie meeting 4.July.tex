@@ -44,10 +44,14 @@ We can also compare the RMSE of the ground truth to learnt function so that we d
 Mark also suggests me to run on CPU instead of GPU for large memory requirements.
 
 Does it make sense that if I fix all the parameters, the invariance kernel does not perform better.
-I had some ideas, such as dropping out adding l1 loss to marginal likelihood, adding invariance criteria directly to the loss function? Different optimiser.
-How do I make the regularisation not so strong on real coefficients but strong on the zeroed ones?
+I had some ideas, such as dropping out adding l1 loss to marginal likelihood, adding invariance criteria directly to the loss function, like besides marginal likelihood? Different optimiser.
+How do I make the regularisation not so strong on real coefficients but strong on the zeroed ones? Now it's like the coefficients are $10^{-2}$ but the zeroed ones are $10^{-3/4}$
 not pruning etc.?
 too much data naive GP learn but too few data the coefficients don't learn especially for double pendulum where a lot of data is needed.
+dynamic regrowing?
+local grid distribution?
+scale of other hyperparameter not the same as the polynomial coefficients so that might be a problem in gradient descent.
+How to demonstrate learning invariance in 2D.
 
 \end{document}
 
