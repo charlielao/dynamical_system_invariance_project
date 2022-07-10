@@ -261,10 +261,9 @@ def evaluate_model_grid(m, grid_range, grid_density, dynamics):
     return MSE.numpy()
 
 def evaluate_model_future_2D(m,test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2, dynamics1, dynamics2, total_time, time_step):
-    X, Y = ground_truth
     likelihood = m.likelihood.variance.numpy()
 
-    X = np.zeros((int(total_time/time_step),2))
+    X = np.zeros((int(total_time/time_step),4))
     X[0,0] = test_starting_position1
     X[0,1] = test_starting_position2
     X[0,2] = test_starting_velocity1
@@ -279,6 +278,8 @@ def evaluate_model_future_2D(m,test_starting_position1, test_starting_position2,
     X[1,1] = X[0,1] + X[0,3]*time_step
     X[1,2] = X[0,2] + dynamics1(X[None,0,:])*time_step
     X[1,3] = X[0,3] + dynamics2(X[None,0,:])*time_step
+
+    pred, var = m.predict_f(to_default_float(predicted_future[0,:].reshape(1,4)))
 
     predicted_future[1, 0] = predicted_future[0, 0] + pred[2]*time_step 
     predicted_future_variance_top[1, 0] = predicted_future[0, 0] + (pred[2]+1.96*np.sqrt(var[2]+likelihood))*time_step

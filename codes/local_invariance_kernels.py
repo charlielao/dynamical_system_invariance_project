@@ -51,10 +51,10 @@ class SHMLocalInvariance2D(gpflow.kernels.Kernel):
         K_X2X2   = tf.concat([tf.concat([Ka1_X2X2,zeros_mm, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, Ka2_X2X2, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, Kv1_X2X2, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, zeros_mm, Kv2_X2X2],1)],0)
 
         local_X1_invar_grids = tf.repeat(X, self.n_neighbours, 0) 
-        local_X1_invar_grids += self.invar_neighbourhood*tf.random.normal((local_X1_invar_grids.shape), dtype=tf.float64)
+        local_X1_invar_grids += tf.random.uniform((local_X1_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
         local_X2_invar_grids = tf.repeat(X2, self.n_neighbours, 0) 
-        local_X2_invar_grids += self.invar_neighbourhood*tf.random.normal((local_X2_invar_grids.shape), dtype=tf.float64)
-        
+        local_X2_invar_grids += tf.random.uniform((local_X2_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
+
         local_invar_grids = tf.concat([local_X1_invar_grids, local_X2_invar_grids],0)
         
         Ka1_X1Xg  = self.Ka1(X, local_invar_grids) 
@@ -113,7 +113,7 @@ class SHMLocalInvariance2D(gpflow.kernels.Kernel):
         K_X   = tf.concat([tf.concat([Ka1_X, zeros_nn, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, Ka2_X, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, Kv1_X, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, zeros_nn, Kv2_X],1)],0)
 
         local_invar_grids = tf.repeat(X, self.n_neighbours, 0) 
-        local_invar_grids += self.invar_neighbourhood*tf.random.normal((local_invar_grids.shape), dtype=tf.float64)
+        local_invar_grids += tf.random.uniform((local_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
         
         Ka1_Xg  = self.Ka1(X, local_invar_grids) 
         Ka2_Xg  = self.Ka2(X, local_invar_grids) 
