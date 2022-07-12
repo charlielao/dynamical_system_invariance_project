@@ -9,7 +9,7 @@ from itertools import combinations_with_replacement
 
 
 class SHMLocalInvariance2D(gpflow.kernels.Kernel):
-    def __init__(self, invar_neighbourhood, n_neighbours, jitter_size):
+    def __init__(self, invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours, jitter_size):
         super().__init__(active_dims=[0, 1, 2, 3])
         self.Ka1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Ka2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
@@ -17,7 +17,8 @@ class SHMLocalInvariance2D(gpflow.kernels.Kernel):
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.jitter = jitter_size
         self.n_neighbours = n_neighbours
-        self.invar_neighbourhood = invar_neighbourhood
+        self.invar_neighbourhood_min = invar_neighbourhood_min
+        self.invar_neighbourhood_max = invar_neighbourhood_max
 
 
     def K(self, X, X2=None):
@@ -51,9 +52,9 @@ class SHMLocalInvariance2D(gpflow.kernels.Kernel):
         K_X2X2   = tf.concat([tf.concat([Ka1_X2X2,zeros_mm, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, Ka2_X2X2, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, Kv1_X2X2, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, zeros_mm, Kv2_X2X2],1)],0)
 
         local_X1_invar_grids = tf.repeat(X, self.n_neighbours, 0) 
-        local_X1_invar_grids += tf.random.uniform((local_X1_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
+        local_X1_invar_grids += tf.multiply(tf.random.uniform((local_X1_invar_grids.shape), self.invar_neighbourhood_min, self.invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), tf.math.reduce_prod(local_X1_invar_grids.shape)), (local_X1_invar_grids.shape)), tf.float64)-1*tf.ones((local_X1_invar_grids.shape),dtype=tf.float64))
         local_X2_invar_grids = tf.repeat(X2, self.n_neighbours, 0) 
-        local_X2_invar_grids += tf.random.uniform((local_X2_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
+        local_X2_invar_grids += tf.multiply(tf.random.uniform((local_X2_invar_grids.shape), self.invar_neighbourhood_min, self.invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), tf.math.reduce_prod(local_X2_invar_grids.shape)), (local_X2_invar_grids.shape)), tf.float64)-1*tf.ones((local_X2_invar_grids.shape),dtype=tf.float64))
 
         local_invar_grids = tf.concat([local_X1_invar_grids, local_X2_invar_grids],0)
         
@@ -113,7 +114,8 @@ class SHMLocalInvariance2D(gpflow.kernels.Kernel):
         K_X   = tf.concat([tf.concat([Ka1_X, zeros_nn, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, Ka2_X, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, Kv1_X, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, zeros_nn, Kv2_X],1)],0)
 
         local_invar_grids = tf.repeat(X, self.n_neighbours, 0) 
-        local_invar_grids += tf.random.uniform((local_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
+        local_invar_grids += tf.multiply(tf.random.uniform((local_invar_grids.shape), self.invar_neighbourhood_min, self.invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), tf.math.reduce_prod(local_invar_grids.shape)), (local_invar_grids.shape)), tf.float64)-1*tf.ones((local_invar_grids.shape),dtype=tf.float64))
+
         
         Ka1_Xg  = self.Ka1(X, local_invar_grids) 
         Ka2_Xg  = self.Ka2(X, local_invar_grids) 
@@ -146,14 +148,15 @@ class SHMLocalInvariance2D(gpflow.kernels.Kernel):
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
 class DoublePendulumLocalInvariance(gpflow.kernels.Kernel):
-    def __init__(self, invar_neighbourhood, n_neighbours, jitter_size):
+    def __init__(self, invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours, jitter_size):
         super().__init__(active_dims=[0, 1, 2, 3])
         self.Ka1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Ka2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.jitter = jitter_size
-        self.invar_neighbourhood = invar_neighbourhood
+        self.invar_neighbourhood_min = invar_neighbourhood_min
+        self.invar_neighbourhood_max = invar_neighbourhood_max
         self.n_neighbours = n_neighbours
 
     def inv_f1(self, X):
@@ -196,9 +199,9 @@ class DoublePendulumLocalInvariance(gpflow.kernels.Kernel):
         K_X2X2   = tf.concat([tf.concat([Ka1_X2X2,zeros_mm, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, Ka2_X2X2, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, Kv1_X2X2, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, zeros_mm, Kv2_X2X2],1)],0)
 
         local_X1_invar_grids = tf.repeat(X, self.n_neighbours, 0) 
-        local_X1_invar_grids += tf.random.uniform((local_X1_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
+        local_X1_invar_grids += tf.multiply(tf.random.uniform((local_X1_invar_grids.shape), self.invar_neighbourhood_min, self.invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), tf.math.reduce_prod(local_X1_invar_grids.shape)), (local_X1_invar_grids.shape)), tf.float64)-1*tf.ones((local_X1_invar_grids.shape),dtype=tf.float64))
         local_X2_invar_grids = tf.repeat(X2, self.n_neighbours, 0) 
-        local_X2_invar_grids += tf.random.uniform((local_X2_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
+        local_X2_invar_grids += tf.multiply(tf.random.uniform((local_X2_invar_grids.shape), self.invar_neighbourhood_min, self.invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), tf.math.reduce_prod(local_X2_invar_grids.shape)), (local_X2_invar_grids.shape)), tf.float64)-1*tf.ones((local_X2_invar_grids.shape),dtype=tf.float64))
         
         local_invar_grids = tf.concat([local_X1_invar_grids, local_X2_invar_grids],0)
         
@@ -259,10 +262,10 @@ class DoublePendulumLocalInvariance(gpflow.kernels.Kernel):
         Kv1_X  = self.Kv1(X) 
         Kv2_X  = self.Kv2(X) 
         K_X   = tf.concat([tf.concat([Ka1_X, zeros_nn, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, Ka2_X, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, Kv1_X, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, zeros_nn, Kv2_X],1)],0)
-
-        local_invar_grids = tf.repeat(X, self.n_neighbours, 0) 
-        local_invar_grids += tf.random.uniform((local_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
         
+        local_invar_grids = tf.repeat(X, self.n_neighbours, 0) 
+        local_invar_grids += tf.multiply(tf.random.uniform((local_invar_grids.shape), self.invar_neighbourhood_min, self.invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), tf.math.reduce_prod(local_invar_grids.shape)), (local_invar_grids.shape)), tf.float64)-1*tf.ones((local_invar_grids.shape),dtype=tf.float64))
+
         Ka1_Xg  = self.Ka1(X, local_invar_grids) 
         Ka2_Xg  = self.Ka2(X, local_invar_grids) 
         Kv1_Xg  = self.Kv1(X, local_invar_grids) 
@@ -298,7 +301,7 @@ class DoublePendulumLocalInvariance(gpflow.kernels.Kernel):
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
 class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
-    def __init__(self, invar_neighbourhood, n_neighbours, jitter_size, poly_d):
+    def __init__(self, invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours, jitter_size, poly_d):
         super().__init__(active_dims=[0, 1, 2, 3])
         #poly_d = [d, d, d, d]
         self.Ka1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
@@ -306,13 +309,11 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         self.Kv1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.poly_d = poly_d
-        self.prior_variance = 1e-2#gpflow.Parameter(tf.Variable(1e-2,dtype=tf.float64), transform=tfp.bijectors.Sigmoid(to_default_float(1e-4), to_default_float(1.)))
-        self.f1_poly = gpflow.Parameter(tf.Variable(1e-6*np.random.laplace(size=(self.number_of_coefficients(self.poly_d[0]),1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.f2_poly = gpflow.Parameter(tf.Variable(1e-6*np.random.laplace(size=(self.number_of_coefficients(self.poly_d[1]),1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.g1_poly = gpflow.Parameter(tf.Variable(1e-6*np.random.laplace(size=(self.number_of_coefficients(self.poly_d[2]),1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.g2_poly = gpflow.Parameter(tf.Variable(1e-6*np.random.laplace(size=(self.number_of_coefficients(self.poly_d[3]),1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+        self.prior_variance = 1e-2
+        self.poly = gpflow.Parameter(tf.Variable(1-3*np.random.normal(size=(self.number_of_coefficients(self.poly_d),4)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)), trainable=True, prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
         self.jitter = jitter_size
-        self.invar_neighbourhood = invar_neighbourhood
+        self.invar_neighbourhood_min = invar_neighbourhood_min
+        self.invar_neighbourhood_max = invar_neighbourhood_max
         self.n_neighbours = n_neighbours
 
     def number_of_coefficients(self, d):
@@ -323,7 +324,7 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
 
     def inv_f1(self, X):
         polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
-        for d in range(1,self.poly_d[0]+1):
+        for d in range(1,self.poly_d+1):
             indices = list(combinations_with_replacement(range(4),d))
             for index in indices:
                 sub_polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
@@ -331,11 +332,11 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
                     sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.f1_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.poly[:,0, None]))
 
     def inv_f2(self, X):
         polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
-        for d in range(1, self.poly_d[1]+1):
+        for d in range(1, self.poly_d+1):
             indices = list(combinations_with_replacement(range(4),d))
             for index in indices:
                 sub_polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
@@ -343,11 +344,11 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
                     sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.f2_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.poly[:,1, None]))
 
     def inv_g1(self, X):
         polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
-        for d in range(1, self.poly_d[2]+1):
+        for d in range(1, self.poly_d+1):
             indices = list(combinations_with_replacement(range(4),d))
             for index in indices:
                 sub_polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
@@ -355,11 +356,11 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
                     sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.g1_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.poly[:,2, None]))
 
     def inv_g2(self, X):
         polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
-        for d in range(1, self.poly_d[3]+1):
+        for d in range(1, self.poly_d+1):
             indices = list(combinations_with_replacement(range(4),d))
             for index in indices:
                 sub_polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
@@ -367,7 +368,7 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
                     sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.g2_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.poly[:,3, None]))
 
 
     def K(self, X, X2=None):
@@ -401,10 +402,10 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         K_X2X2   = tf.concat([tf.concat([Ka1_X2X2,zeros_mm, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, Ka2_X2X2, zeros_mm, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, Kv1_X2X2, zeros_mm],1),tf.concat([zeros_mm, zeros_mm, zeros_mm, Kv2_X2X2],1)],0)
 
         local_X1_invar_grids = tf.repeat(X, self.n_neighbours, 0) 
-        local_X1_invar_grids += tf.random.uniform((local_X1_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
+        local_X1_invar_grids += tf.multiply(tf.random.uniform((local_X1_invar_grids.shape), self.invar_neighbourhood_min, self.invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), tf.math.reduce_prod(local_X1_invar_grids.shape)), (local_X1_invar_grids.shape)), tf.float64)-1*tf.ones((local_X1_invar_grids.shape),dtype=tf.float64))
         local_X2_invar_grids = tf.repeat(X2, self.n_neighbours, 0) 
-        local_X2_invar_grids += tf.random.uniform((local_X2_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
-        
+        local_X2_invar_grids += tf.multiply(tf.random.uniform((local_X2_invar_grids.shape), self.invar_neighbourhood_min, self.invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), tf.math.reduce_prod(local_X2_invar_grids.shape)), (local_X2_invar_grids.shape)), tf.float64)-1*tf.ones((local_X2_invar_grids.shape),dtype=tf.float64))
+
         local_invar_grids = tf.concat([local_X1_invar_grids, local_X2_invar_grids],0)
         
         Ka1_X1Xg  = self.Ka1(X, local_invar_grids) 
@@ -466,7 +467,7 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         K_X   = tf.concat([tf.concat([Ka1_X, zeros_nn, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, Ka2_X, zeros_nn, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, Kv1_X, zeros_nn],1),tf.concat([zeros_nn, zeros_nn, zeros_nn, Kv2_X],1)],0)
 
         local_invar_grids = tf.repeat(X, self.n_neighbours, 0) 
-        local_invar_grids += tf.random.uniform((local_invar_grids.shape), -self.invar_neighbourhood, self.invar_neighbourhood, dtype=tf.float64)
+        local_invar_grids += tf.multiply(tf.random.uniform((local_invar_grids.shape), self.invar_neighbourhood_min, self.invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), tf.math.reduce_prod(local_invar_grids.shape)), (local_invar_grids.shape)), tf.float64)-1*tf.ones((local_invar_grids.shape),dtype=tf.float64))
 
         Ka1_Xg  = self.Ka1(X, local_invar_grids) 
         Ka2_Xg  = self.Ka2(X, local_invar_grids) 
@@ -502,8 +503,8 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
-def get_SHM_local_invariance_2D(invar_neighbourhood, n_neighbours, jitter_size):
-    invariance_kernel = SHMLocalInvariance2D(invar_neighbourhood, n_neighbours,jitter_size)
+def get_SHM_local_invariance_2D(invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours, jitter_size):
+    invariance_kernel = SHMLocalInvariance2D(invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours,jitter_size)
     invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
@@ -514,8 +515,8 @@ def get_SHM_local_invariance_2D(invar_neighbourhood, n_neighbours, jitter_size):
     invariance_kernel.Kv2.lengthscales = gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     return invariance_kernel
 
-def get_double_pendulum_local_invariance(invar_neighbourhood, n_neighbours, jitter_size):
-    invariance_kernel = DoublePendulumLocalInvariance(invar_neighbourhood, n_neighbours,jitter_size)
+def get_double_pendulum_local_invariance(invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours, jitter_size):
+    invariance_kernel = DoublePendulumLocalInvariance(invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours,jitter_size)
     invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
@@ -526,14 +527,14 @@ def get_double_pendulum_local_invariance(invar_neighbourhood, n_neighbours, jitt
     invariance_kernel.Kv2.lengthscales = gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     return invariance_kernel
 
-def get_polynomial_local_invariance_2D(invar_neighbourhood, n_neighbours, jitter_size, poly_d):
-    invariance_kernel = PolynomialLocalInvariance2D(invar_neighbourhood, n_neighbours,jitter_size, poly_d)
-    invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-    invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-    invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-    invariance_kernel.Kv2.variance = gpflow.Parameter(invariance_kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-    invariance_kernel.Ka1.lengthscales = gpflow.Parameter(invariance_kernel.Ka1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-    invariance_kernel.Ka2.lengthscales = gpflow.Parameter(invariance_kernel.Ka2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-    invariance_kernel.Kv1.lengthscales = gpflow.Parameter(invariance_kernel.Kv1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-    invariance_kernel.Kv2.lengthscales = gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+def get_polynomial_local_invariance_2D(invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours, jitter_size, poly_d):
+    invariance_kernel = PolynomialLocalInvariance2D(invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours,jitter_size, poly_d)
+    invariance_kernel.Ka2.variance = 1.*gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka2.variance = 1.*gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv2.variance = 1.*gpflow.Parameter(invariance_kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv2.variance = 1.*gpflow.Parameter(invariance_kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka2.lengthscales = 1.*gpflow.Parameter(invariance_kernel.Ka2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka2.lengthscales = 1.*gpflow.Parameter(invariance_kernel.Ka2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv2.lengthscales = 1.*gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv2.lengthscales = 1.*gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
     return invariance_kernel

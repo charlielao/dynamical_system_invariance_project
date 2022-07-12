@@ -166,7 +166,7 @@ class GPR_with_sparse(gpflow.models.GPR):
         super().__init__(**kwargs)
         self.reg = reg
     def maximum_log_likelihood_objective(self):
-        return self.log_marginal_likelihood()-self.reg*(tf.reduce_sum(tf.abs(self.kernel.f1_poly))+tf.reduce_sum(tf.abs(self.kernel.f2_poly))+tf.reduce_sum(tf.abs(self.kernel.g1_poly))+tf.reduce_sum(tf.abs(self.kernel.g2_poly)))
+        return self.log_marginal_likelihood()-self.reg*(tf.reduce_sum(tf.abs(self.kernel.poly)))
 
 def get_GPR_model_sparse_2D(kernel, mean_function, data, optimiser, iterations, lr, reg, drop_rate):
     X, Y = data
@@ -189,30 +189,14 @@ def get_GPR_model_sparse_2D(kernel, mean_function, data, optimiser, iterations, 
                     break
                 best = lml
                 best_param = m.trainable_variables
-            for i,_ in enumerate(m.kernel.f1_poly):
-                if np.random.uniform()<drop_rate:
-                    drop = m.kernel.f1_poly.numpy()
-                    drop[i] = 0
-                    m.kernel.f1_poly.assign(drop)
-            for i,_ in enumerate(m.kernel.f2_poly):
-                if np.random.uniform()<drop_rate:
-                    drop = m.kernel.f2_poly.numpy()
-                    drop[i] = 0
-                    m.kernel.f2_poly.assign(drop)
-            for i,_ in enumerate(m.kernel.g1_poly):
-                if np.random.uniform()<drop_rate:
-                    drop = m.kernel.g1_poly.numpy()
-                    drop[i] = 0
-                    m.kernel.g1_poly.assign(drop)
-            for i,_ in enumerate(m.kernel.g2_poly):
-                if np.random.uniform()<drop_rate:
-                    drop = m.kernel.g2_poly.numpy()
-                    drop[i] = 0
-                    m.kernel.g2_poly.assign(drop)
             try:
-                print(round(lml)," ", j,end='\r')#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
+                print(round(lml)," ", j)#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
+                np.set_printoptions(precision=4)
+                print(m.kernel.poly.numpy())
             except ValueError:
                 print("bad coefficients")
+#            m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(x<1e-5, 0 , x), m.kernel.poly.numpy()))
+            
         return m, best_param
 
 def evaluate_model_future(m, test_starting_position, test_starting_velocity, dynamics, total_time, time_step):
