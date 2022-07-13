@@ -137,73 +137,64 @@ def get_GPR_model(kernel, mean_function, data, iterations):
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
     return m
 
-def get_GPR_model_2D(kernel, mean_function, data, optimiser, iterations, lr):
+def get_GPR_model_2D(kernel, mean_function, data, iterations):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
-    if optimiser=="scipy":
-        opt = gpflow.optimizers.Scipy()
-        opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
-        return m
-    else:
-        opt = tf.optimizers.Adam(learning_rate=lr)
-        @tf.function
-        def optimization_step():
-            opt.minimize(m.training_loss, m.trainable_variables)
-        best = m.log_marginal_likelihood().numpy()
-        for _ in range(iterations):
-            optimization_step()
-            lml = m.log_marginal_likelihood().numpy()
-            if lml > best:
-                if lml-best<1e-6:
-                    break
-                best = lml
-                best_param = m.trainable_variables
-            print(round(lml)," ", _,end='\r')
-        return m, best_param
+    opt = gpflow.optimizers.Scipy()
+    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
+    return m
 
+'''
 class GPR_with_sparse(gpflow.models.GPR):
     def __init__(self, reg, **kwargs):
         super().__init__(**kwargs)
         self.reg = reg
     def maximum_log_likelihood_objective(self):
         return self.log_marginal_likelihood()-self.reg*(tf.reduce_sum(tf.abs(self.kernel.poly)))
+'''
 
-def get_GPR_model_sparse_2D(kernel, mean_function, data, optimiser, iterations, lr, reg, drop_rate):
+def get_GPR_model_GD_2D(kernel, mean_function, data, iterations, lr):
     X, Y = data
-    m = GPR_with_sparse(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function, reg=reg)
-    if optimiser=="scipy":
-        opt = gpflow.optimizers.Scipy()
-        opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
-        return m
-    else:
-        opt = tf.optimizers.Adam(learning_rate=lr)
-        @tf.function
-        def optimization_step():
-            opt.minimize(m.training_loss, m.trainable_variables)
-        best = m.log_marginal_likelihood().numpy()
-        for j in range(iterations):
-            optimization_step()
-            lml = m.log_marginal_likelihood().numpy()
-            if lml > best:
-                if lml-best<1e-8:
-                    break
-                best = lml
-                best_param = m.trainable_variables
-            try:
-                print(round(lml)," ", j)#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
-                np.set_printoptions(precision=4)
-                print(m.kernel.poly.numpy())
-            except ValueError:
-                print("bad coefficients")
-#            m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(x<1e-5, 0 , x), m.kernel.poly.numpy()))
-            
-        return m, best_param
+    m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
+    opt = tf.optimizers.Adam(learning_rate=lr)
+    @tf.function
+    def optimization_step():
+        opt.minimize(m.training_loss, m.trainable_variables)
+    best = m.log_marginal_likelihood().numpy()
+    for j in range(iterations):
+        optimization_step()
+        lml = m.log_marginal_likelihood().numpy()
+        if lml > best:
+            best = lml
+            best_param = m.trainable_variables
+        try:
+            print(round(lml)," ", j)#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
+            np.set_printoptions(precision=4)
+            print(m.kernel.poly.numpy())
+        except ValueError:
+            print("bad coefficients")
+    m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(x<1e-5, 0 , x), m.kernel.poly.numpy()))
+    for j in range(int(iterations/10)):
+        optimization_step()
+        lml = m.log_marginal_likelihood().numpy()
+        if lml > best:
+            best = lml
+            best_param = m.trainable_variables
+        try:
+            print(round(lml)," ", j)#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
+            np.set_printoptions(precision=4)
+            print(m.kernel.poly.numpy())
+        except ValueError:
+            print("bad coefficients")
+    
+    return m#, best_param
 
-def evaluate_model_future(m, test_starting_position, test_starting_velocity, dynamics, total_time, time_step):
+def evaluate_model_future(m, test_starting_position, test_starting_velocity, dynamics, total_time, time_step, inv_f=None, inv_g=None):
     likelihood = m.likelihood.variance.numpy()
     X = np.zeros((int(total_time/time_step),2))
     X[0,0] = test_starting_position
     X[0,1] = test_starting_velocity
+
     predicted_future = np.zeros(X.shape)
     predicted_future_variance_top = np.zeros(X.shape)
     predicted_future_variance_bottom = np.zeros(X.shape)
@@ -211,6 +202,8 @@ def evaluate_model_future(m, test_starting_position, test_starting_velocity, dyn
 
     X[1,0] = X[0,0] + X[0,1]*time_step
     X[1,1] = X[0,1] + dynamics(X[None,0,:])*time_step
+
+
     pred, var = m.predict_f(to_default_float(predicted_future[0,:].reshape(1,2)))
 
     predicted_future[1, 0] = predicted_future[0, 0] + pred[1]*time_step 
@@ -220,6 +213,12 @@ def evaluate_model_future(m, test_starting_position, test_starting_velocity, dyn
     predicted_future[1, 1] = predicted_future[0, 1] + pred[0]*time_step 
     predicted_future_variance_top[1, 1] = predicted_future[0, 1] + (pred[0]+1.96*np.sqrt(var[0]+likelihood))*time_step
     predicted_future_variance_bottom[1, 1] = predicted_future[0, 1] - (pred[0]+1.96*np.sqrt(var[0]+likelihood))*time_step
+    if inv_f:
+        invariance_on_true = []
+        invariance_on_predict = []
+
+        invariance_on_true.append(inv_f(X[0,1,None])*dynamics(X[None,0,:])+inv_g(X[0,0,None])*X[0,1])
+        invariance_on_predict.append(inv_f(predicted_future[0,1,None])*pred[0]+inv_g(predicted_future[0,0,None])*pred[1])
 
     for i in range(2, X.shape[0]):
         pred, var = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,2)))
@@ -233,6 +232,12 @@ def evaluate_model_future(m, test_starting_position, test_starting_velocity, dyn
         X[i,1] =X[i-2,1] + dynamics(X[None,i-1,:])*2*time_step 
         predicted_future_variance_top[i, 1] = predicted_future[i-2, 1] + (pred[0]+1.96*np.sqrt(var[0]+likelihood))*2*time_step
         predicted_future_variance_bottom[i, 1] = predicted_future[i-2, 1] - (pred[0]+1.96*np.sqrt(var[0]+likelihood))*2*time_step
+        if inv_f:
+            invariance_on_true.append(inv_f(X[i-1,1,None])*dynamics(X[None,i-1,:])+inv_g(X[i-1,0,None])*X[i-1,1])
+            invariance_on_predict.append(inv_f(predicted_future[i-1,1,None])*pred[0]+inv_g(predicted_future[i-1,0,None])*pred[1])
+    if inv_f:
+        invariance_on_true.append(inv_f(X[i,1,None])*dynamics(X[None,i,:])+inv_g(X[i,0,None])*X[i,1])
+        invariance_on_predict.append(inv_f(predicted_future[i,1,None])*pred[0]+inv_g(predicted_future[i,0,None])*pred[1])
 
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X)
@@ -244,8 +249,10 @@ def evaluate_model_grid(m, grid_range, grid_density, dynamics):
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,None],X[:,1,None]],1)),(Y.shape[0]*2,1))))
     return MSE.numpy()
 
-def evaluate_model_future_2D(m,test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2, dynamics1, dynamics2, total_time, time_step):
+def evaluate_model_future_2D(m,test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2, dynamics1, dynamics2, total_time, time_step, scalerX, scalerY, inv_f1=None, inv_f2=None, inv_g1=None, inv_g2=None):
     likelihood = m.likelihood.variance.numpy()
+    invariance_on_true = []
+    invariance_on_predict = []
 
     X = np.zeros((int(total_time/time_step),4))
     X[0,0] = test_starting_position1
@@ -263,49 +270,46 @@ def evaluate_model_future_2D(m,test_starting_position1, test_starting_position2,
     X[1,2] = X[0,2] + dynamics1(X[None,0,:])*time_step
     X[1,3] = X[0,3] + dynamics2(X[None,0,:])*time_step
 
-    pred, var = m.predict_f(to_default_float(predicted_future[0,:].reshape(1,4)))
+    pred, var = m.predict_f(scalerX.transform(to_default_float(predicted_future[0,:].reshape(1,4))))
+    pred = tf.roll(tf.transpose(pred), shift=-2, axis=1)
+    var =  tf.roll(tf.transpose(var), shift=-2, axis=1)
+    var = scalerY.inverse_transform(pred + 1.96*np.sqrt(var+likelihood*np.ones(var.shape)))
+    pred = scalerY.inverse_transform(pred)
 
-    predicted_future[1, 0] = predicted_future[0, 0] + pred[2]*time_step 
-    predicted_future_variance_top[1, 0] = predicted_future[0, 0] + (pred[2]+1.96*np.sqrt(var[2]+likelihood))*time_step
-    predicted_future_variance_bottom[1, 0] = predicted_future[0, 0] - (pred[2]+1.96*np.sqrt(var[2]+likelihood))*time_step
+    predicted_future[1, :] = predicted_future[0, :] + pred*time_step 
+    predicted_future_variance_top[1, :] = predicted_future[0, :] + var*time_step
+    predicted_future_variance_bottom[1, :] = predicted_future[0, :] - var*time_step
 
-    predicted_future[1, 1] = predicted_future[0, 1] + pred[3]*time_step 
-    predicted_future_variance_top[1, 1] = predicted_future[0, 1] + (pred[3]+1.96*np.sqrt(var[3]+likelihood))*time_step
-    predicted_future_variance_bottom[1, 1] = predicted_future[0, 1] - (pred[3]+1.96*np.sqrt(var[3]+likelihood))*time_step
 
-    predicted_future[1, 2] = predicted_future[0, 2] + pred[0]*time_step 
-    predicted_future_variance_top[1, 2] = predicted_future[0, 2] + (pred[0]+1.96*np.sqrt(var[0]+likelihood))*time_step
-    predicted_future_variance_bottom[1, 2] = predicted_future[0, 2] - (pred[0]+1.96*np.sqrt(var[0]+likelihood))*time_step
-
-    predicted_future[1, 3] = predicted_future[0, 1] + pred[1]*time_step 
-    predicted_future_variance_top[1, 3] = predicted_future[0, 3] + (pred[1]+1.96*np.sqrt(var[1]+likelihood))*time_step
-    predicted_future_variance_bottom[1, 3] = predicted_future[0, 3] - (pred[1]+1.96*np.sqrt(var[1]+likelihood))*time_step
+    if inv_f1:
+        invariance_on_true.append(inv_f1(X[None, 0,:])*dynamics1(X[None,0,:])+inv_f2(X[None, 0,:])*dynamics2(X[None, 0, :])+inv_g1(X[None, 0,:])*X[0,2]+inv_g2(X[None, 0,:])*X[0,3])
+        invariance_on_predict.append(inv_f1(predicted_future[None,0,:])*pred[0,0]+inv_f2(predicted_future[None,0,:])*pred[0,1]+inv_g1(predicted_future[None,0,:])*pred[0,2]+inv_g2(predicted_future[None,0,:])*pred[0,3])
 
     for i in range(2, X.shape[0]):
-        pred, var = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,4)))
+        pred, var = m.predict_f(scalerX.transform(to_default_float(predicted_future[i-1,:].reshape(1,4))))
+        pred = tf.roll(tf.transpose(pred), shift=-2, axis=1)
+        var =  tf.roll(tf.transpose(var), shift=-2, axis=1)
+        var = scalerY.inverse_transform(pred + 1.96*np.sqrt(var+likelihood*np.ones(var.shape)))
+        pred = scalerY.inverse_transform(pred)
 
-        predicted_future[i, 0] = predicted_future[i-2, 0] + pred[2]*2*time_step 
+        predicted_future[i, :] = predicted_future[i-2, :] + pred*2*time_step 
+        predicted_future_variance_top[i, :] = predicted_future[i-2, :] + var*2*time_step
+        predicted_future_variance_bottom[i, :] = predicted_future[i-2, :] - var*2*time_step
         X[i,0] = X[i-2,0] + X[i-1,2]*2*time_step
-        predicted_future_variance_top[i, 0] = predicted_future[i-2, 0] + (pred[2]+1.96*np.sqrt(var[2]+likelihood))*2*time_step
-        predicted_future_variance_bottom[i, 0] = predicted_future[i-2, 0] - (pred[2]+1.96*np.sqrt(var[2]+likelihood))*2*time_step
-
-        predicted_future[i, 1] = predicted_future[i-2, 1] + pred[3]*2*time_step 
         X[i,1] = X[i-2,1] + X[i-1,3]*2*time_step
-        predicted_future_variance_top[i, 1] = predicted_future[i-2, 1] + (pred[3]+1.96*np.sqrt(var[3]+likelihood))*2*time_step
-        predicted_future_variance_bottom[i, 1] = predicted_future[i-2, 1] - (pred[3]+1.96*np.sqrt(var[3]+likelihood))*2*time_step
+        X[i,2] = X[i-2,2] + dynamics1(X[None,i-1,:])*2*time_step
+        X[i,3] = X[i-2,3] + dynamics2(X[None,i-1,:])*2*time_step
 
-        predicted_future[i, 2] = predicted_future[i-2, 2] + pred[0]*2*time_step 
-        X[i,2] = X[i-2,2] + dynamics1(X[None,i-1,:])*time_step
-        predicted_future_variance_top[i, 2] = predicted_future[i-2, 2] + (pred[0]+1.96*np.sqrt(var[0]+likelihood))*2*time_step
-        predicted_future_variance_bottom[i, 2] = predicted_future[i-2, 2] - (pred[0]+1.96*np.sqrt(var[0]+likelihood))*2*time_step
+        if inv_f1:
+            invariance_on_true.append(inv_f1(X[None,i-1,:])*dynamics1(X[None,i-1,:])+inv_f2(X[None,i-1,:])*dynamics2(X[None, i-1, :])+inv_g1(X[None,i-1,:])*X[i-1,2]+inv_g2(X[None,i-1,:])*X[i-1,3])
+            invariance_on_predict.append(inv_f1(predicted_future[None,i-1,:])*pred[0,0]+inv_f2(predicted_future[None,i-1,:])*pred[0,1]+inv_g1(predicted_future[None,i-1,:])*pred[0,2]+inv_g2(predicted_future[None,i-1,:])*pred[0,3])
 
-        predicted_future[i, 3] = predicted_future[i-2, 3] + pred[1]*2*time_step 
-        X[i,3] = X[i-2,3] + dynamics2(X[None,i-1,:])*time_step
-        predicted_future_variance_top[i, 3] = predicted_future[i-2, 3] + (pred[1]+1.96*np.sqrt(var[1]+likelihood))*2*time_step
-        predicted_future_variance_bottom[i, 3] = predicted_future[i-2, 3] - (pred[1]+1.96*np.sqrt(var[1]+likelihood))*2*time_step
+    if inv_f1:
+        invariance_on_true.append(inv_f1(X[None,-1,:])*dynamics1(X[None,-1,:])+inv_f2(X[None,-1,:])*dynamics2(X[None, -1, :])+inv_g1(X[None,-1,:])*X[-1,2]+inv_g2(X[None,-1,:])*X[-1,3])
+        invariance_on_predict.append(inv_f1(predicted_future[None,-1,:])*pred[0,0]+inv_f2(predicted_future[None,-1,:])*pred[0,1]+inv_g1(predicted_future[None,-1,:])*pred[0,2]+inv_g2(predicted_future[None,-1,:])*pred[0,3])
 
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
-    return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom)
+    return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X)
 
 def evaluate_model_grid_2D(m, grid_range, grid_density, dynamics1, dynamics2):
     X = get_grid_of_points_2D(grid_range, grid_density)
