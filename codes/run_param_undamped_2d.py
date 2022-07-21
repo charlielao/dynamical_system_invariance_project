@@ -49,7 +49,7 @@ time_setting = (testing_time, time_step)
 scalers = (scalerX, scalerY)
 
 jitter = 1e-5
-n_neighbours = 20
+n_neighbours = 30
 print("moi")
 dynamics = (SHM_dynamics1_2D, SHM_dynamics2_2D)
 moi = get_GPR_model_2D(get_MOI_2D(), mean, data, 100)
@@ -75,7 +75,7 @@ try:
     print("polynomial local")
     kernel = get_polynomial_local_invariance_2D(0.1, 1, n_neighbours, jitter, polynomial_degree ) #switch
     m = get_GPR_model_GD_2D(kernel, mean, data, iterations=30000, lr=0.001)
-#    m = get_GPR_model_2D(kernel, mean, data, iterations=1000)
+#    m = get_GPR_model_2D(kernel, mean, data, iterations=2000)
     evaluate_invariance = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers)
     print(kernel.poly)
     print("Learnt: %s"%round(m.log_marginal_likelihood().numpy()))

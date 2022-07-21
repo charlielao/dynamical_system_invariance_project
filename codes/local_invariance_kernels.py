@@ -310,7 +310,7 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         self.Kv1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.poly_d = poly_d
-        self.prior_variance = 1e-2
+        self.prior_variance = 1e-1
         self.poly = gpflow.Parameter(tf.Variable(1*np.random.normal(size=(4, self.number_of_coefficients(self.poly_d))), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-5.), to_default_float(5.)), trainable=True, prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
         self.jitter = jitter_size
         self.local_invar_grid = tf.multiply(tf.random.uniform((n_neighbours,4), invar_neighbourhood_min,invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), 4*n_neighbours), (n_neighbours,4)), tf.float64)-1*tf.ones((n_neighbours,4),dtype=tf.float64))

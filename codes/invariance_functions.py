@@ -141,7 +141,7 @@ def get_GPR_model_2D(kernel, mean_function, data, iterations):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
-    opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
+    opt_logs = opt.minimize(m.training_loss, m.trainable_variables,  options=dict(maxiter=iterations), step_callback=callback)
     return m
 
 '''
@@ -173,8 +173,8 @@ def get_GPR_model_GD_2D(kernel, mean_function, data, iterations, lr):
             print(m.kernel.poly.numpy())
         except ValueError:
             print("bad coefficients")
-    m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(x<1e-5, 0 , x), m.kernel.poly.numpy()))
-    for j in range(int(iterations/100)):
+    m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(abs(x)<1e-3, 0 , x), m.kernel.poly.numpy()))
+    for j in range(int(iterations/1000)):
         optimization_step()
         lml = m.log_marginal_likelihood().numpy()
         if lml > best:
@@ -237,11 +237,11 @@ def evaluate_model_future(m, test_starting, dynamics, time_setting, invs=None):
         if invs:
             invariance_on_true.append(inv_f(X[i-1,1,None])*dynamics(X[None,i-1,:])+inv_g(X[i-1,0,None])*X[i-1,1])
             invariance_on_predict.append(inv_f(predicted_future[i-1,1,None])*pred[0]+inv_g(predicted_future[i-1,0,None])*pred[1])
+    MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
     if invs:
         invariance_on_true.append(inv_f(X[-1,1,None])*dynamics(X[None,-1,:])+inv_g(X[-1,0,None])*X[-1,1])
         invariance_on_predict.append(inv_f(predicted_future[-1,1,None])*pred[0]+inv_g(predicted_future[-1,0,None])*pred[1])
-
-    MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
+        return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, invariance_on_true, invariance_on_predict)
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X)
 
 def evaluate_model_grid(m, grids, dynamics):
@@ -312,11 +312,12 @@ def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, 
             invariance_on_true.append(inv_f1(X[None,i-1,:])*dynamics1(X[None,i-1,:])+inv_f2(X[None,i-1,:])*dynamics2(X[None, i-1, :])+inv_g1(X[None,i-1,:])*X[i-1,2]+inv_g2(X[None,i-1,:])*X[i-1,3])
             invariance_on_predict.append(inv_f1(predicted_future[None,i-1,:])*pred[0,2]+inv_f2(predicted_future[None,i-1,:])*pred[0,3]+inv_g1(predicted_future[None,i-1,:])*pred[0,0]+inv_g2(predicted_future[None,i-1,:])*pred[0,1])
 
+
+    MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
     if invs:
         invariance_on_true.append(inv_f1(X[None,-1,:])*dynamics1(X[None,-1,:])+inv_f2(X[None,-1,:])*dynamics2(X[None, -1, :])+inv_g1(X[None,-1,:])*X[-1,2]+inv_g2(X[None,-1,:])*X[-1,3])
         invariance_on_predict.append(inv_f1(predicted_future[None,-1,:])*pred[0,2]+inv_f2(predicted_future[None,-1,:])*pred[0,3]+inv_g1(predicted_future[None,-1,:])*pred[0,0]+inv_g2(predicted_future[None,-1,:])*pred[0,1])
-
-    MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
+        return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, invariance_on_true, invariance_on_predict)
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X)
 
 def evaluate_model_grid_2D(m, grids, dynamics, scalers):
