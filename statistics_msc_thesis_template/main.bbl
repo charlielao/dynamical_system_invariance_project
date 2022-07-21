@@ -1,15 +1,15 @@
-\begin{thebibliography}{3}
+\begin{thebibliography}{4}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[Alligood et~al.(2000)Alligood, Sauer, and
-  Yorke]{alligood_sauer_yorke_2000}
-Kathleen~T. Alligood, Tim Sauer, and James~A. Yorke.
-\newblock \emph{Chaos: An introduction to dynamical systems}.
-\newblock Springer, 2000.
+\bibitem[Glendinning(1994)]{glendinning_1994}
+Paul Glendinning.
+\newblock \emph{Stability, instability and Chaos: An introduction to the theory
+  of nonlinear differential equations}.
+\newblock Cambridge University Press, 1994.
 
 \bibitem[Matthews et~al.(2017)Matthews, {van der Wilk}, Nickson, Fujii,
   {Boukouvalas}, {Le{\'o}n-Villagr{\'a}}, Ghahramani, and Hensman]{GPflow2017}
@@ -25,5 +25,11 @@ Alexander G. de~G. Matthews, Mark {van der Wilk}, Tom Nickson, Keisuke. Fujii,
 Carl~Edward Rasmussen and Christopher K~I Williams.
 \newblock \emph{Gaussian process for machine learning}.
 \newblock The MIT Press, 2006.
+
+\bibitem[Strogatz(2019)]{strogatz_2019}
+Steven Strogatz.
+\newblock \emph{Nonlinear Dynamics and Chaos: With applications to physics,
+  Biology, Chemistry and Engineering}.
+\newblock CRC Press, 2019.
 
 \end{thebibliography}
