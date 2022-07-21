@@ -18,7 +18,7 @@ training_time = 0.1
 testing_time = 1
 
 max_x = 5
-n_train = 3
+n_train = 5
 train_starting_position1 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_position2 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_velocity1 = np.random.uniform(-max_x/5, max_x/5, (n_train))

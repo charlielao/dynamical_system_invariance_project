@@ -189,7 +189,7 @@ def get_GPR_model_GD_2D(kernel, mean_function, data, iterations, lr):
     
     return m#, best_param
 
-def evaluate_model_future(m, test_starting, dynamics, time_setting, invs=None):
+def evaluate_model_future(m, test_starting, dynamics, time_setting, invs=None, known=None):
     test_starting_position, test_starting_velocity = test_starting
     total_time, time_step = time_setting
     likelihood = m.likelihood.variance.numpy()
@@ -216,11 +216,12 @@ def evaluate_model_future(m, test_starting, dynamics, time_setting, invs=None):
     predicted_future_variance_bottom[1, 1] = predicted_future[0, 1] - (pred[0]+1.96*np.sqrt(var[0]+likelihood))*time_step
     if invs:
         inv_f, inv_g = invs
-        invariance_on_true = []
-        invariance_on_predict = []
+        known_f, known_g = known
+        invariance_on_known = []
+        invariance_on_learnt = []
 
-        invariance_on_true.append(inv_f(X[0,1,None])*dynamics(X[None,0,:])+inv_g(X[0,0,None])*X[0,1])
-        invariance_on_predict.append(inv_f(predicted_future[0,1,None])*pred[0]+inv_g(predicted_future[0,0,None])*pred[1])
+        invariance_on_known.append(known_f(X[0,1])*dynamics(X[None,0,:])+known_g(X[0,0])*X[0,1])
+        invariance_on_learnt.append(inv_f(X[0,1,None, None])*dynamics(X[None,0,:])+inv_g(X[0,0,None, None])*X[0,1])
 
     for i in range(2, X.shape[0]):
         pred, var = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,2)))
@@ -235,13 +236,13 @@ def evaluate_model_future(m, test_starting, dynamics, time_setting, invs=None):
         predicted_future_variance_top[i, 1] = predicted_future[i-2, 1] + (pred[0]+1.96*np.sqrt(var[0]+likelihood))*2*time_step
         predicted_future_variance_bottom[i, 1] = predicted_future[i-2, 1] - (pred[0]+1.96*np.sqrt(var[0]+likelihood))*2*time_step
         if invs:
-            invariance_on_true.append(inv_f(X[i-1,1,None])*dynamics(X[None,i-1,:])+inv_g(X[i-1,0,None])*X[i-1,1])
-            invariance_on_predict.append(inv_f(predicted_future[i-1,1,None])*pred[0]+inv_g(predicted_future[i-1,0,None])*pred[1])
+            invariance_on_known.append(known_f(X[i-1,1])*dynamics(X[None,i-1,:])+known_g(X[i-1,0])*X[i-1,1])
+            invariance_on_learnt.append(inv_f(X[i-1,1,None, None])*dynamics(X[None,i-1,:])+inv_g(X[i-1,0,None, None])*X[i-1,1])
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
     if invs:
-        invariance_on_true.append(inv_f(X[-1,1,None])*dynamics(X[None,-1,:])+inv_g(X[-1,0,None])*X[-1,1])
-        invariance_on_predict.append(inv_f(predicted_future[-1,1,None])*pred[0]+inv_g(predicted_future[-1,0,None])*pred[1])
-        return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, invariance_on_true, invariance_on_predict)
+        invariance_on_known.append(known_f(X[-1,1])*dynamics(X[None,-1,:])+known_g(X[-1,0])*X[-1,1])
+        invariance_on_learnt.append(inv_f(X[-1,1,None, None])*dynamics(X[None,-1,:])+inv_g(X[-1,0,None, None])*X[-1,1])
+        return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, invariance_on_known, invariance_on_learnt)
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X)
 
 def evaluate_model_grid(m, grids, dynamics):
