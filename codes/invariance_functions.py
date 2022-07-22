@@ -249,8 +249,9 @@ def evaluate_model_grid(m, grids, dynamics):
     grid_range, grid_density = grids
     X = get_grid_of_points_1D(grid_range, grid_density)
     predicted = m.predict_f(X)[0]
+    predicted = tf.transpose(tf.reshape(predicted, (2, int(predicted.shape[0]/2))))
     Y = dynamics(X) #acceleration
-    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,None],X[:,1,None]],1)),(Y.shape[0]*2,1))))
+    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.concat([Y[:,None],X[:,1,None]],1)))
     return MSE.numpy()
 
 def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, invs=None, known=None):
@@ -327,13 +328,13 @@ def evaluate_model_grid_2D(m, grids, dynamics, scalers):
     dynamics1, dynamics2 = dynamics
     scalerX, scalerY = scalers
     X = get_grid_of_points_2D(grid_range, grid_density)
-    Y1 = dynamics1(X) #acceleration
-    Y2 = dynamics2(X) #acceleration
+    Y1 = dynamics1(X) #acceleration1
+    Y2 = dynamics2(X) #acceleration2
     predicted = m.predict_f(scalerX.transform(X))[0]
-    predicted = tf.roll(tf.transpose(predicted), shift=-2, axis=1)
+    predicted = tf.transpose(tf.reshape(predicted, (4, int(predicted.shape[0]/4))))
+    predicted = tf.roll(predicted, shift=-2, axis=1)
     predicted = scalerY.inverse_transform(predicted)
-    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([X[:,2,None], X[:,3,None],Y1[:,None], Y2[:,None]],1)),(Y.shape[0]*4,1))))
-    
+    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.concat([X[:,2,None], X[:,3,None],Y1[:,None], Y2[:,None]],1)))
     return MSE.numpy()
 
 def SHM_dynamics(X):
@@ -347,6 +348,18 @@ def SHM_dynamics2_2D(X):
 
 def pendulum_dynamics(X):
     return -np.sin(X[:,0])
+
+def double_pendulum_dynamics1(X):
+    x1 = X[:,0]; x2 = X[:,1]; v1 = X[:,2]; v2 = X[:,3]
+    numerator = -3*np.sin(x1)-np.sin(x1-2*x2)-2*np.sin(x1-x2)*(v2**2+v1**2*np.cos(x1-x2))
+    denominator = 3-np.cos(2*x1-2*x2)
+    return numerator/denominator
+
+def double_pendulum_dynamics2(X):
+    x1 = X[:,0]; x2 = X[:,1]; v1 = X[:,2]; v2 = X[:,3]
+    numerator = 2*np.sin(x1-x2)*(2*v1**2+2*np.cos(x1)+v2**2*np.cos(x1-x2))
+    denominator = 3-np.cos(2*x1-2*x2)
+    return numerator/denominator
 
 def damped_SHM_dynamics(X, gamma=0.1):
     return -X[:,0]-2*gamma*X[:,1]

@@ -87,7 +87,8 @@ try:
     print("Known: %s"%round(known.log_marginal_likelihood().numpy()))
     print(evaluate_known[0])
     '''
-    eva = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, (kernel.inv_f1, kernel.inv_f2, kernel.inv_g1, kernel.inv_g2), (lambda x: x[2], lambda x: x[3], lambda x:x[0], lambda x:x[1]))
+#    eva = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, (kernel.inv_f1, kernel.inv_f2, kernel.inv_g1, kernel.inv_g2), (lambda x: x[2], lambda x: x[3], lambda x:x[0], lambda x:x[1]))
+    eva = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, (kernel.inv_f1, kernel.inv_f2, kernel.inv_g1, kernel.inv_g2), (lambda x: 2*x[2]+x[3]*np.cos(x[0]-x[1]), lambda x: x[3]+x[2]*np.cos(x[0]-x[1]), lambda x:2*np.sin(x[0])-x[2]*x[3]*np.sin(x[0]-x[1]), lambda x:np.sin(x[1])+x[2]*x[3]*np.sin(x[0]-x[1])))
 
     plt.plot(eva[5])
     plt.plot(eva[6])
