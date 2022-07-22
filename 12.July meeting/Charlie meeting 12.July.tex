@@ -1,0 +1,63 @@
+\documentclass{article}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{mathtools}
+\usepackage{amsmath,amssymb}
+\usepackage{siunitx}
+\usepackage{listings}
+\usepackage{bbm}
+\usepackage[most]{tcolorbox}
+\newcommand{\e}[1]{{\mathbb E}\left[ #1 \right]}
+\definecolor{block-gray}{gray}{0.90}
+\newtcolorbox{code}{colback=block-gray,grow to right by=-1mm,grow to left by=-1mm,boxrule=0pt,boxsep=0pt,breakable}
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+}
+
+\title{\vspace{-3cm}Charlie meeting 12th July\vspace{-3em}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\section*{Meeting}
+In today's meeting, I asked Andrew about some questions regarding the training of polynomial basis in 2D.
+He gave me a lot of suggestions.
+\begin{enumerate}
+  \item Scale the data so that it is between $\pm 1$
+  \item Or we can scale the polynomial coefficients according to maximum range; for example 0 to 5, the cubic coefficients should be divied by $5^3.$
+  \item I can also use Legrenge polynomial, which is orthogonal and can be more stable.
+\end{enumerate}
+He also said something about compute covariance matrix of the coefficients and normalise it to 1 but its probably too complicated. 
+Also, for the local grid, I should fix it once I have my data instead of changing it everytime the kernel is called. 
+He also said scipy optimiser will be more stable than slow gradient descent.
+Pruning is good after done with optimisation. Not necessary during the training, since it might not be stable. 
+He said it's not good to temper with an optimiser. 
+
+For 2D invariance, I can compute the energy over time so that we can see how good an invariance it is. 
+We also addressed the problem that if we fix the lengthscales, the invariance kernel is not better, this makes sense because the lengthscales and hyperparameters restrict the function class we have. 
+If the hyperparameters are wrong so that maybe the function class is too restrictive, then even if we have the correct invariance it would be useless. 
+An intuition is that since will will have lower degree of freedom after conditioning on invariance, the hyperparameters have to somehow compensate for that.
+
+We also talked about the new projects we discussed last time.
+It is essentially like if we have a 3D space that follows some sort of dynamical system. However, we only observe the trajectory in 2D space through a projection of some sort. 
+We then want to infer the missing dimesions using the fact that the observed trajectory plus the missing trajectory will obey the invariance. 
+In terms of physical system, it is like we said. 
+The entire world is a higher dimension system then the ones we observe. 
+For example, in a dissipative system, we observe the trajectory after friction and that the conservation of energy is not conserved. 
+However, once we take account of the enviroment where the heat goes, it is conserved. 
+Andrew suggests that in my 2D system, I can take away one dimension. 
+Or even, in 1D system, takes away velocity and just observe position. Then we should see exchange between kinetic (velocity based) and potential energy (position based) since the missing potential energy goes to kinetic, and the total energy system is conserved.
+
+\end{document}
+
