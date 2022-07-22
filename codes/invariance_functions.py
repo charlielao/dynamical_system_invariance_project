@@ -253,7 +253,7 @@ def evaluate_model_grid(m, grids, dynamics):
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.reshape(tf.transpose(tf.concat([Y[:,None],X[:,1,None]],1)),(Y.shape[0]*2,1))))
     return MSE.numpy()
 
-def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, invs=None):
+def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, invs=None, known=None):
     test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2 = test_starting
     dynamics1, dynamics2 = dynamics
     total_time, time_step = time_setting
@@ -288,11 +288,12 @@ def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, 
 
     if invs:
         inv_f1, inv_f2, inv_g1, inv_g2 = invs
-        invariance_on_true = []
-        invariance_on_predict = []
+        known_f1, known_f2, known_g1, known_g2 = known
+        invariance_on_known = []
+        invariance_on_learnt = []
 
-        invariance_on_true.append(inv_f1(X[None, 0,:])*dynamics1(X[None,0,:])+inv_f2(X[None, 0,:])*dynamics2(X[None, 0, :])+inv_g1(X[None, 0,:])*X[0,2]+inv_g2(X[None, 0,:])*X[0,3])
-        invariance_on_predict.append(inv_f1(predicted_future[None,0,:])*pred[0,2]+inv_f2(predicted_future[None,0,:])*pred[0,3]+inv_g1(predicted_future[None,0,:])*pred[0,0]+inv_g2(predicted_future[None,0,:])*pred[0,1])
+        invariance_on_known.append(known_f1(X[0,:])*dynamics1(X[None,0,:])+known_f2(X[0,:])*dynamics2(X[None, 0, :])+known_g1(X[0,:])*X[0,2]+known_g2(X[0,:])*X[0,3])
+        invariance_on_learnt.append(inv_f1(X[None, 0,:])*dynamics1(X[None,0,:])+inv_f2(X[None, 0,:])*dynamics2(X[None, 0, :])+inv_g1(X[None, 0,:])*X[0,2]+inv_g2(X[None, 0,:])*X[0,3])
 
     for i in range(2, X.shape[0]):
         pred, var = m.predict_f(scalerX.transform(to_default_float(predicted_future[i-1,:].reshape(1,4))))
@@ -310,15 +311,15 @@ def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, 
         X[i,3] = X[i-2,3] + dynamics2(X[None,i-1,:])*2*time_step
 
         if invs:
-            invariance_on_true.append(inv_f1(X[None,i-1,:])*dynamics1(X[None,i-1,:])+inv_f2(X[None,i-1,:])*dynamics2(X[None, i-1, :])+inv_g1(X[None,i-1,:])*X[i-1,2]+inv_g2(X[None,i-1,:])*X[i-1,3])
-            invariance_on_predict.append(inv_f1(predicted_future[None,i-1,:])*pred[0,2]+inv_f2(predicted_future[None,i-1,:])*pred[0,3]+inv_g1(predicted_future[None,i-1,:])*pred[0,0]+inv_g2(predicted_future[None,i-1,:])*pred[0,1])
+            invariance_on_known.append(known_f1(X[i-1,:])*dynamics1(X[None,i-1,:])+known_f2(X[i-1,:])*dynamics2(X[None, i-1, :])+known_g1(X[i-1,:])*X[i-1,2]+known_g2(X[i-1,:])*X[i-1,3])
+            invariance_on_learnt.append(inv_f1(X[None, i-1,:])*dynamics1(X[None,i-1,:])+inv_f2(X[None, i-1,:])*dynamics2(X[None, i-1, :])+inv_g1(X[None, i-1,:])*X[i-1,2]+inv_g2(X[None, i-1,:])*X[i-1,3])
 
 
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
     if invs:
-        invariance_on_true.append(inv_f1(X[None,-1,:])*dynamics1(X[None,-1,:])+inv_f2(X[None,-1,:])*dynamics2(X[None, -1, :])+inv_g1(X[None,-1,:])*X[-1,2]+inv_g2(X[None,-1,:])*X[-1,3])
-        invariance_on_predict.append(inv_f1(predicted_future[None,-1,:])*pred[0,2]+inv_f2(predicted_future[None,-1,:])*pred[0,3]+inv_g1(predicted_future[None,-1,:])*pred[0,0]+inv_g2(predicted_future[None,-1,:])*pred[0,1])
-        return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, invariance_on_true, invariance_on_predict)
+        invariance_on_known.append(known_f1(X[-1,:])*dynamics1(X[None,-1,:])+known_f2(X[-1,:])*dynamics2(X[None, -1, :])+known_g1(X[-1,:])*X[-1,2]+known_g2(X[-1,:])*X[-1,3])
+        invariance_on_learnt.append(inv_f1(X[None, -1,:])*dynamics1(X[None,-1,:])+inv_f2(X[None, -1,:])*dynamics2(X[None, -1, :])+inv_g1(X[None, -1,:])*X[-1,2]+inv_g2(X[None, -1,:])*X[-1,3])
+        return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, invariance_on_known, invariance_on_learnt)
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X)
 
 def evaluate_model_grid_2D(m, grids, dynamics, scalers):

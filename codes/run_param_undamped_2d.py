@@ -10,7 +10,8 @@ from invariance_functions import degree_of_freedom, get_GPR_model_2D, get_SHM_da
 from local_invariance_kernels import  get_polynomial_local_invariance_2D, get_SHM_local_invariance_2D, get_double_pendulum_local_invariance
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = '6'
+import matplotlib.pyplot as plt
+os.environ["CUDA_VISIBLE_DEVICES"] = '4'
 mean = ZeroMean(4) 
 
 time_step = 0.01
@@ -86,5 +87,11 @@ try:
     print("Known: %s"%round(known.log_marginal_likelihood().numpy()))
     print(evaluate_known[0])
     '''
+    eva = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, (kernel.inv_f1, kernel.inv_f2, kernel.inv_g1, kernel.inv_g2), (lambda x: x[2], lambda x: x[3], lambda x:x[0], lambda x:x[1]))
+
+    plt.plot(eva[5])
+    plt.plot(eva[6])
+    plt.show()
+    plt.savefig("test.pdf")
 except tf.errors.InvalidArgumentError:
     print("jitter too small")
