@@ -164,7 +164,7 @@ def get_GPR_model_GD_2D(kernel, mean_function, data, iterations, lr):
         optimization_step()
         lml = m.log_marginal_likelihood().numpy()
         print(round(lml)," ", j, end="\r")#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
-    m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(abs(x)<1e-3, 0 , x), m.kernel.poly.numpy()))
+    m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(abs(x)<1e-4, 0 , x), m.kernel.poly.numpy()))
     for j in range(int(iterations/1000)):
         optimization_step()
         lml = m.log_marginal_likelihood().numpy()

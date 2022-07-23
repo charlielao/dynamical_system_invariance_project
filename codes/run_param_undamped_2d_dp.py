@@ -6,20 +6,20 @@ import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 from invariance_kernels import ZeroMean , get_MOI, get_MOI_2D, get_SHM_invariance_2D 
-from invariance_functions import degree_of_freedom, get_GPR_model_2D, get_SHM_data_2D, get_double_pendulum_data, evaluate_model_future_2D, evaluate_model_grid_2D, SHM_dynamics1_2D, SHM_dynamics2_2D, get_GPR_model_GD_2D
+from invariance_functions import degree_of_freedom, get_GPR_model_2D, get_SHM_data_2D, get_double_pendulum_data, evaluate_model_future_2D, evaluate_model_grid_2D, SHM_dynamics1_2D, SHM_dynamics2_2D, get_GPR_model_GD_2D, double_pendulum_dynamics1, double_pendulum_dynamics2
 from local_invariance_kernels import  get_polynomial_local_invariance_2D, get_SHM_local_invariance_2D, get_double_pendulum_local_invariance
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import os
 import matplotlib.pyplot as plt
-os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+os.environ["CUDA_VISIBLE_DEVICES"] = '4'
 mean = ZeroMean(4) 
 
 time_step = 0.01
 training_time = 0.1
 testing_time = 3
 
-max_x = 5
-max_v = 0.5
+max_x = 60
+max_v = 10
 n_train = 5
 train_starting_position1 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_position2 = np.random.uniform(-max_x, max_x, (n_train))
@@ -31,7 +31,7 @@ print(train_starting_position2)
 print(train_starting_velocity1)
 print(train_starting_velocity2)
 
-data2 = get_SHM_data_2D(time_step, training_time, 1e-8, train_starting_position1, train_starting_position2, train_starting_velocity1, train_starting_velocity2) #switch
+data2 = get_double_pendulum_data(time_step, training_time, 1e-8, train_starting_position1, train_starting_position2, train_starting_velocity1, train_starting_velocity2) #switch
 
 #scalerX = StandardScaler(with_mean=False, with_std=False).fit(data2[0])
 #scalerY = StandardScaler(with_mean=False, with_std=False).fit(data2[1])
@@ -42,7 +42,7 @@ Y = scalerY.transform(data2[1])
 data = (X, Y)
 scalers = (scalerX, scalerY)
 time_setting = (testing_time, time_step)
-dynamics = (SHM_dynamics1_2D, SHM_dynamics2_2D)
+dynamics = (double_pendulum_dynamics1, double_pendulum_dynamics2)
 jitter = 1e-5
 
 eva_future_moi = []
@@ -53,9 +53,9 @@ print("moi")
 moi = get_GPR_model_2D(get_MOI_2D(), mean, data, 100)
 print(moi.log_marginal_likelihood().numpy())
 try:
-    n_neighbours = 30
+    n_neighbours = 40
     print("known")
-    kernel = get_SHM_local_invariance_2D(0.1, 1, n_neighbours, jitter) #switch
+    kernel = get_double_pendulum_local_invariance(0.1, 1, n_neighbours, jitter) #switch
     known = get_GPR_model_2D(kernel, mean, data, iterations=1000)
     print(known.log_marginal_likelihood().numpy())
 
@@ -74,9 +74,9 @@ try:
     known.predict_f_compiled(samples_input)
     m.predict_f_compiled(samples_input)
 
-    tf.saved_model.save(moi, "shm_2d_model/moi")
-    tf.saved_model.save(known, "shm_2d_model/known")
-    tf.saved_model.save(m, "shm_2d_model/m")
+    tf.saved_model.save(moi, "double_pendulum_model/moi")
+    tf.saved_model.save(known, "double_pendulum_model/known")
+    tf.saved_model.save(m, "double_pendulum_model/m")
 
     '''
     #loaded_moi = tf.saved_model.load("shm_2d_model/moi")
