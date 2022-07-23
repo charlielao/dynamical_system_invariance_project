@@ -630,11 +630,13 @@ Which is to take samples in the local region around training and testing points 
 We will illustrate a lot of examples in 1D cases since the results are easy to visualise, but the principle readily extend to high dimensional spaces. 
 
 \subsection{SHM}
-We start with the 1D SHM case, we will have only one trajectory starting randomly $-5\le q\le5$ and $p$ to be between $\pm 0.5$ it does not overshoot the boundary, and we allow it to run for $0.1$ seconds so there will be in total 10 training points. 
-We will then draw three test point from $q$ between $\pm 5$, to test the performance of the future predictive power for 3 seconds and average over. 
-We will choose one at random and draw the future trajectories.
+We start with the 1D SHM case, and for the data we will have only one trajectory starting randomly for $-5\le q\le5$ and $p$ to be between $\pm 0.5$ so that it does not overshoot the boundary, and we allow it to run for $0.1$ seconds so there will be in total 10 training points. 
+We will then draw three test point from the same range as training, to test the performance of the future predictive power for 3 seconds (300 points) and average over the three trajectories. 
+In figure \ref{fig:shm_prediction}, we will choose one at random and draw the future trajectories.
 We will then evaluate the the recovery of ground truth dynamics $a=-q$ and $v=p$ between $q, p=\pm 5$ of 40 by 40.
-The performance is summarised in table with jitter $1\times 10^{-5}$ with invariance density of 40 within $\pm 5$. 
+The performance is summarised in table \ref{tab:shm_performance} with jitter $1\times 10^{-5}$ with invariance density of 40 within $\pm 5$. 
+We have also plotted the posterior distribution of using invariance kernel and compare that to using naive RBF kernel in figure \ref{fig:posterior_shm}.
+We can see the invariance has much better predictive power and generalisability.
 \begin{table}[H]
   \centering
   \begin{tabular}{l l l l }
@@ -651,14 +653,14 @@ Invariance Kernel & 82.75 & 0.1007 & 3.8778 \\
 
 \begin{figure}[H]
      \centering
-     \begin{subfigure}[b]{\linewidth}
+     \begin{subfigure}[b]{0.6\linewidth}
         \centering
         \includegraphics[width=\linewidth]{../codes/figures/shm_predicted_trajectory.pdf}
         \caption{SHM predicted trajectory}
         \label{fig:shm_prediction_combined}
      \end{subfigure}
      \hfill
-     \begin{subfigure}[b]{\linewidth}
+     \begin{subfigure}[b]{0.6\linewidth}
          \centering
          \includegraphics[width=\linewidth]{../codes/figures/shm_predicted_trajectory_seperate.pdf}
          \caption{SHM predicted trajectory with $q, p$ seperated}
@@ -689,10 +691,10 @@ Invariance Kernel & 82.75 & 0.1007 & 3.8778 \\
 
 \subsection{Pendulum}
 The procedure is pretty much the same here that we will draw a single training example between $q=\pm 150^{\circ}$ and $\pm 10^{\circ}$ for $p$.
-The rest is the same and we will do a test from $\pm 150^{\circ}$ too.
-Again, the invariance is conditioned from $\pm 150^{\circ}$ with invariance density of 20 with jitter $10^{-5}$.
-Evalute restoring dynamics on a $\pm 150^{\circ}$ too.
-Jitter is $10^{-5}$
+The rest of the procedure is the same as the SHM case.
+Again, the invariance is conditioned between $\pm 150^{\circ}$ with invariance density of 20 with jitter $1\times 10^{-5}$.
+We again have the prediction performance summarised in table \ref{tab:pendulum_performance} as well as figures \ref{fig:pendulum_prediction}, \ref{fig:posterior_pendulum}.
+We again see a much better improvement in performance even in this nonlinear case. 
 \begin{table}[H]
   \centering
   \begin{tabular}{ c c c c c}
@@ -709,17 +711,17 @@ Invariance Kernel & 85.33 & 0.0040 & 0.0393 \\
 
 \begin{figure}[H]
      \centering
-     \begin{subfigure}[b]{\linewidth}
+     \begin{subfigure}[b]{0.6\linewidth}
         \centering
         \includegraphics[width=\linewidth]{../codes/figures/pendulum_predicted_trajectory.pdf}
         \caption{Pendulum predicted trajectory}
         \label{fig:pendulum_prediction_combined}
      \end{subfigure}
      \hfill
-     \begin{subfigure}[b]{\linewidth}
+     \begin{subfigure}[b]{0.6\linewidth}
          \centering
          \includegraphics[width=\linewidth]{../codes/figures/pendulum_predicted_trajectory_seperate.pdf}
-         \caption{ Pendulum predicted trajectory with $q, p$ seperated}
+         \caption{Pendulum predicted trajectory with $q, p$ seperated}
          \label{fig:pendulum_prediction_seperate}
      \end{subfigure}
         \caption{Pendulum predictions}
@@ -745,23 +747,25 @@ Invariance Kernel & 85.33 & 0.0040 & 0.0393 \\
         \label{fig:posterior_pendulum}
 \end{figure}
 
+Here we also include the prior distribution of RBF kernel in figure \ref{fig:prior_shm_rbf}, SHM invariance kernel in figure \ref{fig:prior_shm_invariance} and pendulum invariance kernel in figure \ref{fig:prior_pendulum_invariance}.
+We can see the prior knowledge of the dynamics, such as the linearity in SHM as well as the sinusoidal nature of pendulum dynamics. 
 \begin{figure}[H]
      \centering
-     \begin{subfigure}[b]{\linewidth}
+     \begin{subfigure}[b]{0.5\linewidth}
         \centering
         \includegraphics[width=\linewidth]{../codes/figures/prior_shm_rbf.pdf}
         \caption{RBF prior}
         \label{fig:prior_shm_rbf}
      \end{subfigure}
      \hfill
-     \begin{subfigure}[b]{\linewidth}
+     \begin{subfigure}[b]{0.5\linewidth}
          \centering
          \includegraphics[width=\linewidth]{../codes/figures/prior_shm_invariance.pdf}
          \caption{SHM invariance prior}
          \label{fig:prior_shm_invariance}
      \end{subfigure}
      \hfill
-     \begin{subfigure}[b]{\linewidth}
+     \begin{subfigure}[b]{0.5\linewidth}
          \centering
          \includegraphics[width=\linewidth]{../codes/figures/prior_pendulum_invariance.pdf}
          \caption{Pendulum invariance prior}
@@ -771,13 +775,39 @@ Invariance Kernel & 85.33 & 0.0040 & 0.0393 \\
         \label{fig:priors}
 \end{figure}
 
+\subsection{Invariance Density}
+Here we will to explore how the change of invariance density could affect the performance of the kernel as well as degree of freedom.
+Since 1D SHM is rather trival, I will test it on the nonlinear pendulum case. 
+We will assess its perdiction power using the same method above and we will also calculate its degree of freedom using equation.
+We can see that beyond a certain point, the increase in performance is not that significant but the computation cost in terms of time and space all increases dramatically.
+Therefore, from here, we will only use the minimum number of invariance points that ensure the performance of the invariance kernel. 
 
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_invariance_density.pdf}
+  \centering
+  \caption{Effect of varying invariance density}
+  \label{fig:vary_invariance_density}
+\end{figure}
+
+\subsection{Effect of Jitter}
+Since we need a little bit of jitter to stabilise the computation of our invariance kernel as explained above, and that adding jitter is the same as adding noise to the invariance (since we are adding it on the diagonal of $D$ submatrix), we need to make sure it is not too noisy. So we will again assess the performance using different amount of jitter.
+We can again see beyond a certain point, the performance does not change. 
+While the lower the jitter, the higher the performance should be in theory; the instability of matrix inversion and numerical errors could cause a drop in performance.
+As a result, now we will also choose the smallest amount of jitter that remains stable.  
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_jitter_density.pdf}
+  \centering
+  \caption{Effect of varying jitter}
+  \label{fig:vary_jitter}
+\end{figure}
 
 \subsection{Damped SHM}
-We now have double the amount of data (20 points) since it is a more difficult problem.
-The results is the same, and the learnt $\epsilon$ is summarised in table. Learnt epsilon 
-
-$0.0297$
+In damped system, we introduce a damping of $\gamma=0.1$, which is very high already.
+The rest of the setting is essentially the same as undamped SHM case.
+However, this time we use double the amount of data (20 points) since it is a more difficult problem.
+The results is again summarised in table \ref{tab:damped_shm_performance} and figure \ref{fig:damped_shm_prediction}, and the learnt $\epsilon$ is $0.0297$, which is not too high a noise.
+We see that even in damped cases, the knowledge of conservation of energy is helpful.
 \begin{table}[H]
   \centering
   \begin{tabular}{l l l l}
@@ -812,9 +842,11 @@ Invariance Kernel & 147.43 & 0.2790 & 3.5804 \\
 \end{figure}
 
 \subsection{Damped Pendulum}
-We kept at 10 points data since the phase space is smaller than that of SHM. 
-The results is the same, and the learnt $\epsilon$ is summarised in table. With setting exactly the same as the pendulum case and $\gamma=0.1$
-Learnt epsilon is $0.0014$
+Again, the setting is almost the same as the undamped pendulum, and $\gamma=0.1$. 
+Also, this time we kept at 10 data points since the phase space is smaller than that of SHM. 
+The results is summarised in table \ref{tab:damped_pendulum_performance} and figure \ref{fig:damped_pendulum_prediction}, and the learnt $\epsilon$ is $0.0014$, again not too high.
+We again see an improvement using invariance kernel in this damped nonlinear case. 
+
 \begin{table}[H]
   \centering
   \begin{tabular}{l l l l}
@@ -849,34 +881,61 @@ Invariance Kernel & 82.96 & 0.1029 & 0.4788 \\
         \label{fig:damped_pendulum_prediction}
 \end{figure}
 
-\section{Invariance Density}
-Here we will to explore how the change of invariance density could affect the performance of the kernel as well as degree of freedom.
-Since 1D SHM is rather trival, I will test it on the nonlinear pendulum case. 
-Between -160 and 160, fix jitter at 1e-5
-recover dynamics between 160.
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_invariance_density.pdf}
-  \centering
-  \caption{Effect of varying invariance density}
-  \label{fig:vary_invariance_density}
-\end{figure}
-
-\section{Effect of Jitter}
-Since we need a little bit of jitter to stabilise the computation of our invariance kernel, since adding jitter is the same as adding noise to the invariance (since we are adding it on the $D$ submatrix) so that we need to make sure it is not too much. So we will again assess the performance 
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_jitter_density.pdf}
-  \centering
-  \caption{Effect of varying jitter}
-  \label{fig:vary_jitter}
-\end{figure}
 
 \section{2D}
+\subsection{SHM}
+Here we again use the same set of input space as the 1D space, but double the dimensions. 
+The results are summarised in table \ref{tab:SHM_2d_performance} and figure \ref{fig:shm_2d_prediction}.
+Since 4 dimensional space is difficult to visualise, only individual prediction of the trajectory is provided. 
+\begin{table}[H]
+  \centering
+  \begin{tabular}{l l l }
+    \hline
+                    & log marignal liklihood &  prediction MSE  \\
+    \hline
+Baseline RBF & 402.62 & 7.7531 \\
+Invariance Kernel & 446.76 & 1.3978 \\
+    \hline
+  \end{tabular}
+  \caption{2D SHM Invariance performance}
+  \label{tab:SHM_2d_performance}
+\end{table}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_2d_predicted_trajectory.pdf}
+  \centering
+  \caption{2D SHM prediction}
+  \label{fig:shm_2d_prediction}
+\end{figure}
+
+\subsection{Double Pendulum}
+With double pendulum, we have angles being between $\pm 60^\circ$ and angular velocity between $\pm 10^\circ$.
+The results are summarised in table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}.
+\begin{table}[H]
+  \centering
+  \begin{tabular}{l l l }
+    \hline
+                    & log marignal liklihood &  prediction MSE  \\
+    \hline
+Baseline RBF & 459.80 & 1.5658 \\
+Invariance Kernel & 475.22 & 0.1457 \\
+    \hline
+  \end{tabular}
+  \caption{Double pendulum Invariance performance}
+  \label{tab:double_pendulum_performance}
+\end{table}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/double_pendulum_predicted_trajectory.pdf}
+  \centering
+  \caption{Double pendulum prediction}
+  \label{fig:double_pendulum_prediction}
+\end{figure}
+
 
 \section{Learning 1D invariance}
 \subsection{SHM}
-We will test all combination of polynomial of degree 0, 1, 2, 3 so there will be 16 of them, and we will choose the ones with highest marginal likelihood.
+We will test all combination of polynomial of degree 0, 1, 2, 3, 4, 5 so there will be 36 of them, and we will choose the ones with highest marginal likelihood.
 We put a prior of Laplace distribution of all the coefficients with variance $0.1$ to encourage sparsity and we initialise the coefficients with normal distribution with variance of $10^{-3}$, we also restrict the search between $\pm 1$.
 This is done by 20 training points (2 random start points) since we need more data to learn parameters.
 Data is again between $\pm 5$ so is the invariance conditioning.
@@ -1146,50 +1205,6 @@ Parameterised Invariance Kernel & 239.57 & 0.0704 & 0.0705 \\
 \end{figure}
 
 \section{Learning 2D invariance}
-
-\subsection{SHM}
-\begin{table}[H]
-  \centering
-  \begin{tabular}{l l l }
-    \hline
-                    & log marignal liklihood &  prediction MSE  \\
-    \hline
-Baseline RBF & 402.62 & 7.7531 \\
-Invariance Kernel & 446.76 & 1.3978 \\
-    \hline
-  \end{tabular}
-  \caption{2D SHM Invariance performance}
-  \label{tab:SHM_2d_performance}
-\end{table}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_2d_predicted_trajectory.pdf}
-  \centering
-  \caption{2D SHM prediction}
-  \label{fig:shm_2d_prediction}
-\end{figure}
-
-\subsection{Double Pendulum}
-\begin{table}[H]
-  \centering
-  \begin{tabular}{l l l }
-    \hline
-                    & log marignal liklihood &  prediction MSE  \\
-    \hline
-Baseline RBF & 459.80 & 1.5658 \\
-Invariance Kernel & 475.22 & 0.1457 \\
-    \hline
-  \end{tabular}
-  \caption{Double pendulum Invariance performance}
-  \label{tab:double_pendulum_performance}
-\end{table}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/double_pendulum_predicted_trajectory.pdf}
-  \centering
-  \caption{Double pendulum prediction}
-  \label{fig:double_pendulum_prediction}
-\end{figure}
 
 
 
