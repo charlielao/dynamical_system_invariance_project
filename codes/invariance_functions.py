@@ -141,6 +141,12 @@ def get_GPR_model_2D(kernel, mean_function, data, iterations):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
+
+#   log_dir_scipy = f"{log_dir}/scipy"
+#    model_task = ModelToTensorBoard(log_dir_scipy, model)
+#    lml_task = ScalarToTensorBoard(log_dir_scipy, lambda: model.training_loss(), "training_objective")
+
+#    monitor = Monitor(MonitorTaskGroup([model_task, lml_task], period=1), MonitorTaskGroup(image_task, period=5))
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables,  options=dict(maxiter=iterations), step_callback=callback)
     return m
 
@@ -153,23 +159,25 @@ class GPR_with_sparse(gpflow.models.GPR):
         return self.log_marginal_likelihood()-self.reg*(tf.reduce_sum(tf.abs(self.kernel.poly)))
 '''
 
-def get_GPR_model_GD_2D(kernel, mean_function, data, iterations, lr):
-    X, Y = data
-    m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
+def get_GPR_model_GD_2D(model, iterations, lr, manager):
     opt = tf.optimizers.Adam(learning_rate=lr)
+
     @tf.function
-    def optimization_step():
+    def optimization_step(m):
         opt.minimize(m.training_loss, m.trainable_variables)
+
     for j in range(iterations):
-        optimization_step()
-        lml = m.log_marginal_likelihood().numpy()
+        optimization_step(model)
+        lml = model.log_marginal_likelihood().numpy()
         print(round(lml)," ", j, end="\r")#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
-    m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(abs(x)<1e-4, 0 , x), m.kernel.poly.numpy()))
+        if j%1000==0:
+            manager.save()
+    m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(abs(x)<1e-5, 0 , x), m.kernel.poly.numpy()))
     for j in range(int(iterations/1000)):
-        optimization_step()
-        lml = m.log_marginal_likelihood().numpy()
+        optimization_step(model)
+        lml = model.log_marginal_likelihood().numpy()
         print(round(lml)," ", j, end="\r")#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
-    return m
+    return model
 
 def evaluate_model_future(m, test_starting, dynamics, time_setting, invs=None, known=None):
     test_starting_position, test_starting_velocity = test_starting

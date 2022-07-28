@@ -9,9 +9,10 @@ from invariance_kernels import ZeroMean , get_MOI, get_MOI_2D, get_SHM_invarianc
 from invariance_functions import degree_of_freedom, get_GPR_model_2D, get_SHM_data_2D, get_double_pendulum_data, evaluate_model_future_2D, evaluate_model_grid_2D, SHM_dynamics1_2D, SHM_dynamics2_2D, get_GPR_model_GD_2D
 from local_invariance_kernels import  get_polynomial_local_invariance_2D, get_SHM_local_invariance_2D, get_double_pendulum_local_invariance
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import joblib
 import os
 import matplotlib.pyplot as plt
-os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+os.environ["CUDA_VISIBLE_DEVICES"] = '5'
 mean = ZeroMean(4) 
 
 time_step = 0.01
@@ -20,7 +21,7 @@ testing_time = 3
 
 max_x = 5
 max_v = 0.5
-n_train = 5
+n_train = 10 
 train_starting_position1 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_position2 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_velocity1 = np.random.uniform(-max_v, max_v, (n_train))
@@ -43,7 +44,7 @@ data = (X, Y)
 scalers = (scalerX, scalerY)
 time_setting = (testing_time, time_step)
 dynamics = (SHM_dynamics1_2D, SHM_dynamics2_2D)
-jitter = 1e-5
+jitter = 5e-5
 
 eva_future_moi = []
 eva_future_inv = []
@@ -55,34 +56,42 @@ print(moi.log_marginal_likelihood().numpy())
 try:
     n_neighbours = 30
     print("known")
-    kernel = get_SHM_local_invariance_2D(0.1, 1, n_neighbours, jitter) #switch
+    kernel = get_SHM_local_invariance_2D(0, 1, n_neighbours, jitter) #switch
     known = get_GPR_model_2D(kernel, mean, data, iterations=1000)
     print(known.log_marginal_likelihood().numpy())
 
     polynomial_degree = 3
     print("polynomial local")
-    kernel = get_polynomial_local_invariance_2D(0.1, 1, n_neighbours, jitter, polynomial_degree ) #switch
-    m = get_GPR_model_GD_2D(kernel, mean, data, iterations=30000, lr=0.001)
-    print(m.log_marginal_likelihood().numpy())
+    X, Y = data
+    kernel = get_polynomial_local_invariance_2D(0, 1, n_neighbours, jitter, polynomial_degree ) 
+    model = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean)
+    ckpt = tf.train.Checkpoint(model=model)
+    manager = tf.train.CheckpointManager(ckpt, "shm_2d", max_to_keep=3)
+    model = get_GPR_model_GD_2D(model=model, iterations=50000, lr=0.001, manager=manager)
+    print(model.log_marginal_likelihood().numpy())
 
-    moi.predict_f_compiled = tf.function(moi.predict_f)
-    known.predict_f_compiled = tf.function(known.predict_f)
-    m.predict_f_compiled = tf.function(m.predict_f)
+#    moi.predict_f_compiled = tf.function(moi.predict_f)
+#    known.predict_f_compiled = tf.function(known.predict_f)
+#    m.predict_f_compiled = tf.function(m.predict_f)
 
-    samples_input = tf.convert_to_tensor(data[0])
-    moi.predict_f_compiled(samples_input)
-    known.predict_f_compiled(samples_input)
-    m.predict_f_compiled(samples_input)
+#    samples_input = tf.convert_to_tensor(data[0])
+#    moi.predict_f_compiled(samples_input)
+#    known.predict_f_compiled(samples_input)
+#    m.predict_f_compiled(samples_input)
 
-    tf.saved_model.save(moi, "shm_2d_model/moi")
-    tf.saved_model.save(known, "shm_2d_model/known")
-    tf.saved_model.save(m, "shm_2d_model/m")
+#    tf.saved_model.save(moi, "shm_2d_model/moi")
+#    tf.saved_model.save(known, "shm_2d_model/known")
+#    tf.saved_model.save(m, "shm_2d_model/m")
+    joblib.dump(scalerX, 'shm_2d/scalerX.gz')
+    joblib.dump(scalerY, 'shm_2d/scalerY.gz')
 
     '''
-    #loaded_moi = tf.saved_model.load("shm_2d_model/moi")
-    #loaded_known = tf.saved_model.load("shm_2d_model/known")
-    #loaded_m = tf.saved_model.load("shm_2d_model/m")
-    #loaded_result = loaded_model.predict_f_compiled(samples_input)
+    scalerX = joblib.load('scalerX.gz')
+    scalerY = joblib.load('scalerY.gz')
+    loaded_moi = tf.saved_model.load("shm_2d_model/moi")
+    loaded_known = tf.saved_model.load("shm_2d_model/known")
+    loaded_m = tf.saved_model.load("shm_2d_model/m")
+    loaded_result = loaded_model.predict_f_compiled(samples_input)
     for i in range(3):
         print(i)
         test_starting_position1 = np.random.uniform(-max_x, max_x)
