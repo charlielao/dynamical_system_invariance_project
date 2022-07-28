@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex main"] 1658576797 "main.aux" "main.bbl" "main" 1658576948
+["bibtex main"] 1658594556 "main.aux" "main.bbl" "main" 1658594571
   "c:/texlive/2021/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1643575256 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "main.aux" 1658576947 32690 15cd16315be350c86af81ba18a1d3718 "pdflatex"
+  "main.aux" 1658594568 32717 4e5095c8a5990d151a3f09137e21db4f "pdflatex"
   "refs.bib" 1658310154 1324 04db8c79a3ccbe7cbbe08304035ad737 ""
   (generated)
   "main.bbl"
   "main.blg"
-["pdflatex"] 1658576942 "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/main.tex" "main.pdf" "main" 1658576948
+["pdflatex"] 1658594558 "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/main.tex" "main.pdf" "main" 1658594571
   "../codes/figures/damped_pendulum_predicted_trajectory.pdf" 1658438584 14302 0b77fcf7d7c510b35061af77553eb0c0 ""
   "../codes/figures/damped_pendulum_predicted_trajectory_seperate.pdf" 1658438584 31651 0cd7ccdf11fdc8be8ffb271cab028ae1 ""
   "../codes/figures/damped_pendulum_trajectory_1D.pdf" 1657447453 13069 ee5f1c7e55fd4e37942377e71a69097b ""
@@ -42,7 +42,7 @@
   "../codes/figures/shm_trajectory_1D.pdf" 1657373624 13058 e43517ab5d8d2d2211bbbb3d2db29b2c ""
   "../codes/figures/vary_invariance_density.pdf" 1658438585 14586 f38bc7a41b0028c91578923920ab90d8 ""
   "../codes/figures/vary_jitter_density.pdf" 1658438585 13956 4a0e843fdaa0cfc5363b4b15a33a9028 ""
-  "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/main.tex" 1658576941 52965 a8bb5568d51d7c5bcfc79812d2b97d53 ""
+  "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/main.tex" 1658594543 55745 03a2e39d85ef6c4ff8ebd34f04a32f12 ""
   "c:/texlive/2021/texmf-dist/fonts/map/fontname/texfonts.map" 1643573932 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "c:/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1643572477 1004 54797486969f23fa377b128694d548df ""
   "c:/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1643572477 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -304,10 +304,10 @@
   "c:/texlive/2021/texmf-var/web2c/pdftex/pdflatex.fmt" 1643577759 2796727 b2dac15f369e114b80aeca667807ff9d ""
   "c:/texlive/2021/texmf.cnf" 1643577561 713 614551405fc44b98efbf516466e3c909 ""
   "imperial_logo.pdf" 1652874704 7654 c7bb8e49d84d63185a4551e748ff5ccd ""
-  "main.aux" 1658576947 32690 15cd16315be350c86af81ba18a1d3718 "pdflatex"
-  "main.bbl" 1658576798 1468 bc110e3b9c71a69ddbd5a1ccb3221f24 "bibtex main"
-  "main.out" 1658576946 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "main.tex" 1658576941 52965 a8bb5568d51d7c5bcfc79812d2b97d53 ""
+  "main.aux" 1658594568 32717 4e5095c8a5990d151a3f09137e21db4f "pdflatex"
+  "main.bbl" 1658594557 1468 bc110e3b9c71a69ddbd5a1ccb3221f24 "bibtex main"
+  "main.out" 1658594566 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "main.tex" 1658594543 55745 03a2e39d85ef6c4ff8ebd34f04a32f12 ""
   "statsmsc.cls" 1652874704 5731 87c86afe53417e4eb65d5bfdf221d01c ""
   (generated)
   "main.aux"
