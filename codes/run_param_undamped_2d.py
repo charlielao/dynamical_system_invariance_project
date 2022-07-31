@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import joblib
 import os
 import matplotlib.pyplot as plt
-os.environ["CUDA_VISIBLE_DEVICES"] = '5'
+os.environ["CUDA_VISIBLE_DEVICES"] = '4'
 mean = ZeroMean(4) 
 
 time_step = 0.01
@@ -21,7 +21,7 @@ testing_time = 3
 
 max_x = 5
 max_v = 0.5
-n_train = 10 
+n_train = 1
 train_starting_position1 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_position2 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_velocity1 = np.random.uniform(-max_v, max_v, (n_train))
@@ -34,17 +34,20 @@ print(train_starting_velocity2)
 
 data2 = get_SHM_data_2D(time_step, training_time, 1e-8, train_starting_position1, train_starting_position2, train_starting_velocity1, train_starting_velocity2) #switch
 
-#scalerX = StandardScaler(with_mean=False, with_std=False).fit(data2[0])
-#scalerY = StandardScaler(with_mean=False, with_std=False).fit(data2[1])
-scalerX = MinMaxScaler((-1,1)).fit(data2[0])
-scalerY = MinMaxScaler((-1,1)).fit(data2[1])
+scalerX = StandardScaler(with_mean=False, with_std=False).fit(data2[0])
+scalerY = StandardScaler(with_mean=False, with_std=False).fit(data2[1])
+#scalerX = MinMaxScaler((-1,1)).fit(data2[0])
+#scalerY = MinMaxScaler((-1,1)).fit(data2[1])
 X = scalerX.transform(data2[0])
 Y = scalerY.transform(data2[1])
 data = (X, Y)
 scalers = (scalerX, scalerY)
 time_setting = (testing_time, time_step)
 dynamics = (SHM_dynamics1_2D, SHM_dynamics2_2D)
-jitter = 5e-5
+jitter = 1e-1
+
+#joblib.dump(scalerX, 'shm_2d/scalerX.gz')
+#joblib.dump(scalerY, 'shm_2d/scalerY.gz')
 
 eva_future_moi = []
 eva_future_inv = []
@@ -54,21 +57,26 @@ print("moi")
 moi = get_GPR_model_2D(get_MOI_2D(), mean, data, 100)
 print(moi.log_marginal_likelihood().numpy())
 try:
-    n_neighbours = 30
+    n_neighbours = 50
     print("known")
-    kernel = get_SHM_local_invariance_2D(0, 1, n_neighbours, jitter) #switch
+    kernel = get_SHM_local_invariance_2D(0, 5, n_neighbours, jitter) #switch
     known = get_GPR_model_2D(kernel, mean, data, iterations=1000)
     print(known.log_marginal_likelihood().numpy())
 
-    polynomial_degree = 3
+    polynomial_degree = 1
     print("polynomial local")
     X, Y = data
     kernel = get_polynomial_local_invariance_2D(0, 1, n_neighbours, jitter, polynomial_degree ) 
-    model = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean)
+    model = get_GPR_model_2D(kernel, mean, data, iterations=10000)
+    print(model.log_marginal_likelihood().numpy())
+#    model = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean)
     ckpt = tf.train.Checkpoint(model=model)
     manager = tf.train.CheckpointManager(ckpt, "shm_2d", max_to_keep=3)
-    model = get_GPR_model_GD_2D(model=model, iterations=50000, lr=0.001, manager=manager)
+    model = get_GPR_model_GD_2D(model=model, iterations=5000, lr=0.001, manager=manager)
     print(model.log_marginal_likelihood().numpy())
+    '''
+    kernel = get_polynomial_local_invariance_2D(0, 1, n_neighbours, jitter, polynomial_degree) #switch
+    '''
 
 #    moi.predict_f_compiled = tf.function(moi.predict_f)
 #    known.predict_f_compiled = tf.function(known.predict_f)
@@ -82,15 +90,13 @@ try:
 #    tf.saved_model.save(moi, "shm_2d_model/moi")
 #    tf.saved_model.save(known, "shm_2d_model/known")
 #    tf.saved_model.save(m, "shm_2d_model/m")
-    joblib.dump(scalerX, 'shm_2d/scalerX.gz')
-    joblib.dump(scalerY, 'shm_2d/scalerY.gz')
 
     '''
     scalerX = joblib.load('scalerX.gz')
     scalerY = joblib.load('scalerY.gz')
-    loaded_moi = tf.saved_model.load("shm_2d_model/moi")
-    loaded_known = tf.saved_model.load("shm_2d_model/known")
-    loaded_m = tf.saved_model.load("shm_2d_model/m")
+    loaded_moi = tf.saved_model.load("shm_2d/moi")
+    loaded_known = tf.saved_model.load("shm_2d/known")
+    loaded_m = tf.saved_model.load("shm_2d/m")
     loaded_result = loaded_model.predict_f_compiled(samples_input)
     for i in range(3):
         print(i)
@@ -107,7 +113,6 @@ try:
         eva_future_inv.append(evaluate_invariance[0])
         if i==2:
         #    eva = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, (kernel.inv_f1, kernel.inv_f2, kernel.inv_g1, kernel.inv_g2), (lambda x: x[2], lambda x: x[3], lambda x:x[0], lambda x:x[1]))
-        #    eva = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, (kernel.inv_f1, kernel.inv_f2, kernel.inv_g1, kernel.inv_g2), (lambda x: 2*x[2]+x[3]*np.cos(x[0]-x[1]), lambda x: x[3]+x[2]*np.cos(x[0]-x[1]), lambda x:2*np.sin(x[0])-x[2]*x[3]*np.sin(x[0]-x[1]), lambda x:np.sin(x[1])+x[2]*x[3]*np.sin(x[0]-x[1])))
         else:
             evaluate_invariance_p = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers)
         eva_future_inv_p.append(evaluate_invariance_p[0])

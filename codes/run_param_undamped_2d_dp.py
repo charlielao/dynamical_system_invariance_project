@@ -19,9 +19,9 @@ time_step = 0.01
 training_time = 0.1
 testing_time = 3
 
-max_x = 60
+max_x = 120
 max_v = 10
-n_train = 10
+n_train = 5
 train_starting_position1 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_position2 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_velocity1 = np.random.uniform(-max_v, max_v, (n_train))
@@ -44,7 +44,7 @@ data = (X, Y)
 scalers = (scalerX, scalerY)
 time_setting = (testing_time, time_step)
 dynamics = (double_pendulum_dynamics1, double_pendulum_dynamics2)
-jitter = 5e-5
+jitter = 1e-4
 
 #joblib.dump(scalerX, 'double_pendulum/scalerX.gz')
 #joblib.dump(scalerY, 'double_pendulum/scalerY.gz')
@@ -59,7 +59,7 @@ print(moi.log_marginal_likelihood().numpy())
 try:
     n_neighbours = 50
     print("known")
-    kernel = get_double_pendulum_local_invariance(0, 1, n_neighbours, jitter) #switch
+    kernel = get_double_pendulum_local_invariance(0.1, 1, n_neighbours, jitter) #switch
     known = get_GPR_model_2D(kernel, mean, data, iterations=1000)
     print(known.log_marginal_likelihood().numpy())
 
@@ -74,7 +74,7 @@ try:
     model = get_GPR_model_GD_2D(model=model, iterations=50000, lr=0.001, manager=manager)
     print(model.log_marginal_likelihood().numpy())
     '''
-    kernel = get_polynomial_local_invariance_2D(0, 1, n_neighbours, jitter, polynomial_degree) #switch
+    kernel = get_polynomial_local_invariance_2D(0.1, 1, n_neighbours, jitter, polynomial_degree) #switch
     m = get_GPR_model_2D(kernel, mean, data, iterations=10000)
     print(m.log_marginal_likelihood().numpy())
 
