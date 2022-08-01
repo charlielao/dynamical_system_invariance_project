@@ -5,7 +5,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
-from invariance_kernels import ZeroMean , get_MOI, get_MOI_2D, get_SHM_invariance_2D 
+from invariance_kernels import ZeroMean , get_MOI, get_MOI_2D 
 from invariance_functions import degree_of_freedom, get_GPR_model_2D, get_SHM_data_2D, get_double_pendulum_data, evaluate_model_future_2D, evaluate_model_grid_2D, SHM_dynamics1_2D, SHM_dynamics2_2D, get_GPR_model_GD_2D
 from local_invariance_kernels import  get_polynomial_local_invariance_2D, get_SHM_local_invariance_2D, get_double_pendulum_local_invariance
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
@@ -17,11 +17,11 @@ mean = ZeroMean(4)
 
 time_step = 0.01
 training_time = 0.1
-testing_time = 3
+testing_time = 1
 
 max_x = 5
 max_v = 0.5
-n_train = 1
+n_train = 3
 train_starting_position1 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_position2 = np.random.uniform(-max_x, max_x, (n_train))
 train_starting_velocity1 = np.random.uniform(-max_v, max_v, (n_train))
@@ -34,49 +34,47 @@ print(train_starting_velocity2)
 
 data2 = get_SHM_data_2D(time_step, training_time, 1e-8, train_starting_position1, train_starting_position2, train_starting_velocity1, train_starting_velocity2) #switch
 
-scalerX = StandardScaler(with_mean=False, with_std=False).fit(data2[0])
-scalerY = StandardScaler(with_mean=False, with_std=False).fit(data2[1])
-#scalerX = MinMaxScaler((-1,1)).fit(data2[0])
-#scalerY = MinMaxScaler((-1,1)).fit(data2[1])
+#scalerX = StandardScaler(with_mean=False, with_std=False).fit(data2[0])
+#scalerY = StandardScaler(with_mean=False, with_std=False).fit(data2[1])
+scalerX = MinMaxScaler((-1,1)).fit(data2[0])
+scalerY = MinMaxScaler((-1,1)).fit(data2[1])
 X = scalerX.transform(data2[0])
 Y = scalerY.transform(data2[1])
 data = (X, Y)
 scalers = (scalerX, scalerY)
 time_setting = (testing_time, time_step)
 dynamics = (SHM_dynamics1_2D, SHM_dynamics2_2D)
-jitter = 1e-1
+jitter = 1e-4
 
 #joblib.dump(scalerX, 'shm_2d/scalerX.gz')
 #joblib.dump(scalerY, 'shm_2d/scalerY.gz')
 
 eva_future_moi = []
-eva_future_inv = []
-eva_future_inv_p = []
+eva_future_known = []
+eva_future_learnt = []
 
 print("moi")
 moi = get_GPR_model_2D(get_MOI_2D(), mean, data, 100)
 print(moi.log_marginal_likelihood().numpy())
 try:
-    n_neighbours = 50
+    n_neighbours = 60
     print("known")
-    kernel = get_SHM_local_invariance_2D(0, 5, n_neighbours, jitter) #switch
+    kernel = get_SHM_local_invariance_2D(0.1, 1, n_neighbours, jitter) #switch
     known = get_GPR_model_2D(kernel, mean, data, iterations=1000)
     print(known.log_marginal_likelihood().numpy())
 
-    polynomial_degree = 1
-    print("polynomial local")
-    X, Y = data
-    kernel = get_polynomial_local_invariance_2D(0, 1, n_neighbours, jitter, polynomial_degree ) 
+    polynomial_degree = 3
+    print("learnt")
+#    X, Y = data
+    kernel = get_polynomial_local_invariance_2D(0.1, 1, n_neighbours, jitter, polynomial_degree) 
     model = get_GPR_model_2D(kernel, mean, data, iterations=10000)
     print(model.log_marginal_likelihood().numpy())
 #    model = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean)
-    ckpt = tf.train.Checkpoint(model=model)
-    manager = tf.train.CheckpointManager(ckpt, "shm_2d", max_to_keep=3)
-    model = get_GPR_model_GD_2D(model=model, iterations=5000, lr=0.001, manager=manager)
-    print(model.log_marginal_likelihood().numpy())
-    '''
-    kernel = get_polynomial_local_invariance_2D(0, 1, n_neighbours, jitter, polynomial_degree) #switch
-    '''
+#    ckpt = tf.train.Checkpoint(model=model)
+#    manager = tf.train.CheckpointManager(ckpt, "shm_2d", max_to_keep=3)
+#    model = get_GPR_model_GD_2D(model=model, iterations=10000, lr=0.001, manager=manager)
+#    print(model.log_marginal_likelihood().numpy())
+
 
 #    moi.predict_f_compiled = tf.function(moi.predict_f)
 #    known.predict_f_compiled = tf.function(known.predict_f)
@@ -98,34 +96,37 @@ try:
     loaded_known = tf.saved_model.load("shm_2d/known")
     loaded_m = tf.saved_model.load("shm_2d/m")
     loaded_result = loaded_model.predict_f_compiled(samples_input)
-    for i in range(3):
+    '''
+    def energy(X):
+        return 0.5*(tf.square(X[:,0])+tf.square(X[:,1])+tf.square(X[:,2])+tf.square(X[:,3]))
+    for i in range(1):
         print(i)
         test_starting_position1 = np.random.uniform(-max_x, max_x)
         test_starting_position2 = np.random.uniform(-max_x, max_x)
         test_starting_velocity1 = np.random.uniform(-max_x/5, max_x/5)
         test_starting_velocity2 = np.random.uniform(-max_x/5, max_x/5)
-
         test_starting = (test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2)
         print(test_starting)
-        evaluate_moi = evaluate_model_future_2D(moi, test_starting, dynamics, time_setting, scalers)
+        evaluate_moi = evaluate_model_future_2D(moi, test_starting, dynamics, time_setting, scalers, energy)
         eva_future_moi.append(evaluate_moi[0])
-        evaluate_invariance = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers)
-        eva_future_inv.append(evaluate_invariance[0])
-        if i==2:
+        evaluate_known = evaluate_model_future_2D(known, test_starting, dynamics, time_setting, scalers, energy)
+        eva_future_known.append(evaluate_known[0])
+    #        if i==2:
         #    eva = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, (kernel.inv_f1, kernel.inv_f2, kernel.inv_g1, kernel.inv_g2), (lambda x: x[2], lambda x: x[3], lambda x:x[0], lambda x:x[1]))
-        else:
-            evaluate_invariance_p = evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers)
-        eva_future_inv_p.append(evaluate_invariance_p[0])
-        print(evaluate_invariance[0])
+    #        else:
+        evaluate_learnt = evaluate_model_future_2D(model, test_starting, dynamics, time_setting, scalers, energy)
+        eva_future_learnt.append(evaluate_learnt[0])
+        print(evaluate_known[0])
+    #    print("Baseline RBF & " + format((lml_moi),".2f")+" & "+format(np.mean(eva_future_moi),".4f") +' \\\\')
+    #    print("Invariance Kernel & "+ format((lml_inv),".2f")+" & "+format(np.mean(eva_future_inv),".4f")+ ' \\\\')
+        plt.plot(evaluate_learnt[5], label="true")
+        plt.plot(evaluate_moi[6], label="moi")
+        plt.plot(evaluate_known[6], label="known")
+        plt.plot(evaluate_learnt[6], label="learnt")
+        plt.legend()
+        plt.show()
+        plt.savefig("test.pdf")
 
-    print("Baseline RBF & " + format((lml_moi),".2f")+" & "+format(np.mean(eva_future_moi),".4f") +' \\\\')
-    print("Invariance Kernel & "+ format((lml_inv),".2f")+" & "+format(np.mean(eva_future_inv),".4f")+ ' \\\\')
 
-    '''
-
-#    plt.plot(eva[5])
-#    plt.plot(eva[6])
-#    plt.show()
-#    plt.savefig("test.pdf")
 except tf.errors.InvalidArgumentError:
     print("jitter too small")

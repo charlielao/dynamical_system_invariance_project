@@ -19,7 +19,7 @@ time_step = 0.01
 training_time = 0.1
 testing_time = 3
 
-max_x = 120
+max_x = 60
 max_v = 10
 n_train = 5
 train_starting_position1 = np.random.uniform(-max_x, max_x, (n_train))

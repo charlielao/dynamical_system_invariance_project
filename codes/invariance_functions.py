@@ -137,10 +137,32 @@ def get_GPR_model(kernel, mean_function, data, iterations):
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
     return m
 
-def get_GPR_model_2D(kernel, mean_function, data, iterations):
+def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
+    if old_model:
+        kernel.Ka1.lengthscales = old_model.kernel.Ka1.lengthscales
+        kernel.Ka2.lengthscales = old_model.kernel.Ka2.lengthscales
+        kernel.Kv1.lengthscales = old_model.kernel.Kv1.lengthscales
+        kernel.Kv2.lengthscales = old_model.kernel.Kv2.lengthscales
+        kernel.Ka1.variance = old_model.kernel.Ka1.variance
+        kernel.Ka2.variance = old_model.kernel.Ka2.variance
+        kernel.Kv1.variance = old_model.kernel.Kv1.variance
+        kernel.Kv2.variance = old_model.kernel.Kv2.variance
+        m.likelihood.variance = old_model.likelihood.variance
+        '''
+        set_trainable(kernel.Ka1.lengthscales, False)
+        set_trainable(kernel.Ka2.lengthscales, False)
+        set_trainable(kernel.Kv1.lengthscales, False)
+        set_trainable(kernel.Kv2.lengthscales, False)
+        set_trainable(kernel.Ka1.variance, False)
+        set_trainable(kernel.Ka2.variance, False)
+        set_trainable(kernel.Kv1.variance, False)
+        set_trainable(kernel.Kv2.variance, False)
+        set_trainable(m.likelihood.variance, False)
+        '''
+
 
 #   log_dir_scipy = f"{log_dir}/scipy"
 #    model_task = ModelToTensorBoard(log_dir_scipy, model)
@@ -179,7 +201,7 @@ def get_GPR_model_GD_2D(model, iterations, lr, manager):
 #        print(round(lml)," ", j, end="\r")#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
     return model
 
-def evaluate_model_future(m, test_starting, dynamics, time_setting, invs=None, known=None):
+def evaluate_model_future(m, test_starting, dynamics, time_setting, energy):
     test_starting_position, test_starting_velocity = test_starting
     total_time, time_step = time_setting
     likelihood = m.likelihood.variance.numpy()
@@ -204,14 +226,6 @@ def evaluate_model_future(m, test_starting, dynamics, time_setting, invs=None, k
     predicted_future[1, 1] = predicted_future[0, 1] + pred[0]*time_step 
     predicted_future_variance_top[1, 1] = predicted_future[0, 1] + (pred[0]+1.96*np.sqrt(var[0]+likelihood))*time_step
     predicted_future_variance_bottom[1, 1] = predicted_future[0, 1] - (pred[0]+1.96*np.sqrt(var[0]+likelihood))*time_step
-    if invs:
-        inv_f, inv_g = invs
-        known_f, known_g = known
-        invariance_on_known = []
-        invariance_on_learnt = []
-
-        invariance_on_known.append(known_f(X[0,1])*dynamics(X[None,0,:])+known_g(X[0,0])*X[0,1])
-        invariance_on_learnt.append(inv_f(X[0,1,None, None])*dynamics(X[None,0,:])+inv_g(X[0,0,None, None])*X[0,1])
 
     for i in range(2, X.shape[0]):
         pred, var = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,2)))
@@ -225,15 +239,10 @@ def evaluate_model_future(m, test_starting, dynamics, time_setting, invs=None, k
         X[i,1] =X[i-2,1] + dynamics(X[None,i-1,:])*2*time_step 
         predicted_future_variance_top[i, 1] = predicted_future[i-2, 1] + (pred[0]+1.96*np.sqrt(var[0]+likelihood))*2*time_step
         predicted_future_variance_bottom[i, 1] = predicted_future[i-2, 1] - (pred[0]+1.96*np.sqrt(var[0]+likelihood))*2*time_step
-        if invs:
-            invariance_on_known.append(known_f(X[i-1,1])*dynamics(X[None,i-1,:])+known_g(X[i-1,0])*X[i-1,1])
-            invariance_on_learnt.append(inv_f(X[i-1,1,None, None])*dynamics(X[None,i-1,:])+inv_g(X[i-1,0,None, None])*X[i-1,1])
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
-    if invs:
-        invariance_on_known.append(known_f(X[-1,1])*dynamics(X[None,-1,:])+known_g(X[-1,0])*X[-1,1])
-        invariance_on_learnt.append(inv_f(X[-1,1,None, None])*dynamics(X[None,-1,:])+inv_g(X[-1,0,None, None])*X[-1,1])
-        return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, invariance_on_known, invariance_on_learnt)
-    return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X)
+    true_energy = energy(X)
+    predicted_energy = energy(predicted_future)
+    return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, true_energy, predicted_energy)
 
 def evaluate_model_grid(m, grids, dynamics):
     grid_range, grid_density = grids
@@ -244,7 +253,7 @@ def evaluate_model_grid(m, grids, dynamics):
     MSE =  tf.reduce_mean(tf.math.square(predicted-tf.concat([Y[:,None],X[:,1,None]],1)))
     return MSE.numpy()
 
-def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, invs=None, known=None):
+def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, energy):
     test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2 = test_starting
     dynamics1, dynamics2 = dynamics
     total_time, time_step = time_setting
@@ -277,15 +286,6 @@ def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, 
     predicted_future_variance_top[1, :] = predicted_future[0, :] + var*time_step
     predicted_future_variance_bottom[1, :] = predicted_future[0, :] - var*time_step
 
-    if invs:
-        inv_f1, inv_f2, inv_g1, inv_g2 = invs
-        known_f1, known_f2, known_g1, known_g2 = known
-        invariance_on_known = []
-        invariance_on_learnt = []
-
-        invariance_on_known.append(known_f1(X[0,:])*dynamics1(X[None,0,:])+known_f2(X[0,:])*dynamics2(X[None, 0, :])+known_g1(X[0,:])*X[0,2]+known_g2(X[0,:])*X[0,3])
-        invariance_on_learnt.append(inv_f1(X[None, 0,:])*dynamics1(X[None,0,:])+inv_f2(X[None, 0,:])*dynamics2(X[None, 0, :])+inv_g1(X[None, 0,:])*X[0,2]+inv_g2(X[None, 0,:])*X[0,3])
-
     for i in range(2, X.shape[0]):
         pred, var = m.predict_f(scalerX.transform(to_default_float(predicted_future[i-1,:].reshape(1,4))))
         pred = tf.roll(tf.transpose(pred), shift=-2, axis=1)
@@ -301,17 +301,10 @@ def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, 
         X[i,2] = X[i-2,2] + dynamics1(X[None,i-1,:])*2*time_step
         X[i,3] = X[i-2,3] + dynamics2(X[None,i-1,:])*2*time_step
 
-        if invs:
-            invariance_on_known.append(known_f1(X[i-1,:])*dynamics1(X[None,i-1,:])+known_f2(X[i-1,:])*dynamics2(X[None, i-1, :])+known_g1(X[i-1,:])*X[i-1,2]+known_g2(X[i-1,:])*X[i-1,3])
-            invariance_on_learnt.append(inv_f1(X[None, i-1,:])*dynamics1(X[None,i-1,:])+inv_f2(X[None, i-1,:])*dynamics2(X[None, i-1, :])+inv_g1(X[None, i-1,:])*X[i-1,2]+inv_g2(X[None, i-1,:])*X[i-1,3])
-
-
     MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
-    if invs:
-        invariance_on_known.append(known_f1(X[-1,:])*dynamics1(X[None,-1,:])+known_f2(X[-1,:])*dynamics2(X[None, -1, :])+known_g1(X[-1,:])*X[-1,2]+known_g2(X[-1,:])*X[-1,3])
-        invariance_on_learnt.append(inv_f1(X[None, -1,:])*dynamics1(X[None,-1,:])+inv_f2(X[None, -1,:])*dynamics2(X[None, -1, :])+inv_g1(X[None, -1,:])*X[-1,2]+inv_g2(X[None, -1,:])*X[-1,3])
-        return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, invariance_on_known, invariance_on_learnt)
-    return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X)
+    true_energy = energy(X)
+    predicted_energy = energy(predicted_future)
+    return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, true_energy, predicted_energy)
 
 def evaluate_model_grid_2D(m, grids, dynamics, scalers):
     grid_range, grid_density = grids
