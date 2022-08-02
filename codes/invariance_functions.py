@@ -142,15 +142,14 @@ def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None):
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
     if old_model:
-        kernel.Ka1.lengthscales = old_model.kernel.Ka1.lengthscales
-        kernel.Ka2.lengthscales = old_model.kernel.Ka2.lengthscales
-        kernel.Kv1.lengthscales = old_model.kernel.Kv1.lengthscales
-        kernel.Kv2.lengthscales = old_model.kernel.Kv2.lengthscales
-        kernel.Ka1.variance = old_model.kernel.Ka1.variance
-        kernel.Ka2.variance = old_model.kernel.Ka2.variance
-        kernel.Kv1.variance = old_model.kernel.Kv1.variance
-        kernel.Kv2.variance = old_model.kernel.Kv2.variance
-        m.likelihood.variance = old_model.likelihood.variance
+        kernel.Ka1.lengthscales = gpflow.Parameter(old_model.kernel.Ka1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+        kernel.Ka2.lengthscales = gpflow.Parameter(old_model.kernel.Ka2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+        kernel.Kv1.lengthscales = gpflow.Parameter(old_model.kernel.Kv1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+        kernel.Kv2.lengthscales = gpflow.Parameter(old_model.kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+        kernel.Ka1.variance = gpflow.Parameter(old_model.kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+        kernel.Ka2.variance = gpflow.Parameter(old_model.kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+        kernel.Kv1.variance = gpflow.Parameter(old_model.kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+        kernel.Kv2.variance = gpflow.Parameter(old_model.kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
         '''
         set_trainable(kernel.Ka1.lengthscales, False)
         set_trainable(kernel.Ka2.lengthscales, False)

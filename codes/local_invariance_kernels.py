@@ -306,21 +306,21 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         self.Kv1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.poly_d = poly_d
-        self.prior_variance = 1#gpflow.Parameter(0.1, transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(1)), name="prior_variance")
+#       self.prior_variance = 1#gpflow.Parameter(0.1, transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(1)), name="prior_variance")
 #        self.poly = gpflow.Parameter(tf.Variable(0.1*np.random.normal(size=(4, self.number_of_coefficients(self.poly_d))), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), trainable=True, prior=tfp.distributions.Laplace(to_default_float(0),(self.prior_variance)), name="poly")
         init_poly = np.zeros((4, self.number_of_coefficients(self.poly_d)))
-        '''
-        init_poly[0,3]=1
-        init_poly[1,4]=1
-        init_poly[2,1]=1
-        init_poly[3,2]=1
+        init_poly[0,3]=0.5
+        init_poly[1,4]=0.5
+        init_poly[2,1]=0.5
+        init_poly[3,2]=0.5
         '''
         init_poly[0,3]=2;init_poly[0,4]=1;init_poly[0,18]=-0.5;init_poly[0,27]=-0.5;init_poly[0,21]=1
         init_poly[1,3]=1;init_poly[1,4]=1;init_poly[0,17]=-0.5;init_poly[0,26]=-0.5;init_poly[0,20]=1
         init_poly[2,1]=2;init_poly[2,23]=-1;init_poly[0,29]=1
         init_poly[3,2]=1;init_poly[3,23]=1;init_poly[0,29]=-1
+        '''
         init_poly = tf.Variable(init_poly, dtype=tf.float64)
-        self.poly = gpflow.Parameter(init_poly, transform =tfp.bijectors.Sigmoid(to_default_float(-3.), to_default_float(3.)), trainable=True)
+        self.poly = gpflow.Parameter(init_poly, transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), trainable=True)
         self.jitter = jitter_size
         self.local_invar_grid = tf.multiply(tf.random.uniform((n_neighbours,4), invar_neighbourhood_min,invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), 4*n_neighbours), (n_neighbours,4)), tf.float64)-1*tf.ones((n_neighbours,4),dtype=tf.float64))
         self.n_neighbours = n_neighbours
