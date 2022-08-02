@@ -97,8 +97,19 @@
 
 
 \chapter{Introduction}
+Dynamical system is one of the richest theory that models the real world with wide application across all science and engineering. 
+Of course, it is an interesting area of mathematics to study on its own.
+In practice, it will be very valuable to be able to reliably predict the evolution of a system for many purpose; both from a theortical and practical point of view.
+Recently, data intensive machine learning methods, such as deep learning, has shown some very powerful results. 
+However, the amount of data required are often enormous, and that will involve lots of manual labour to label and process the data.
+Sometimes, the data could be very difficult to come by.
+Therefore, data efficiency is the key in the future if we wish to study more complicated systems.
+Inductive bias is one way to achieve the goal.
+What was usually done is to embed the inductive bias into the model in some way so that the model "understands" this knowledge before seeing the data.
+Assuming the inductive bias is correct, we would expect the model to perform better, either in a data efficiency way or prediction performance way.
+One very powerful inductive bias is the use of symmetry and invariances, that puts strong constraints on the model to obey.
 
-The introduction section goes here\footnote{Tip: write this section last.}.
+
 
 \chapter{Background}
 Here we will cover the background knowledge required to understand the remaining thesis, including Gaussian Process, dynamical systems as well as symmetry and invariances. 
@@ -113,12 +124,36 @@ We then then write
 $$
 f(\mathbf{x})\sim\mathcal{GP}(m(\mathbf{x}),k(\mathbf{x},\mathbf{x'})).
 $$
+If we assume the signal is not noise free such that we assume a Gaussian noise $y=f+\epsilon$, where $\epsilon\sim\mathcal{N}(0, \sigma_n^2)$.
+Then we will have 
+An important identity we use throughout the thesis is the Gaussian conditional formula; if
+$$
+  \begin{bmatrix}
+    x\\y
+  \end{bmatrix} 
+  \sim \mathcal{N}
+  \left(
+    \begin{bmatrix}
+      \mathbf{\mu}_x\\
+      \mathbf{\mu}_y
+    \end{bmatrix},
+    \begin{bmatrix}
+      A & C \\
+      C^T & B\\
+    \end{bmatrix}
+  \right)
+$$, 
+then 
+\begin{equation}
+  x|y\sim \mathcal{N}\left(\mathbf{\mu}_x+CB^{-1}(y-\mathbf{\mu}_y),A-CB^{-1}C^T\right)
+  \label{equ:normal_condtion}
+\end{equation}
 
 \subsection{GPflow}
 GPflow is used throughout the project (\cite{GPflow2017}).
 It is a Python package built on TensorFlow to allow efficient and fast computation on GPUs to do GP inferences.
-A particular powerful feature is that it allows the choosing of hyperparameter such as lengthscales and variance of a kernel automatic by calculating the gradient and perform backprobagation.
-Later on, we will a lot more parameters we need to optimise with respect to maginal likelihood objective.
+A particular powerful feature is that it allows the choosing of hyperparameter such as lengthscales and variance of a kernel automatic by calculating the gradient (using automatic differentiation feature of Tensorflow) and perform optimisation.
+In later sections, we will need to optimise more parameters than aforementioned ones with respect to maginal likelihood objective.
 
 
 \section{Dynamical Systems}
@@ -165,15 +200,25 @@ Another important concept is linearity and nonlinearity.
 Invariances are functions of the states that describe a dynamical system, and is unchanged throughout the evolution of the system over time. 
 An example would be from the field of physics, the conservation of energy, which will be unchanged throught out the trajectories of the system.
 There are other types of symmetry, such as translational symmetry, rotational symmetry, permutation symmetry, which are widely explored in geometric deep learning literature. 
+More formally, we can describe symmetry using group theory.
 In physics, there is a deeper connection between symmetry and invariance, namely the Neother's Theorem.
+In plain words, every conservation law is associated with an underlying symmetry.
+For instance, conservation of momentum is obeyed when there is a translation symmetry of the system. 
+Similarly, rotational symmetry is associated with the conservation of angular momentum.
+There are more abstract conservation law, such as conservation of electrical charge is related to Gauge Symmetry, an advanced physics idea that we will not go into too much detail. 
+Here the more relevant ones is the conservation of energy, which is related to the symmetry of the system under temporal translation.
 
 
 \section{Related Work}
+There are many existing literature in the field of learning invariance as well as physics informed machine learning.
 \subsection{Physics Informed Machine Learning}
 \subsubsection{Hamiltonian Neural Network}
 \subsubsection{Symbolic approach}
+\subsection{ODE approach}
 \subsection{Symmetry and Invariance}
 \subsubsection{Learning Invariance using Marginal Likelihood}
+\subsubsection{Geometric Deep Learning}
+\subsection{GP in dynamical systems}
 
 
 
@@ -193,13 +238,13 @@ Notation wise, we will collect the two dynamics term and call them $$\mathbf{f(\
 For simplicity of notation, the dependence on $\mathbf{q}, \mathbf{p}$ is now implicit. 
 We will put independent GP prior on $\mathbf{a}$ and $\mathbf{v}$ since there are no reason we should assume they are correlated. 
 For the choice of kernel, we chose the standard smooth kernel, the squared exponential kernel, or RBF, and we denote this kernel to be $K_{RBF}$. 
-We will also denote any set of coordinates of length $n$ and dimension $d$ as $$X=\begin{pmatrix}
+We will also denote any set of coordinates of length $n$ and dimension $d$ as $$X\equiv\begin{pmatrix}
+    \mathbf{x}_1\\\mathbf{x}_2\\\vdots\\\mathbf{x}_n
+\end{pmatrix}=\begin{pmatrix}
     q_{11}& q_{21} &\dots& q_{d1} & p_{11} & p_{21} & \dots & p_{d1} \\
     q_{12}& q_{22} &\dots& q_{d2} & p_{12} & p_{22} & \dots & p_{d2} \\
     \vdots &\vdots &\ddots &\vdots &\vdots &\vdots &\ddots &\vdots \\
     q_{1n}& q_{2n} &\dots& q_{dn} & p_{1n} & p_{2n} & \dots & p_{dn} \\
-\end{pmatrix}=\begin{pmatrix}
-    \mathbf{x}_1\\\mathbf{x}_2\\\vdots\\\mathbf{x}_n
 \end{pmatrix}.$$
 Without loss of generality, we will choose to stack the dynamics vertically in $\mathbf{f}$; for example in a d dimensional system, we have $$\mathbf{f}(X)=\begin{pmatrix}
     a_1(\mathbf{x}_1)\\
@@ -217,7 +262,7 @@ Without loss of generality, we will choose to stack the dynamics vertically in $
     \vdots\\
     v_d(\mathbf{x}_n)\\
 \end{pmatrix}$$
-For our naive independent RBF GP prior, we have 
+For our naive independent RBF GP prior, we have block diagonal 
 \begin{CentreLongEquation}
 $$
 K=\mathrm{Cov}(\mathbf{f}(X), \mathbf{f}(X'))=\begin{pmatrix}
@@ -233,9 +278,15 @@ $$
 with all the off diagonal terms being zero block matrix because of the independence prior assumption.
 This naive kernel will be our baseline to be compared to throughout the whole project.
 Now we can start considering the invariance. 
-If we assume the invariance is true throughout the input space $\mathbb{R}^{2d}$, then we can condition the GP on the a grid of points, which we referred to invariance points, $X_L$, and assume it has length $\ell$, and we will call the invariance constraints $L$.
-The form of $L$ will depend on the system as well as $X_L$, and examples will be described in the following sections.
-Since the invariance function will always be a linear function on the dynamics, if we apply this linear transformation $L$ on $\mathbf{f}(X_L)$, $L(\mathbf{f}(X_L))$ will again be a GP with a transformed kernel.
+If we assume the invariance is true throughout the input space $\mathbb{R}^{2d}$, then we can condition the GP on the a grid of points, which we referred to invariance points, $X_L$, and assume there are $\ell$ of them, and we will call the invariance constraints $L$.
+
+The form of $L$ will depend on the system as well as $X_L$, and examples will be given in the following sections to make it clear.
+Since the invariance function will always be a linear function on the dynamics by the fact that it is the time derivative
+$$
+\text{energy}=E(\theta, \mathbf{p}, \mathbf{q});  \frac{dE}{dt}= \sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i
+$$
+We can see it is always a linear combination of something independent of the dynamics.
+If we apply this linear transformation $L$ on $\mathbf{f}(X_L)$, $L(\mathbf{f}(X_L))$ will again be a GP with a transformed kernel.
 Therefore, we have 
 $$\begin{pmatrix}
 \mathbf{f}(X)\\L[\mathbf{f}(X_L)]
@@ -250,7 +301,7 @@ $$
 \section{1D System}
 \subsection{Linear}
 We will first examine one of the most simple dynamical system, an 1D simple harmonic motion (SHM). 
-An example would be a mass spring system as shown in figure with mass $m$ and spring constant $k$. 
+An example would be a mass spring system as shown in figure with mass $m$ and spring constant $k$, an example trajectory is shown in figure \ref{fig:shm_trajectory}. 
 
 % HORIZONTAL spring - axis, rest position
 \begin{figure}[H]
@@ -277,7 +328,7 @@ An example would be a mass spring system as shown in figure with mass $m$ and sp
 \end{tikzpicture}
 \end{figure}
 
-The defining equation is $$m\frac{d^2q}{dt^2}=-kq$$, where $q$ is the displacement.
+The equation of motion of the system is $$m\frac{d^2q}{dt^2}=-kq,$$ where $q$ is the displacement.
 And the analytical solution would be of the form $q=A\sin(\omega_0t+\phi),$ where $\omega=\frac{k}{m}$ and $A, \phi$ depends on the initial condition, which dictates the amplitude and phase of the motion. 
 For this case, we have 
 $$
@@ -296,19 +347,19 @@ $$
 
 We also have the energy, $E=\frac{mp^2}{2}+\frac{kq^2}{2},$
 Therefore, to obtain our invariance $L$, we use the conservation of energy $\frac{dE}{dt}=0$ so we finally have $$L(a, v)=mpa+kqv=0$$
-While $L$ is not able to be into a matrix form, it is an linear operator as shown below. 
-If we have $$X_L=\begin{pmatrix}
-    q_{L,1} & p_{L,1}\\
-    \vdots & \vdots \\
-    q_{L,\ell} & p_{L,\ell}\\
-\end{pmatrix}=\begin{pmatrix}
-    \vdots & \vdots\\
-    q_L & p_L\\
-    \vdots & \vdots\\
-\end{pmatrix}=\begin{pmatrix}
+While $L$ is not able to be into a matrix form, it is a linear operator as shown below. 
+If we have $$X_L\equiv\begin{pmatrix}
     \mathbf{x}_{L,1}\\
     \vdots\\
     \mathbf{x}_{L,\ell}\\
+\end{pmatrix}=\begin{pmatrix}
+    q_{L,1} & p_{L,1}\\
+    \vdots & \vdots \\
+    q_{L,\ell} & p_{L,\ell}\\
+\end{pmatrix}\equiv\begin{pmatrix}
+    \vdots & \vdots\\
+    q_L & p_L\\
+    \vdots & \vdots\\
 \end{pmatrix},$$
 then we have 
 $$
@@ -316,9 +367,10 @@ L([\mathbf{f}(X_L)]) = \begin{pmatrix}
    mp_{L,1}a(q_{L,1},p_{L,1}) + kq_{L,1}v(q_{L,1},p_{L,1})\\ 
    \vdots \\
    mp_{L,\ell}a(q_{L,\ell},p_{L,\ell}) + kq_{L,\ell}v(q_{L,\ell},p_{L,\ell})\\ 
-\end{pmatrix}.
+\end{pmatrix},
 $$
-Combine with original GP prior assumption, we will have 
+which can be readily checked to be linear.
+Combine with original GP prior assumption, we have 
 $$
 \begin{pmatrix}
     \mathbf{f}(X)\\
@@ -340,7 +392,7 @@ A=K(X,X), B=\begin{pmatrix}
     mP_L \\ kQ_L
 \end{pmatrix}, C=B^T, D=K_{RBF,a}\odot m^2(p_L\otimes p_L) + K_{RBF,v}\odot k^2(q_L\otimes q_L),
 $$
-where $\odot$ is the element wise product and $\otimes$ is the Kronecker product so that 
+where $\odot$ is the elementwise product and $\otimes$ is the Kronecker product so that 
 $$
 P_L=\begin{pmatrix}
   p_{L,1}  & \dots & p_{L,\ell}  \\
@@ -366,7 +418,7 @@ q_L\otimes q_L=\begin{pmatrix}
   q_{L,\ell}q_{L,1} & q_{L,\ell}q_{L,2} & \dots & q_{L,\ell}^2 \\
 \end{pmatrix},
 $$ 
-These matrices can be obtained if we try to compute the covariance manually. 
+These matrix expressions are derived as follows bt computing the covariance manually. 
 For $B$, we wish to calculate 
 
 \begin{align*}
@@ -390,23 +442,23 @@ D_{ij} &= \mathrm{Cov}(L[\mathbf{f}(X_L)], L[\mathbf{f}(X_L)])_{ij} \\
 \end{align*}
 using the bilnear property of the covariance operator and the fact that $v$ and $a$ are independent.
 Since we assume invariance on these invariance points, we will condition on $L([\mathbf{f}(X_L)])=0.$
-Now we can simply use the Gaussian conditional formula to obtain the Schur Complement
+Now we can simply use the Gaussian conditional formula to obtain the Schur Complement using equation \ref{equ:normal_condtion}.
 $$
 \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0\sim\mathcal{N}(0_{2n},A-BD^{-1}C),
 $$
-we will then call the covariance part our Invariance Kernel for 1D SHM, $K_L$.
+we will then call the resulting covariance our Invariance Kernel for 1D SHM, $K_L$.
 
 \subsection{Non Linear}
-The story is pretty much the same for nonlinear system, it is just the fitting would be expected to be more difficult.
+The idea is pretty much the same for nonlinear system compared to linear; however, the fitting is expected to be more difficult.
 A simple nonlinear system in every day life is a simple pendulum as shown in figure below.
 The governing equation is 
 $$
 \frac{d^2q}{dt^2}=-\frac{g}{\ell}\sin q, 
 $$
-where $q$ is the angle of displacement this time. 
-The nonlinear dynamics bit occurs because of the sine term, which will complicate things slightly. 
+where $q$ is the angle of displacement this time and we have example trajectory in \ref{fig:pendulum_trajectory}, where we can see the effect of nonlinearity on the shape. 
+The nonlinear dynamics arises from the sine term above, which will complicate the derivation for invariance kernel slightly. 
 However, since $\sin x \approx x$ at small angle, this system is approximately linear under small displacement. 
-There is no analytical solution to this nonlinear problem.
+There is no analytical solution to this nonlinear problem in general, besides the small displacement case, which will be 1D SHM.
 
 \begin{figure}[H] 
   \includegraphics[width=0.6\linewidth]{../codes/figures/pendulum_trajectory_1D.pdf}
@@ -442,22 +494,23 @@ $$
   \sin(q_{L,\ell})\sin(q_{L,1}) & \sin(q_{L,\ell})\sin(q_{L,2}) & \dots & \sin(q_{L,\ell})^2 \\
 \end{pmatrix},
 $$
-derived in almost exactly the same way as the linear case. 
+derived in exactly the same way as the linear case. 
+
 \section{Damped System}
-Before we have considered a perfect system, i.e. a system in an ideal world without frictions and the conservation of energy is perfectly obeyed such that $L=0$ exactly.
-However, in a real world system, there will be dissipation where energy is lost in the form of heat etc.  
-Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero. 
-To do so, it is similar in spirit to when we add noise to the underlying GP to represent noise signal, where we have $K+\sigma_n^2 \mathbb{I}$.
+In previous sections, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
+However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
+Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero, i.e. soft invariance.
+To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation, where we have $K+\sigma_n^2 \mathbb{I}$;
 Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
 For the data, we will model the system as a damped SHM or pendulum with linear velocity dependent force.
-If we denote $\omega_0^2=k/m$ or $\omega0^2=g/\ell$
-We will have the equation of motion 
+If we denote $\omega_0^2=k/m$ or $\omega_0^2=g/\ell$
+We will have the equation of motion for SHM and pendulum respectively
 $$
-\frac{d^q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2q=0,
+\frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2q=0; \frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2\sin q=0 ,
 $$
 and the $\gamma$ is the damping factor that controls how much frictional force there is. 
-Note that we will only focus on underdamping case so that the system still oscillate but with gradually reduced amplitude instead of critical damped or overdamped case where the system simply slowly decays to still.
-A simple trajectory for damped SHM and damped pendulum is shown below.
+Note that we will only focus on underdamping case ($\gamma < \omega_0^2$)so that the system still oscillate but with gradually reduced amplitude instead of critical damped ($\gamma=\omega_0^2$) or overdamped ($\gamma>\omega_0^2$) case where the system simply slowly decays to still.
+An example trajectory for damped SHM and damped pendulum is shown below in figure \ref{fig:damped_trajectory}.
 
 \begin{figure}[H]
      \centering
@@ -479,8 +532,8 @@ A simple trajectory for damped SHM and damped pendulum is shown below.
 \end{figure}
 
 \section{2D System}
-A 2D system is not that different from an 1D system. The major difference being there are two more extra variables. 
-We again look at two simple examples, a linear 2D SHM, and a nonlinear double pendulum.
+A 2D system is not that different from an 1D system. The major difference being there will be two more variables. 
+We will again look at two simple examples, a linear 2D SHM, and a nonlinear double pendulum.
 \subsection{Linear}
 A simple extension to 1D SHM to 2D is just allowing the spring to be at an angle so that the system is now in a 2D space.
 Again, the equations are simple that we have two equations for the two coordinates.
@@ -498,7 +551,7 @@ And now we have $$\mathbf{f}(X)=\begin{pmatrix}
     \mathbf{v_2}(X)\\
 \end{pmatrix},$$
 where $\mathbf{a_1}$ and $\mathbf{a_2}$ are the dynamics or time derivative for $\mathbf{p_1}$ and $\mathbf{p_2}$ respectively; similarly $\mathbf{v_1}$ and $\mathbf{v_2}$ are the time derivative of $\mathbf{q_1}$ and $\mathbf{q_2}$.
-In this system, the energy is the sum of energy in the two directions so $E=\frac{m(p_1^2+p_2^2)}{2}+\frac{k(q_1^2+q_2^2)}{2}$ and so the invariance $L(a_1, a_2, v_1, v_2)=mp_1a_1+mp_2a_2+kq_1v_1+kq_2v_2=0.$
+In this system, the energy is the sum of energy in the two directions so $E=\frac{m(p_1^2+p_2^2)}{2}+\frac{k(q_1^2+q_2^2)}{2}$ and so the invariance $L(a_1, a_2, v_1, v_2)=\frac{dE}{dt}=mp_1a_1+mp_2a_2+kq_1v_1+kq_2v_2=0.$
 Now our naive baseline GP has the kernel
 $$
 K(X,X')=\begin{pmatrix}
@@ -619,7 +672,10 @@ Or we can assess the conservation of energy over time.
 We need to add jitter to the $D$ matrix in computation due to the fact that we need the invert it and because of numerical issues, it will be more stable if we add a little bit of jitter in the range of $10^{-6}$ and its effect will be explained in the sections below.
 Similarly, to stabilise the algorithm, when backpropagating the hyperparameters, we need to narrow range of search so it's not too crazy. 
 For example, we wouldn't expect a lengthscale of 100 in our example with maximum range of 5; therefore, we will set for example, the maximum range of search is $10^{-3}$ to $5$ for the length scale and similarly for the variance term.
-\subsection{Local Invariance}
+Another changes we made in the 2D cases is to scale the data using MinMax scaler to squash them to be between $\pm 1$. 
+This is done since the polynomial behaves better around this region.
+
+\subsection*{Local Invariance}
 Conditioning on a grid of invariance points is simply not scalable in high dimensions. 
 If we have an invariance density of 1 in a $\pm 5$ range for 2D SHM, then we will have 10000 points. 
 We will easily run out of memory and also taking the matrix inverse are very difficult and time consuming.
@@ -630,43 +686,36 @@ Which is to take samples in the local region around training and testing points 
 We will illustrate a lot of examples in 1D cases since the results are easy to visualise, but the principle readily extend to high dimensional spaces. 
 
 \subsection{SHM}
-We start with the 1D SHM case, and for the data we will have only one trajectory starting randomly for $-5\le q\le5$ and $p$ to be between $\pm 0.5$ so that it does not overshoot the boundary, and we allow it to run for $0.1$ seconds so there will be in total 10 training points. 
+We start with the 1D SHM case, and for the data we will have only two trajectory starting randomly for $-3\le q\le3$ and $p$ to be between $\pm 0.3$ so that it does not overshoot the boundary, and we allow it to run for $0.1$ seconds so there will be in total 10 training points. 
 We will then draw three test point from the same range as training, to test the performance of the future predictive power for 3 seconds (300 points) and average over the three trajectories. 
 In figure \ref{fig:shm_prediction}, we will choose one at random and draw the future trajectories.
-We will then evaluate the the recovery of ground truth dynamics $a=-q$ and $v=p$ between $q, p=\pm 5$ of 40 by 40.
-The performance is summarised in table \ref{tab:shm_performance} with jitter $1\times 10^{-5}$ with invariance density of 40 within $\pm 5$. 
+The performance is summarised in table \ref{tab:shm_performance} with jitter $1\times 10^{-5}$ with invariance density of 20 within $\pm 3$. 
 We have also plotted the posterior distribution of using invariance kernel and compare that to using naive RBF kernel in figure \ref{fig:posterior_shm}.
 We can see the invariance has much better predictive power and generalisability.
+
+We will test all combination of polynomial of degree 0, 1, 2, 3 so there will be 16 of them, up to the cubic terms, and we will choose the ones with highest marginal likelihood.
+We initialise the coefficients with normal distribution with variance of $10^{-3}$, we also restrict the search between $\pm 1$.
+Data is again between $\pm 3$ so is the invariance conditioning.
+The best polynomial pair is 
+
 \begin{table}[H]
   \centering
   \begin{tabular}{l l l l }
 \hline
-Method           & log marignal likelihood & prediction MSE &  true dynamics  MSE\\
+Method           & RBF & Known Invariance&  Learnt Invariance\\
+  \hline
+Log Marginal Likelihood & 74.66 & 86.28 & 83.32  \\
+MSE & 3.5563 & 0.1057 & 0.0927 \\
                     \hline
-RBF & 68.14 & 2.2682 & 7.5111 \\
-Invariance Kernel & 82.75 & 0.1007 & 3.8778 \\
-\hline
   \end{tabular}
   \caption{SHM Invariance Kernel Performance}
   \label{tab:shm_performance}
 \end{table}
 
 \begin{figure}[H]
-     \centering
-     \begin{subfigure}[b]{0.6\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../codes/figures/shm_predicted_trajectory.pdf}
+        \includegraphics[width=\linewidth]{../codes/figures/shm_predicted.pdf}
         \caption{SHM predicted trajectory}
-        \label{fig:shm_prediction_combined}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.6\linewidth}
-         \centering
-         \includegraphics[width=\linewidth]{../codes/figures/shm_predicted_trajectory_seperate.pdf}
-         \caption{SHM predicted trajectory with $q, p$ seperated}
-         \label{fig:shm_prediction_seperate}
-     \end{subfigure}
-        \caption{SHM predictions}
         \label{fig:shm_prediction}
 \end{figure}
 
@@ -689,20 +738,38 @@ Invariance Kernel & 82.75 & 0.1007 & 3.8778 \\
         \label{fig:posterior_shm}
 \end{figure}
 
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_learnt.pdf}
+  \centering
+  \caption{Learnt invariance for SHM}
+  \label{fig:shm_learnt}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_energy.pdf}
+  \centering
+  \caption{Energy conservation for SHM}
+  \label{fig:shm_energy}
+\end{figure}
+
+
 \subsection{Pendulum}
-The procedure is pretty much the same here that we will draw a single training example between $q=\pm 150^{\circ}$ and $\pm 10^{\circ}$ for $p$.
+The procedure is pretty much the same here that we will draw 3 single training example between $q=\pm 150^{\circ}$ and $\pm 10^{\circ}$ for $p$.
 The rest of the procedure is the same as the SHM case.
-Again, the invariance is conditioned between $\pm 150^{\circ}$ with invariance density of 20 with jitter $1\times 10^{-5}$.
+Again, the invariance is conditioned between $\pm 150^{\circ}$ with invariance density of 30 with jitter $1\times 10^{-5}$.
 We again have the prediction performance summarised in table \ref{tab:pendulum_performance} as well as figures \ref{fig:pendulum_prediction}, \ref{fig:posterior_pendulum}.
+
+The best polynomial degree is  
+
 We again see a much better improvement in performance even in this nonlinear case. 
 \begin{table}[H]
   \centering
   \begin{tabular}{ c c c c c}
     \hline
-                    & log marignal liklihood &  prediction MSE & true dynamics MSE\\
+Method           & RBF & Known Invariance&  Learnt Invariance\\
                     \hline
-RBF & 75.37 & 0.9217 & 1.5987 \\
-Invariance Kernel & 85.33 & 0.0040 & 0.0393 \\
+Log Marginal Likelihood & 233.89 & 262.59 & 255.76 &  \\
+MSE & 0.05 & 0.0025 & 0.0020 \\
     \hline
   \end{tabular}
   \caption{Pendulum }
@@ -710,21 +777,9 @@ Invariance Kernel & 85.33 & 0.0040 & 0.0393 \\
 \end{table}
 
 \begin{figure}[H]
-     \centering
-     \begin{subfigure}[b]{0.6\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../codes/figures/pendulum_predicted_trajectory.pdf}
-        \caption{Pendulum predicted trajectory}
-        \label{fig:pendulum_prediction_combined}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.6\linewidth}
-         \centering
-         \includegraphics[width=\linewidth]{../codes/figures/pendulum_predicted_trajectory_seperate.pdf}
-         \caption{Pendulum predicted trajectory with $q, p$ seperated}
-         \label{fig:pendulum_prediction_seperate}
-     \end{subfigure}
-        \caption{Pendulum predictions}
+        \includegraphics[width=\linewidth]{../codes/figures/pendulum_predicted.pdf}
+        \caption{pendulum predicted trajectory}
         \label{fig:pendulum_prediction}
 \end{figure}
 
@@ -733,19 +788,34 @@ Invariance Kernel & 85.33 & 0.0040 & 0.0393 \\
      \begin{subfigure}[b]{\linewidth}
         \centering
         \includegraphics[width=\linewidth]{../codes/figures/posterior_pendulum_rbf.pdf}
-        \caption{Pendulum RBF posterior}
+        \caption{pendulum RBF posterior}
         \label{fig:posterior_pendulum_rbf}
      \end{subfigure}
      \hfill
      \begin{subfigure}[b]{\linewidth}
          \centering
          \includegraphics[width=\linewidth]{../codes/figures/posterior_pendulum_invariance.pdf}
-         \caption{Pendulum invariance posterior}
+         \caption{pendulum invariance posterior}
          \label{fig:posterior_pendulum_invariance}
      \end{subfigure}
-        \caption{Pendulum posteriors}
+        \caption{pendulum posteriors}
         \label{fig:posterior_pendulum}
 \end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/pendulum_learnt.pdf}
+  \centering
+  \caption{Learnt invariance for pendulum}
+  \label{fig:pendulum_learnt}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/pendulum_energy.pdf}
+  \centering
+  \caption{Energy conservation for pendulum}
+  \label{fig:pendulum_energy}
+\end{figure}
+
 
 Here we also include the prior distribution of RBF kernel in figure \ref{fig:prior_shm_rbf}, SHM invariance kernel in figure \ref{fig:prior_shm_invariance} and pendulum invariance kernel in figure \ref{fig:prior_pendulum_invariance}.
 We can see the prior knowledge of the dynamics, such as the linearity in SHM as well as the sinusoidal nature of pendulum dynamics. 
@@ -783,7 +853,7 @@ We can see that beyond a certain point, the increase in performance is not that 
 Therefore, from here, we will only use the minimum number of invariance points that ensure the performance of the invariance kernel. 
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_invariance_density.pdf}
+  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_invariance.pdf}
   \centering
   \caption{Effect of varying invariance density}
   \label{fig:vary_invariance_density}
@@ -796,7 +866,7 @@ While the lower the jitter, the higher the performance should be in theory; the 
 As a result, now we will also choose the smallest amount of jitter that remains stable.  
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_jitter_density.pdf}
+  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_jitter.pdf}
   \centering
   \caption{Effect of varying jitter}
   \label{fig:vary_jitter}
@@ -812,10 +882,10 @@ We see that even in damped cases, the knowledge of conservation of energy is hel
   \centering
   \begin{tabular}{l l l l}
     \hline
-                    & log marignal likelihood & prediction MSE  & true dynamics MSE\\
-    \hline
-Baseline RBF & 133.20 & 2.2161 & 4.2079 \\
-Invariance Kernel & 147.43 & 0.2790 & 3.5804 \\
+Method           & RBF & Known Invariance&  Learnt Invariance\\
+  \hline
+    Log Marginal Likelihood & 67.69 & 74.84 & 77.43  \\
+MSE & 0.9226 & 0.4772 & 0.2405 \\
     \hline
   \end{tabular}
   \caption{Damped SHM performance }
@@ -823,23 +893,27 @@ Invariance Kernel & 147.43 & 0.2790 & 3.5804 \\
 \end{table}
 
 \begin{figure}[H]
-     \centering
-     \begin{subfigure}[b]{\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../codes/figures/damped_shm_predicted_trajectory.pdf}
-        \caption{Damped SHM predicted trajectory}
-        \label{fig:damped_shm_prediction_combined}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{\linewidth}
-         \centering
-         \includegraphics[width=\linewidth]{../codes/figures/damped_shm_predicted_trajectory_seperate.pdf}
-         \caption{Damped SHM predicted trajectory with $q, p$ seperated}
-         \label{fig:damped_shm_prediction_seperate}
-     \end{subfigure}
-        \caption{Damped SHM predictions}
+        \includegraphics[width=\linewidth]{../codes/figures/damped_shm_predicted.pdf}
+        \caption{damped shm predicted trajectory}
         \label{fig:damped_shm_prediction}
 \end{figure}
+
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/damped_shm_learnt.pdf}
+  \centering
+  \caption{Learnt invariance for damped shm}
+  \label{fig:damped_shm_learnt}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/damped_shm_energy.pdf}
+  \centering
+  \caption{Energy conservation for damped shm}
+  \label{fig:damped_shm_energy}
+\end{figure}
+
 
 \subsection{Damped Pendulum}
 Again, the setting is almost the same as the undamped pendulum, and $\gamma=0.1$. 
@@ -851,11 +925,10 @@ We again see an improvement using invariance kernel in this damped nonlinear cas
   \centering
   \begin{tabular}{l l l l}
     \hline
-                    & log marignal liklihood & prediction MSE & true dynamics MSE\\
-    \hline
-Baseline RBF & 77.61 & 1.3642 & 1.5330 \\
-Invariance Kernel & 82.96 & 0.1029 & 0.4788 \\
-
+Method           & RBF & Known Invariance&  Learnt Invariance\\
+  \hline
+Log Marginal Likelihood & 229.96 & 243.41 & 243.48  \\
+MSE & 0.5983 & 0.0323 & 0.0877 \\
     \hline
   \end{tabular}
   \caption{Damped Pendulum Performance}
@@ -863,23 +936,27 @@ Invariance Kernel & 82.96 & 0.1029 & 0.4788 \\
 \end{table}
 
 \begin{figure}[H]
-     \centering
-     \begin{subfigure}[b]{\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{../codes/figures/damped_pendulum_predicted_trajectory.pdf}
-        \caption{Damped pendulum predicted trajectory}
-        \label{fig:damped_pendulum_prediction_combined}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{\linewidth}
-         \centering
-         \includegraphics[width=\linewidth]{../codes/figures/damped_pendulum_predicted_trajectory_seperate.pdf}
-         \caption{Damped pendulum predicted trajectory with $q, p$ seperated}
-         \label{fig:damped_pendulum_prediction_seperate}
-     \end{subfigure}
-        \caption{Damped pendulum predictions}
+        \includegraphics[width=\linewidth]{../codes/figures/damped_pendulum_predicted.pdf}
+        \caption{damped pendulum predicted trajectory}
         \label{fig:damped_pendulum_prediction}
 \end{figure}
+
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/damped_pendulum_learnt.pdf}
+  \centering
+  \caption{Learnt invariance for damped pendulum}
+  \label{fig:damped_pendulum_learnt}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/damped_pendulum_energy.pdf}
+  \centering
+  \caption{Energy conservation for damped pendulum}
+  \label{fig:damped_pendulum_energy}
+\end{figure}
+
 
 
 \section{2D}
@@ -889,23 +966,30 @@ The results are summarised in table \ref{tab:SHM_2d_performance} and figure \ref
 Since 4 dimensional space is difficult to visualise, only individual prediction of the trajectory is provided. 
 \begin{table}[H]
   \centering
-  \begin{tabular}{l l l }
+  \begin{tabular}{l l l l}
     \hline
-                    & log marignal liklihood &  prediction MSE  \\
-    \hline
-Baseline RBF & 402.62 & 7.7531 \\
-Invariance Kernel & 446.76 & 1.3978 \\
-    \hline
+Method           & RBF & Known Invariance&  Learnt Invariance\\
+  \hline
+Log Marginal Likelihood & 382.50 & 439.74 & 430.80  \\
+MSE & 8.6260 & 2.8882 & 4.1416 \\
+                    \hline
   \end{tabular}
   \caption{2D SHM Invariance performance}
   \label{tab:SHM_2d_performance}
 \end{table}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_2d_predicted_trajectory.pdf}
+  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_2d_predicted.pdf}
   \centering
   \caption{2D SHM prediction}
   \label{fig:shm_2d_prediction}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_2d_energy.pdf}
+  \centering
+  \caption{2D SHM energy}
+  \label{fig:shm_2d_energy}
 \end{figure}
 
 \subsection{Double Pendulum}
@@ -913,12 +997,12 @@ With double pendulum, we have angles being between $\pm 60^\circ$ and angular ve
 The results are summarised in table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}.
 \begin{table}[H]
   \centering
-  \begin{tabular}{l l l }
+  \begin{tabular}{l l l l}
     \hline
-                    & log marignal liklihood &  prediction MSE  \\
-    \hline
-Baseline RBF & 459.80 & 1.5658 \\
-Invariance Kernel & 475.22 & 0.1457 \\
+Method           & RBF & Known Invariance&  Learnt Invariance\\
+  \hline
+    Log Marginal Likelihood & 452.34 & 469.75 & 465.85 \\
+MSE & 0.5592 & 0.2030 & 0.1995 \\
     \hline
   \end{tabular}
   \caption{Double pendulum Invariance performance}
@@ -926,286 +1010,18 @@ Invariance Kernel & 475.22 & 0.1457 \\
 \end{table}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/double_pendulum_predicted_trajectory.pdf}
+  \includegraphics[width=0.6\linewidth]{../codes/figures/double_pendulum_predicted.pdf}
   \centering
-  \caption{Double pendulum prediction}
+  \caption{2D SHM prediction}
   \label{fig:double_pendulum_prediction}
 \end{figure}
 
-
-\section{Learning 1D invariance}
-\subsection{SHM}
-We will test all combination of polynomial of degree 0, 1, 2, 3, 4, 5 so there will be 36 of them, and we will choose the ones with highest marginal likelihood.
-We put a prior of Laplace distribution of all the coefficients with variance $0.1$ to encourage sparsity and we initialise the coefficients with normal distribution with variance of $10^{-3}$, we also restrict the search between $\pm 1$.
-This is done by 20 training points (2 random start points) since we need more data to learn parameters.
-Data is again between $\pm 5$ so is the invariance conditioning.
-The baseline marginal likelihood is 198.06 and known invariance is 238.38.
-\begin{flushleft}
-\begin{table}[H]
-\resizebox{\columnwidth}{!}{
-    \begin{tabular}{c c c c c c c c c c}
-    \hline
-     polynomial degree & (0, 0) & (0, 1) & (0, 2) & (0, 3) & (0, 4) & (0, 5) & (1, 0) & (1, 1) & (1, 2) \\  
-    log marginal likelihood & 192.66&186.76&39.31&187.86&37.56&188.63&197.14&235.97&39.34\\
-    \hline
-     polynomial degree & (1, 3) & (1, 4) & (1, 5) & (2, 0) & (2, 1) & (2, 2) & (2, 3) & (2, 4) & (2, 5) \\  
-    log marginal likelihood& -39282.03&182.13&nan&162.98&194.94&197.52&-582.44&37.29&-152.34\\
-    \hline
-     polynomial degree & (3, 0) & (3, 1) & (3, 2) & (3, 3) & (3, 4) & (3, 5) & (4, 0) & (4, 1) & (4, 2) \\ 
-    log marginal likelihood&168.11&143.68&nan&216.78&37.87&nan&-29417.31&-85.89&184.90\\
-    \hline
-     polynomial degree & (4, 3) & (4, 4) & (4, 5) & (5, 0) & (5, 1) & (5, 2) & (5, 3) & (5, 4) & (5, 5) \\ 
-    log marginal likelihood&nan&29.21&106.39&148.90&nan&nan&-1772.36&180.70&123.38\\
-    \end{tabular}}
-  \caption{Log marginal likelihood for polynomial of different degree}
-  \label{tab:shm_paramertised}
-\end{table}
-\end{flushleft}
-The best coefficients are (1, 1):
-$-1.8318\times 10^{-5}-0.9042x$
-and
-$4.4850\times 10^{-4}-0.9045x$
-We will evaluate the peformance again choosing from $\pm 5$ and restoring the dynamics on a grid of 40 by 40 within $\pm 5$.
-\begin{table}[H]
-  \centering
-  \begin{tabular}{l l l l} 
-                    \hline
-                    & log marginal liklihood &  prediction MSE  & true dynamics MSE\\
-                    \hline
-Baseline RBF & 198.06 & 14.0999 & 3.1996 \\
-Invariance Kernel & 238.38 & 0.1479 & 0.1493 \\
-Parameterised Invariance Kernel & 233.97 & 1.9799 & 0.9743 \\
-                    \hline
-  \end{tabular}
-  \caption{Learnt SHM invariance performance}
-  \label{tab:paramertised_shm_performance}
-\end{table}
-
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_shm_predicted_trajectory.pdf}
+  \includegraphics[width=0.6\linewidth]{../codes/figures/double_pendulum_energy.pdf}
   \centering
-  \caption{Comparison of learnt SHM invariance trajectory prediction}
-  \label{fig:parameterised_shm_trajectory}
+  \caption{2D SHM energy}
+  \label{fig:double_pendulum_energy}
 \end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_shm_learnt_polynomial.pdf}
-  \centering
-  \caption{Learnt SHM polynomial}
-  \label{fig:parameterised_shm_polynomial}
-\end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_shm_conservation_of_energy.pdf}
-  \centering
-  \caption{Learnt SHM conservation of energy}
-  \label{fig:parameterised_shm_conserve_energy}
-\end{figure}
-
-\subsection{Pendulum}
-We will test all combination of polynomial of degree 0, 1, 2, 3, 4, 5 so there will be 36 of them, and we will choose the ones with highest marginal likelihood.
-We put a prior of Laplace distribution of all the coefficients with variance $0.1$ to encourage sparsity and we initialise the coefficients with normal distribution with variance of $10^{-3}$, we also restrict the search between $\pm 1$. Since this time, we canot force such strong prior on the coefficients to be zero. 
-This is done by 30 training points (3 random start points) since we need more data to learn parameters.
-Data is again between $\pm 150^{\circ}$ so is the invariance conditioning.
-The baseline marginal likelihood is 229.44 and known invariance is 259.23.
-
-\begin{flushleft}
-\begin{table}[H]
-\resizebox{\columnwidth}{!}{
-    \begin{tabular}{c c c c c c c c c c}
-    \hline
-     polynomial degree & (0, 0) & (0, 1) & (0, 2) & (0, 3) & (0, 4) & (0, 5) & (1, 0) & (1, 1) & (1, 2) \\  
-    log marginal likelihood &233.19&233.19&233.04&231.08&215.58&-778657.91&230.56&241.84&71.94\\
-    \hline
-     polynomial degree & (1, 3) & (1, 4) & (1, 5) & (2, 0) & (2, 1) & (2, 2) & (2, 3) & (2, 4) & (2, 5) \\  
-    log marginal likelihood&-55.00&-57.43&221.83&230.54&245.13&232.63&257.56&nan&-100349.16\\
-    \hline
-     polynomial degree & (3, 0) & (3, 1) & (3, 2) & (3, 3) & (3, 4) & (3, 5) & (4, 0) & (4, 1) & (4, 2) \\ 
-    log marginal likelihood&227.73&242.15&-83384.19&-53.35&217.43&231.41&229.79&240.80&229.65\\
-    \hline
-     polynomial degree & (4, 3) & (4, 4) & (4, 5) & (5, 0) & (5, 1) & (5, 2) & (5, 3) & (5, 4) & (5, 5) \\ 
-    log marginal likelihood&-32024.85&251.19&nan&188.66&242.33&nan&nan&225.38&nan\\
-    \hline
-    \end{tabular}}
-  \caption{Log marginal likelihood for polynomial of different degree}
-  \label{tab:pendulum_paramertised}
-\end{table}
-\end{flushleft}
-
-
-The best coefficients are
-$3.645\times 10^{-4} + 0.9775x -3.314\times 10^{-5} x^2$
-and 
-$0.0013+ 0.9623x + 0.0215x^2-0.1222x^3$
-
-
-We will evaluate the peformance again choosing from $\pm 3$ and restoring the dynamics on a grid of 40 by 40 within $\pm 3$.
-\begin{table}[H]
-  \centering
-  \begin{tabular}{l l l l }
-    \hline
-                    & log marignal liklihood &  prediction MSE  & true dynamics MSE\\
-    \hline
-Baseline RBF & 233.20 & 0.4336 & 1.0325 \\
-Invariance Kernel & 263.35 & 0.0088 & 0.0084 \\
-Parameterised Invariance Kernel & 257.20 & 0.0184 & 0.2797 \\
-    \hline
-  \end{tabular}
-  \caption{Learnt pendulum invariance performance}
-  \label{tab:paramertised_pendulum_performance}
-\end{table}
-The learnt invariance function is as follows
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_pendulum_predicted_trajectory.pdf}
-  \centering
-  \caption{Comparison of learnt pendulum invariance trajectory prediction}
-  \label{fig:parameterised_pendulum_trajectory}
-\end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_pendulum_learnt_polynomial.pdf}
-  \centering
-  \caption{Learnt pendulum polynomial}
-  \label{fig:parameterised_pendulum_polynomial}
-\end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_pendulum_conservation_of_energy.pdf}
-  \centering
-  \caption{Learnt pendulum conservation of energy}
-  \label{fig:parameterised_pendulum_conserve_energy}
-\end{figure}
-
-
-\section{Learning Damped 1D invariance}
-
-\subsection{SHM}
-30 points
-\begin{flushleft}
-\begin{table}[H]
-\resizebox{\columnwidth}{!}{
-      \begin{tabular}{c c c c c c c c c c}
-    \hline
-     polynomial degree & (0, 0) & (0, 1) & (0, 2) & (0, 3) & (0, 4) & (0, 5) & (1, 0) & (1, 1) & (1, 2) \\  
-    log marginal likelihood & 223.97&223.15&222.67&220.92&220.44&222.12&223.30&237.13&230.55\\
-    \hline
-     polynomial degree & (1, 3) & (1, 4) & (1, 5) & (2, 0) & (2, 1) & (2, 2) & (2, 3) & (2, 4) & (2, 5) \\  
-    log marginal likelihood& 233.77&214.02&234.26&224.23&234.30&221.00&-90.55&235.41&230.84\\
-    \hline
-     polynomial degree & (3, 0) & (3, 1) & (3, 2) & (3, 3) & (3, 4) & (3, 5) & (4, 0) & (4, 1) & (4, 2) \\ 
-    log marginal likelihood&224.07&234.58&222.94&226.14&235.12&235.18&225.39&223.24&217.29\\
-    \hline
-     polynomial degree & (4, 3) & (4, 4) & (4, 5) & (5, 0) & (5, 1) & (5, 2) & (5, 3) & (5, 4) & (5, 5) \\ 
-    log marginal likelihood&233.06&236.45&205.45&223.15&236.85&229.43&218.43&236.46&226.88\\
-
-    \end{tabular}}
-  \caption{Log marginal likelihood for polynomial of different degree}
-  \label{tab:damped_shm_paramertised}
-\end{table}
-\end{flushleft}
-best coefficients:
-$6.135\times 10^{-4}+1.000x$ and $-0.1201+1.000x$
-\begin{table}[H]
-  \centering
-  \begin{tabular}{l l l l }
-    \hline
-                    & log marignal liklihood &  prediction MSE  & true dynamics MSE\\
-    \hline
-    Baseline RBF & 226.25 & 1.8317 & 5.3019 \\
-Invariance Kernel & 234.50 & 0.0847 & 2.2566 \\
-Parameterised Invariance Kernel & 239.52 & 0.3194 & 4.1505 \\
-    \hline
-  \end{tabular}
-  \caption{Learnt damped SHM Invariance performance}
-  \label{tab:paramertised_damped_shm_performance}
-\end{table}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_damped_shm_predicted_trajectory.pdf}
-  \centering
-  \caption{Comparison of learnt damped SHM invariance trajectory prediction}
-  \label{fig:parameterised_damped_shm_trajectory}
-\end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_damped_shm_learnt_polynomial.pdf}
-  \centering
-  \caption{Learnt damped SHM polynomial}
-  \label{fig:parameterised_damped_shm_polynomial}
-\end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_damped_shm_conservation_of_energy.pdf}
-  \centering
-  \caption{Learnt damped SHM conservation of energy}
-  \label{fig:parameterised_damped_shm_conserve_energy}
-\end{figure}
-
-\subsection{Pendulum}
-We used 30 points.
-\begin{flushleft}
-\begin{table}[H]
-\resizebox{\columnwidth}{!}{
-      \begin{tabular}{c c c c c c c c c c}
-    \hline
-     polynomial degree & (0, 0) & (0, 1) & (0, 2) & (0, 3) & (0, 4) & (0, 5) & (1, 0) & (1, 1) & (1, 2) \\  
-    log marginal likelihood &226.08&226.08&218.59&218.16&221.86&219.11&225.99&223.57&215.04\\
-    \hline
-     polynomial degree & (1, 3) & (1, 4) & (1, 5) & (2, 0) & (2, 1) & (2, 2) & (2, 3) & (2, 4) & (2, 5) \\  
-    log marginal likelihood&-112049.02&225.45&218.52&220.35&223.26&221.92&240.04&231.61&225.89\\
-    \hline
-     polynomial degree & (3, 0) & (3, 1) & (3, 2) & (3, 3) & (3, 4) & (3, 5) & (4, 0) & (4, 1) & (4, 2) \\ 
-    log marginal likelihood&221.63&223.61&215.57&212.95&211.57&nan&222.00&222.51&218.68\\
-    \hline
-     polynomial degree & (4, 3) & (4, 4) & (4, 5) & (5, 0) & (5, 1) & (5, 2) & (5, 3) & (5, 4) & (5, 5) \\ 
-    log marginal likelihood&212.60&-77.94&-49457.89&215.94&225.39&223.42&-84.95&215.23&225.66\\
-    \end{tabular}}
-  \caption{Log marginal likelihood for polynomial of different degree}
-  \label{tab:damped_pendulum_parameterised}
-\end{table}
-\end{flushleft}
-best coefficients:
-$-1.008\times 10^{-4} + 0.1254x-0.0133x^2$ and $-0.0025+0.1203x-0.0033x^2-0.014x^3$
-
-\begin{table}[H]
-  \centering
-  \begin{tabular}{l l l l }
-    \hline
-                    & log marignal liklihood &  prediction MSE  & true dynamics MSE\\
-    \hline
-    Baseline RBF & 226.09 & 0.2235 & 0.9067 \\
-Invariance Kernel & 239.48 & 0.0427 & 0.2136 \\
-Parameterised Invariance Kernel & 239.57 & 0.0704 & 0.0705 \\
-    \hline
-  \end{tabular}
-  \caption{Learnt damped pendulum invariance performance}
-  \label{tab:paramertised_damped_pendulum_performance}
-\end{table}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_damped_pendulum_predicted_trajectory.pdf}
-  \centering
-  \caption{Comparison of learnt damped pendulum invariance trajectory prediction}
-  \label{fig:parameterised_damped_pendulum_trajectory}
-\end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_damped_pendulum_learnt_polynomial.pdf}
-  \centering
-  \caption{Learnt damped pendulum polynomial}
-  \label{fig:parameterised_damped_pendulum_polynomial}
-\end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/parameterised_damped_pendulum_conservation_of_energy.pdf}
-  \centering
-  \caption{Learnt damped pendulum conservation of energy}
-  \label{fig:parameterised_damped_pendulum_conserve_energy}
-\end{figure}
-
-\section{Learning 2D invariance}
-
 
 
 
