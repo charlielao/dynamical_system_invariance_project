@@ -297,6 +297,13 @@ $$\begin{pmatrix}
     KL^T & LKL^T\\
 \end{pmatrix}\right)
 $$
+We can then condition the first row on the second row using equation \ref{equ:normal_condtion} to obtain
+\begin{equation}
+  \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} \left(0_{2nd}, \begin{pmatrix}
+    K-LK(LKL^T)^{-1}KL^T
+  \end{pmatrix}\right)
+  \label{equ:invariance_condition}
+\end{equation}
 
 \section{1D System}
 \subsection{Linear}
@@ -496,6 +503,32 @@ $$
 $$
 derived in exactly the same way as the linear case. 
 
+\begin{figure}[H]
+     \centering
+     \begin{subfigure}[b]{0.5\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{../codes/figures/prior_shm_rbf.pdf}
+        \caption{RBF prior}
+        \label{fig:prior_shm_rbf}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.5\linewidth}
+         \centering
+         \includegraphics[width=\linewidth]{../codes/figures/prior_shm_invariance.pdf}
+         \caption{SHM invariance prior}
+         \label{fig:prior_shm_invariance}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.5\linewidth}
+         \centering
+         \includegraphics[width=\linewidth]{../codes/figures/prior_pendulum_invariance.pdf}
+         \caption{Pendulum invariance prior}
+         \label{fig:prior_pendulum_invariance}
+     \end{subfigure}
+        \caption{Priors}
+        \label{fig:priors}
+\end{figure}
+
 \section{Damped System}
 In previous sections, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
 However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
@@ -626,12 +659,12 @@ The form of the invariance matrix is too cubersome to write down, but the deriva
 
 
 
-\chapter{Learning Invariance}
+\section{Learning Invariance}
 Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which allowed us to derive the energy and thereafter the invariance equation. 
 However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then the system is pretty much solved that we can just use an ODE integrator to obtain the trajectories. 
 Therefore, we should find a way for the system to learn the form of invariance from data directly.
 One way to do so is to parameterise our invariance function and allow the system to learn the coefficients by maximising the log marginal likelihood.
-\section{1D system}
+\subsection{1D system}
 A simple way to parameterise an unknown function, when the problem is relatively bounded is to use polynomial basis to paramertise the unknown function $L(a,v)$.
 In 1D cases, for our examples, they are simple enough so that $L(a,v)$ is a sum of a function of $a$ and $p$ only, $f_pa$ and a different function of $v$ and $q$ only, $g_q(v)$ so that $L(a,v)=f_p(a)+g_q(v)$.
 In the 1D SHM case, $f_p(a)=mpa$ and $g_q(v)=kqv$.
@@ -639,7 +672,7 @@ For simple pendulum, we have $f_p(a)=\ell pa$ and $g_q(v)=\sin qv$.
 We will therefore set $$f_p(a)=\sum_{i=0}^{n_f}c_{f,i}p^i,g_q(a)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
 where $c_{f,i}, c_{g,i}$ are the parameter we will optimise based on marginal likelihood and we will evaluate different degree of polynomial $n_f, n_g$ and see which gives the best results. 
 
-\section{2D system}
+\subsection{2D system}
 In 2D, things are a bit more complicated. For example, it is very clear that in double pendulum, the invariance function is not seperable.
 Instead, we need to consider all combinations of polynomials; i.e. multivariate polynomial.
 Therefore, for 2D we have $L(a,v)=f_1a_1+f_2a_2+g_1v_1+g_2v_2.$
@@ -648,55 +681,59 @@ Therefore, there will be many more coefficients.
 
 \chapter{Experiments}
 \section{Data Generation}
-To generate the data, we use RK4 integrator to generate data using the ODEs for each problem. 
-We will also add some small Gaussian noise $10^{-8}$ to the dynamics to reflect the real world better.
-Since we aim to predict the value of dynamics at any point in the input space, we will need the dynamics as targets. 
-This is done by combing forward and backward difference to compute the finite gradient. 
+To generate the data, we use a Runge-Kutta integrator to generate data using the equation of motions for each problem. 
+We also added some small Gaussian noise $10^{-8}$ to the dynamics to reflect the real world better as well as stablising the integrator.
+Since we aim to predict the value of dynamics at any point in the input space, we use the dynamics as targets , Y. 
+This is done by combining forward and backward finite difference (midpoint method) to compute the gradient. 
 We also choose the time step to be $0.01$ to ensure sufficient accuracy for the integrator.
-For training data, we will choose a few random starting point within a range(exact details depends on the task as will be explained later) in the input space and generate data from the point for a number of timesteps. 
-For testing data, we will do the same both in the same range and outside the range, we will pick a few starting points and then average the result.
-Without loss of generality, we choose $m=k=1$ and $g=\ell=1$ for 1D and 2D SHM and simple pendulum for simplicity. For the damping, we will choose $\gamma= 0.1$. 
-For double pendulum, we also let $m_1=m_2=\ell_1=\ell_2=g=1.$
+For training data, X, we choose a few random starting point within a range (datails depends on the task as described later) in the input space and generate data from there for a number of timesteps (which is fixed at 10 points per trajectory in this report). 
+To assess the performance, we generate the test set using the same input range, we will pick three different starting points and then average the result.
+Without loss of generality, we choose $m=k=1$ and $g=\ell=1$ for 1D and 2D SHM and simple pendulum for simplicity of presentation. 
+For the damping, we will choose $\gamma= 0.1$, which is fairly strongly damped as shown in figure \ref{fig:damped_pendulum_trajectory}, \ref{fig:damped_shm_trajectory}. 
+For double pendulum, we also set $m_1=m_2=\ell_1=\ell_2=g=1.$
 
 \section{Evaluation Method}
-We will use a few different evaluation metrics. 
-\begin{enumerate}
-    \item Generate future trajectories from a random starting point and compare to true trajectories
-    \item Evaluate the difference between the true analytical dynamics and the predicted dynamics on a grid
-    \item Log marginal likelihood
-\end{enumerate}
-If we are learning the invariance, we can also further compare the true invariance and the learnt invariance.
-Or we can assess the conservation of energy over time.
+We will mainly use the mean squared error (MSE) between the trajectory prediction and ground truth as our evaluation metrics. 
+We also illustrate the amount of energy (using the exact expression) along the trajectory to demonstrate that invariance is obeyed.
+For learning the invariance in 1D case, we can also further compare the true invariance and the learnt invariance up to a multiplicative constant.
+However, it is not possible to visualise in 2D cases so we will simply assess the conservation of energy (invariance) performance.
 
 \section{Implementation Technicalities}
-We need to add jitter to the $D$ matrix in computation due to the fact that we need the invert it and because of numerical issues, it will be more stable if we add a little bit of jitter in the range of $10^{-6}$ and its effect will be explained in the sections below.
-Similarly, to stabilise the algorithm, when backpropagating the hyperparameters, we need to narrow range of search so it's not too crazy. 
-For example, we wouldn't expect a lengthscale of 100 in our example with maximum range of 5; therefore, we will set for example, the maximum range of search is $10^{-3}$ to $5$ for the length scale and similarly for the variance term.
-Another changes we made in the 2D cases is to scale the data using MinMax scaler to squash them to be between $\pm 1$. 
+We will need to add jitter, a diagnoal matrix of small value, to the $LKL^T$ matrix in equation \ref{equ:invariance_condition}.
+This is due to the fact that we need the invert it and it will be more stable numerically if we add a little bit of jitter in the range of $10^{-6}$ to $10^{-4}$, and its effect on the model will be explained in the sections below.
+Similarly, for stability, when backpropagating to optimise the hyperparameters with respect to marginal likelihood, we need to narrow range of search such that the value is more reasonable.
+It is particularly important in our dynamical systems since, for example, in SHM the equation of motion is $a=-q$ and $v=p$, so that is will be a 2D plane extends to infinity;
+as a result, if the GP learns "correctly", the lengthscales of some directions will be very large or $\infty$, and that will be problematic and it would not affect the performance a lot if we limit the lengthscales for a much smaller value.
+Therefore, here I would set the range of both lengthscales and variable to be around the twice to three times the maximum range possible.
+For example, if we have maximum range of $\pm 3$, my upper bound for search is set to $10$ and lower bound is $10^{-3}$.
+Another change we made in 2D SHM is to scale the data using MinMax scaler to squash them to be between $\pm 1$. 
 This is done since the polynomial behaves better around this region.
 
-\subsection*{Local Invariance}
-Conditioning on a grid of invariance points is simply not scalable in high dimensions. 
-If we have an invariance density of 1 in a $\pm 5$ range for 2D SHM, then we will have 10000 points. 
-We will easily run out of memory and also taking the matrix inverse are very difficult and time consuming.
-As a result, to make the approach scalable to 2D space, we will use the idea of local invariance. 
-Which is to take samples in the local region around training and testing points and condition on these points, where we sample uniformly around the spaces of these points.
+\subsection*{Invariance points $X_L$}
+In low dimensions, we could simply allow $X_L$ to be a evenly spaced grid in the input space, and we will call the number of points in each dimension the \textbf{invariance density}.
+So that if I have an invariance density of $40$, it means my $X_L$ will contain $1600$ points. 
+However, conditioning on a grid of invariance points is simply not scalable in high dimensions. 
+If we have an invariance density of 10 in a $\pm 5$ range for 2D SHM (spacing of 1), then we will have 10000 points. 
+We can easily run out of memory and also taking the matrix inverse are very difficult and time consuming.
+As a result, to make the approach scalable to high dimensional space, we will use the idea of local invariance. 
+The idea is straightforward, we simply sample uniformly (30-80 points) in the local region around the training and testing points and set them as $X_L$ (we choose a torus shape around the data points so that we will not have invariance points too close to the data points, which will be unstable).
+This works on the assumption that only the region around testing points will be the most important to predict in terms of conditioning; and to use the same kernel, we also have to condition on the region around training points, which is also important to help maximising the marginal likelihood objective when we are learning the invariance function.
+Another evidence that supports the use of local invariance, which have much fewer points than using a grid, is demonstrated below where we show that there is a diminishing return in increasing the number of invariance points so that actually not that many invariance points is needed to achieve a good performance. 
 
-\section{1D}
-We will illustrate a lot of examples in 1D cases since the results are easy to visualise, but the principle readily extend to high dimensional spaces. 
-
-\subsection{SHM}
-We start with the 1D SHM case, and for the data we will have only two trajectory starting randomly for $-3\le q\le3$ and $p$ to be between $\pm 0.3$ so that it does not overshoot the boundary, and we allow it to run for $0.1$ seconds so there will be in total 10 training points. 
-We will then draw three test point from the same range as training, to test the performance of the future predictive power for 3 seconds (300 points) and average over the three trajectories. 
-In figure \ref{fig:shm_prediction}, we will choose one at random and draw the future trajectories.
-The performance is summarised in table \ref{tab:shm_performance} with jitter $1\times 10^{-5}$ with invariance density of 20 within $\pm 3$. 
+\section{SHM}
+We start with the 1D SHM case, and for the data we will have only one trajectory starting randomly in $-3\le q\le3$ and $p$ to be between $\pm 0.3$.
+We chose $p$ to be smaller so that the future trajectory does not overshoot the upper bound of $q$ too much. 
+We allow the integrator to run for $0.1$ seconds so there will be in total 10 training points (10 time steps). 
+We will then draw three test points from the same range as training, to assess the performance of the predictive power for 3 seconds (300 points) and average the MSE over the three trajectories. 
+In figure \ref{fig:shm_prediction}, \ref{fig:damped_shm_energy}, we have chosen one trajectory at random to illustate the predictions as well as the energy along the trajectory.
+For this task, we have used a jitter amount of $10^{-5}$ and an invariance density of 20 between $\pm 3$ in both $p$ and $q$ direction.
 We have also plotted the posterior distribution of using invariance kernel and compare that to using naive RBF kernel in figure \ref{fig:posterior_shm}.
 We can see the invariance has much better predictive power and generalisability.
-
-We will test all combination of polynomial of degree 0, 1, 2, 3 so there will be 16 of them, up to the cubic terms, and we will choose the ones with highest marginal likelihood.
-We initialise the coefficients with normal distribution with variance of $10^{-3}$, we also restrict the search between $\pm 1$.
-Data is again between $\pm 3$ so is the invariance conditioning.
-The best polynomial pair is 
+For learning the invariance, we test all combinations of polynomials of $f(p)$ and $g(q)$, each with degree 0, 1, 2, 3 (i.e. up to cubic term) so there will be 16 of them to optimise, and we choose the pair with the highest marginal likelihood. 
+We initialise the coefficients with normal distribution with variance of $10^{-3}$, we also restrict the search space to be between $\pm 1$.
+We have also added a Laplace prior on the coefficients with variance 0.1 since we expect most coefficients would be zero and Laplace prior encourage sparse solution.
+The learnt $f(p)$ and $g(q)$ is plotted in figure \ref{fig:shm_learnt}.
+The performance is summarised in table \ref{tab:shm_performance}.
 
 \begin{table}[H]
   \centering
@@ -708,7 +745,7 @@ Log Marginal Likelihood & 74.66 & 86.28 & 83.32  \\
 MSE & 3.5563 & 0.1057 & 0.0927 \\
                     \hline
   \end{tabular}
-  \caption{SHM Invariance Kernel Performance}
+  \caption{SHM performance}
   \label{tab:shm_performance}
 \end{table}
 
@@ -739,40 +776,43 @@ MSE & 3.5563 & 0.1057 & 0.0927 \\
 \end{figure}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_learnt.pdf}
+  \includegraphics[width=\linewidth]{../codes/figures/shm_learnt.pdf}
   \centering
   \caption{Learnt invariance for SHM}
   \label{fig:shm_learnt}
 \end{figure}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_energy.pdf}
+  \includegraphics[width=\linewidth]{../codes/figures/shm_energy.pdf}
   \centering
   \caption{Energy conservation for SHM}
   \label{fig:shm_energy}
 \end{figure}
 
+We can clearly see the naive RBF kernel failed to learn at all as it does not have enough example data to genealise, as we can see from \ref{fig:posterior_shm_rbf}, so that it is only able to predict well in the region where the data are. 
+On the other hand, from \ref{fig:posterior_shm_invariance} and the prediction performance, we can see the invariance kernel has much better generalisation ability.
+From the energy plot in figure \ref{fig:shm_energy}, we again see both the known and learnt invariance obeys the invariance very well while the RBF kernel does not at all.
+In this case, the learnt invariance performs almost exactly as the known form, as we can also see in figure \ref{fig:shm_learnt}, and has successfully recovered the physics. 
 
-\subsection{Pendulum}
-The procedure is pretty much the same here that we will draw 3 single training example between $q=\pm 150^{\circ}$ and $\pm 10^{\circ}$ for $p$.
-The rest of the procedure is the same as the SHM case.
-Again, the invariance is conditioned between $\pm 150^{\circ}$ with invariance density of 30 with jitter $1\times 10^{-5}$.
-We again have the prediction performance summarised in table \ref{tab:pendulum_performance} as well as figures \ref{fig:pendulum_prediction}, \ref{fig:posterior_pendulum}.
 
-The best polynomial degree is  
+\section{Pendulum}
+In this task, the experiment setup is essentially exactly the same as the SHM case. 
+However, since this time the dynamics is more complicated, we will draw three different starting points for training between $q=\pm 150^{\circ}$ and $\pm 10^{\circ}$ for $p$, so in total 30 points.
+This time, since it is a harder task, we will use an invariance density of 30 between $\pm 150^{\circ}$.
+We again have the prediction performance summarised in table \ref{tab:pendulum_performance} as well as figures \ref{fig:pendulum_prediction}, \ref{fig:pendulum_energy} and the posteriors in \ref{fig:posterior_pendulum}.
+The learnt polynomial is in \ref{fig:pendulum_learnt}.
 
-We again see a much better improvement in performance even in this nonlinear case. 
 \begin{table}[H]
   \centering
-  \begin{tabular}{ c c c c c}
+  \begin{tabular}{ l l l l}
     \hline
 Method           & RBF & Known Invariance&  Learnt Invariance\\
                     \hline
-Log Marginal Likelihood & 233.89 & 262.59 & 255.76 &  \\
-MSE & 0.05 & 0.0025 & 0.0020 \\
+Log Marginal Likelihood & 233.89 & 262.59 & 255.76  \\
+MSE & 0.0500 & 0.0025 & 0.0020 \\
     \hline
   \end{tabular}
-  \caption{Pendulum }
+  \caption{Pendulum performance}
   \label{tab:pendulum_performance}
 \end{table}
 
@@ -803,81 +843,79 @@ MSE & 0.05 & 0.0025 & 0.0020 \\
 \end{figure}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/pendulum_learnt.pdf}
+  \includegraphics[width=\linewidth]{../codes/figures/pendulum_learnt.pdf}
   \centering
   \caption{Learnt invariance for pendulum}
   \label{fig:pendulum_learnt}
 \end{figure}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/pendulum_energy.pdf}
+  \includegraphics[width=\linewidth]{../codes/figures/pendulum_energy.pdf}
   \centering
   \caption{Energy conservation for pendulum}
   \label{fig:pendulum_energy}
 \end{figure}
 
+From table \ref{tab:pendulum_performance}, figure \ref{fig:pendulum_prediction}, \ref{fig:pendulum_energy}.
+This time, again the RBF kernel performs poorly.
+The known kernel performs very well again, almost exactly the same as the ground truth.
+However, this time, the learnt invariance is slightly worse; this is expected since we are approximating a sine function with a cubic polynomial, and so some level of deviation is expected.
+As we can see from figure \ref{fig:pendulum_learnt}, the learning is pretty accurate.
+From the posteriors in \ref{fig:posterior_pendulum}, we see RBF generalise much better due to extra data points, but it is still very far from giving a reasonable prediction. 
 
-Here we also include the prior distribution of RBF kernel in figure \ref{fig:prior_shm_rbf}, SHM invariance kernel in figure \ref{fig:prior_shm_invariance} and pendulum invariance kernel in figure \ref{fig:prior_pendulum_invariance}.
-We can see the prior knowledge of the dynamics, such as the linearity in SHM as well as the sinusoidal nature of pendulum dynamics. 
-\begin{figure}[H]
-     \centering
-     \begin{subfigure}[b]{0.5\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{../codes/figures/prior_shm_rbf.pdf}
-        \caption{RBF prior}
-        \label{fig:prior_shm_rbf}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.5\linewidth}
-         \centering
-         \includegraphics[width=\linewidth]{../codes/figures/prior_shm_invariance.pdf}
-         \caption{SHM invariance prior}
-         \label{fig:prior_shm_invariance}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.5\linewidth}
-         \centering
-         \includegraphics[width=\linewidth]{../codes/figures/prior_pendulum_invariance.pdf}
-         \caption{Pendulum invariance prior}
-         \label{fig:prior_pendulum_invariance}
-     \end{subfigure}
-        \caption{Priors}
-        \label{fig:priors}
-\end{figure}
 
-\subsection{Invariance Density}
-Here we will to explore how the change of invariance density could affect the performance of the kernel as well as degree of freedom.
-Since 1D SHM is rather trival, I will test it on the nonlinear pendulum case. 
-We will assess its perdiction power using the same method above and we will also calculate its degree of freedom using equation.
-We can see that beyond a certain point, the increase in performance is not that significant but the computation cost in terms of time and space all increases dramatically.
-Therefore, from here, we will only use the minimum number of invariance points that ensure the performance of the invariance kernel. 
+\section{Invariance Density}
+Here we will to explore how different invariance density affect the performance of the kernel as well as the degree of freedom.
+Since 1D SHM is trival to learn, we test it on the nonlinear pendulum case, which will illustrate the point better. 
+We will use different invariance density using the same training data and three different trajectories of testing data.
+We again calculate the MSE of trajectory prediction as well as the percentage of energy deviation from the starting point of three different trajectories and average over.
+The results is shown in figure \ref{fig:vary_invariance_density}.
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_invariance.pdf}
+  \includegraphics[width=\linewidth]{../codes/figures/vary_invariance.pdf}
   \centering
   \caption{Effect of varying invariance density}
   \label{fig:vary_invariance_density}
 \end{figure}
 
-\subsection{Effect of Jitter}
-Since we need a little bit of jitter to stabilise the computation of our invariance kernel as explained above, and that adding jitter is the same as adding noise to the invariance (since we are adding it on the diagonal of $D$ submatrix), we need to make sure it is not too noisy. So we will again assess the performance using different amount of jitter.
-We can again see beyond a certain point, the performance does not change. 
-While the lower the jitter, the higher the performance should be in theory; the instability of matrix inversion and numerical errors could cause a drop in performance.
-As a result, now we will also choose the smallest amount of jitter that remains stable.  
+We can see that for the marginal likelihood, it increases as the number of invariance points increases, which is expected since we have more information/evidence to support the data.
+However, MSE first decreases then increases.
+The first decrease makes sense since with more invariance points, we should in principle predict better.
+However, the increase is counter-intuitive.
+We conclude that there is actually not that big a difference and it is possibly due to the numerical instability as we increase the size of the matrix with increasing invariance density.  
+We also see the deviation of energy decreases as we increase the number of invariance points, which makes sense because we are imposing "more" invariance in the input space by increasing the invariance density.
+Lastly, we see the degree of freedom does not vary much either, while in theory it should decrease with increasing invariance density due to more constraints on the function.
+
+Overall, we see there is not that big an advantage to increase our invariance density beyond a certain point due to diminishing return in performance and $N^6$ computational cost.
+Therefore, from this point we will choose the smallest invariance density that give reasonable performance.  
+
+\section{Effect of Jitter}
+Since we need a little bit of jitter to stabilise the computation of our invariance kernel as explained above, and that adding jitter is the same as adding noise to the invariance (since we are adding it on the diagonal of $LKL^T$ submatrix), we need to make sure it is not too large and too noisy, which will destroy the point of having invariance to start with. 
+So we will again assess the performance in the similar way as above using different amount of jitter.
+The results is shown in figure \ref{fig:vary_jitter}.
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/vary_jitter.pdf}
+  \includegraphics[width=\linewidth]{../codes/figures/vary_jitter.pdf}
   \centering
   \caption{Effect of varying jitter}
   \label{fig:vary_jitter}
 \end{figure}
 
-\subsection{Damped SHM}
-In damped system, we introduce a damping of $\gamma=0.1$, which is very high already.
-The rest of the setting is essentially the same as undamped SHM case.
-However, this time we use double the amount of data (20 points) since it is a more difficult problem.
-The results is again summarised in table \ref{tab:damped_shm_performance} and figure \ref{fig:damped_shm_prediction}, and the learnt $\epsilon$ is $0.0297$, which is not too high a noise.
-We see that even in damped cases, the knowledge of conservation of energy is helpful.
+For marginal likelihood, we see it decreases as jitter increases as expected because then the invariance is not as strong a contraint.
+For MSE, we expect to see steady decrease in performance.
+However, here we see a dip initially.
+Again, there is not a big difference, and that the lowest jitter might not be enough to stablise the model so that the worse performance could be due to numerical instability.
+We see a similar pattern in energy conservation, where we see energy consevation is not as enforced when we have noisy invariance.
+Degree of freedom increases with jitter as expected since we are relaxing the constraints.
+While the lower the jitter, the higher the performance should be in theory; the instability of matrix inversion and numerical errors could cause a drop in performance.
+As a result,  we will also choose the smallest amount of jitter that still gives stable performance.  
+Note that, in both cases of varying jitter and invariance density; all of them are much better than the RBF in performance anyways.
+
+\section{Damped SHM}
+For damped system, we have exactly the same setup as the original undamped SHM.
+The results is again summarised in table \ref{tab:damped_shm_performance} and figure \ref{fig:damped_shm_prediction}, \ref{fig:damped_shm_energy}.
+The learnt $f(p)$ and $g(q)$ is shown in figure \ref{fig:damped_shm_learnt}.
+
 \begin{table}[H]
   \centering
   \begin{tabular}{l l l l}
@@ -888,34 +926,43 @@ Method           & RBF & Known Invariance&  Learnt Invariance\\
 MSE & 0.9226 & 0.4772 & 0.2405 \\
     \hline
   \end{tabular}
-  \caption{Damped SHM performance }
+  \caption{Damped SHM performance}
   \label{tab:damped_shm_performance}
 \end{table}
 
 \begin{figure}[H]
         \centering
         \includegraphics[width=\linewidth]{../codes/figures/damped_shm_predicted.pdf}
-        \caption{damped shm predicted trajectory}
+        \caption{Damped SHM predicted trajectory}
         \label{fig:damped_shm_prediction}
 \end{figure}
 
-
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/damped_shm_learnt.pdf}
+  \includegraphics[width=\linewidth]{../codes/figures/damped_shm_energy.pdf}
   \centering
-  \caption{Learnt invariance for damped shm}
-  \label{fig:damped_shm_learnt}
-\end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/damped_shm_energy.pdf}
-  \centering
-  \caption{Energy conservation for damped shm}
+  \caption{Energy conservation for damped SHM}
   \label{fig:damped_shm_energy}
 \end{figure}
 
 
-\subsection{Damped Pendulum}
+\begin{figure}[H] 
+  \includegraphics[width=\linewidth]{../codes/figures/damped_shm_learnt.pdf}
+  \centering
+  \caption{Learnt invariance for damped SHM}
+  \label{fig:damped_shm_learnt}
+\end{figure}
+
+We can see that the RBF performance is still poor as before.
+However, this time the invariance kernel does not perform as well as before. 
+This is expected since we still enforce some degree of invariance, even though it is noisy. 
+However, it is clear that it is making use of the knowledge of the invariance since the performance is fairly good.
+Also, when we are learning the invariance, it again successfully recover the physics.
+For energy consevation
+
+
+
+
+\section{Damped Pendulum}
 Again, the setting is almost the same as the undamped pendulum, and $\gamma=0.1$. 
 Also, this time we kept at 10 data points since the phase space is smaller than that of SHM. 
 The results is summarised in table \ref{tab:damped_pendulum_performance} and figure \ref{fig:damped_pendulum_prediction}, and the learnt $\epsilon$ is $0.0014$, again not too high.
@@ -959,8 +1006,7 @@ MSE & 0.5983 & 0.0323 & 0.0877 \\
 
 
 
-\section{2D}
-\subsection{SHM}
+\section{2D SHM}
 Here we again use the same set of input space as the 1D space, but double the dimensions. 
 The results are summarised in table \ref{tab:SHM_2d_performance} and figure \ref{fig:shm_2d_prediction}.
 Since 4 dimensional space is difficult to visualise, only individual prediction of the trajectory is provided. 
@@ -992,7 +1038,7 @@ MSE & 8.6260 & 2.8882 & 4.1416 \\
   \label{fig:shm_2d_energy}
 \end{figure}
 
-\subsection{Double Pendulum}
+\section{Double Pendulum}
 With double pendulum, we have angles being between $\pm 60^\circ$ and angular velocity between $\pm 10^\circ$.
 The results are summarised in table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}.
 \begin{table}[H]
