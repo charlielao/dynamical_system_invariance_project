@@ -717,6 +717,7 @@ If we have an invariance density of 10 in a $\pm 5$ range for 2D SHM (spacing of
 We can easily run out of memory and also taking the matrix inverse are very difficult and time consuming.
 As a result, to make the approach scalable to high dimensional space, we will use the idea of local invariance. 
 The idea is straightforward, we simply sample uniformly (30-80 points) in the local region around the training and testing points and set them as $X_L$ (we choose a torus shape around the data points so that we will not have invariance points too close to the data points, which will be unstable).
+Note that we only sampled once, so that the same local grid will be centred on every training and testing points; this is done to remove the randomness for stability and dependence on the data.
 This works on the assumption that only the region around testing points will be the most important to predict in terms of conditioning; and to use the same kernel, we also have to condition on the region around training points, which is also important to help maximising the marginal likelihood objective when we are learning the invariance function.
 Another evidence that supports the use of local invariance, which have much fewer points than using a grid, is demonstrated below where we show that there is a diminishing return in increasing the number of invariance points so that actually not that many invariance points is needed to achieve a good performance. 
 
@@ -751,9 +752,23 @@ MSE & 3.5563 & 0.1057 & 0.0927 \\
 
 \begin{figure}[H]
         \centering
-        \includegraphics[width=\linewidth]{../codes/figures/shm_predicted.pdf}
+        \includegraphics[width=0.8\linewidth]{../codes/figures/shm_predicted.pdf}
         \caption{SHM predicted trajectory}
         \label{fig:shm_prediction}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_energy.pdf}
+  \centering
+  \caption{Energy conservation for SHM}
+  \label{fig:shm_energy}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_learnt.pdf}
+  \centering
+  \caption{Learnt invariance for SHM}
+  \label{fig:shm_learnt}
 \end{figure}
 
 \begin{figure}[H]
@@ -775,19 +790,7 @@ MSE & 3.5563 & 0.1057 & 0.0927 \\
         \label{fig:posterior_shm}
 \end{figure}
 
-\begin{figure}[H] 
-  \includegraphics[width=\linewidth]{../codes/figures/shm_learnt.pdf}
-  \centering
-  \caption{Learnt invariance for SHM}
-  \label{fig:shm_learnt}
-\end{figure}
 
-\begin{figure}[H] 
-  \includegraphics[width=\linewidth]{../codes/figures/shm_energy.pdf}
-  \centering
-  \caption{Energy conservation for SHM}
-  \label{fig:shm_energy}
-\end{figure}
 
 We can clearly see the naive RBF kernel failed to learn at all as it does not have enough example data to genealise, as we can see from \ref{fig:posterior_shm_rbf}, so that it is only able to predict well in the region where the data are. 
 On the other hand, from \ref{fig:posterior_shm_invariance} and the prediction performance, we can see the invariance kernel has much better generalisation ability.
@@ -818,9 +821,23 @@ MSE & 0.0500 & 0.0025 & 0.0020 \\
 
 \begin{figure}[H]
         \centering
-        \includegraphics[width=\linewidth]{../codes/figures/pendulum_predicted.pdf}
+        \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_predicted.pdf}
         \caption{pendulum predicted trajectory}
         \label{fig:pendulum_prediction}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_energy.pdf}
+  \centering
+  \caption{Energy conservation for pendulum}
+  \label{fig:pendulum_energy}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_learnt.pdf}
+  \centering
+  \caption{Learnt invariance for pendulum}
+  \label{fig:pendulum_learnt}
 \end{figure}
 
 \begin{figure}[H]
@@ -842,19 +859,7 @@ MSE & 0.0500 & 0.0025 & 0.0020 \\
         \label{fig:posterior_pendulum}
 \end{figure}
 
-\begin{figure}[H] 
-  \includegraphics[width=\linewidth]{../codes/figures/pendulum_learnt.pdf}
-  \centering
-  \caption{Learnt invariance for pendulum}
-  \label{fig:pendulum_learnt}
-\end{figure}
 
-\begin{figure}[H] 
-  \includegraphics[width=\linewidth]{../codes/figures/pendulum_energy.pdf}
-  \centering
-  \caption{Energy conservation for pendulum}
-  \label{fig:pendulum_energy}
-\end{figure}
 
 From table \ref{tab:pendulum_performance}, figure \ref{fig:pendulum_prediction}, \ref{fig:pendulum_energy}.
 This time, again the RBF kernel performs poorly.
@@ -872,7 +877,7 @@ We again calculate the MSE of trajectory prediction as well as the percentage of
 The results is shown in figure \ref{fig:vary_invariance_density}.
 
 \begin{figure}[H] 
-  \includegraphics[width=\linewidth]{../codes/figures/vary_invariance.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/vary_invariance.pdf}
   \centering
   \caption{Effect of varying invariance density}
   \label{fig:vary_invariance_density}
@@ -895,7 +900,7 @@ So we will again assess the performance in the similar way as above using differ
 The results is shown in figure \ref{fig:vary_jitter}.
 
 \begin{figure}[H] 
-  \includegraphics[width=\linewidth]{../codes/figures/vary_jitter.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/vary_jitter.pdf}
   \centering
   \caption{Effect of varying jitter}
   \label{fig:vary_jitter}
@@ -932,13 +937,13 @@ MSE & 0.9226 & 0.4772 & 0.2405 \\
 
 \begin{figure}[H]
         \centering
-        \includegraphics[width=\linewidth]{../codes/figures/damped_shm_predicted.pdf}
+        \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_predicted.pdf}
         \caption{Damped SHM predicted trajectory}
         \label{fig:damped_shm_prediction}
 \end{figure}
 
 \begin{figure}[H] 
-  \includegraphics[width=\linewidth]{../codes/figures/damped_shm_energy.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_energy.pdf}
   \centering
   \caption{Energy conservation for damped SHM}
   \label{fig:damped_shm_energy}
@@ -946,7 +951,7 @@ MSE & 0.9226 & 0.4772 & 0.2405 \\
 
 
 \begin{figure}[H] 
-  \includegraphics[width=\linewidth]{../codes/figures/damped_shm_learnt.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_learnt.pdf}
   \centering
   \caption{Learnt invariance for damped SHM}
   \label{fig:damped_shm_learnt}
@@ -956,17 +961,13 @@ We can see that the RBF performance is still poor as before.
 However, this time the invariance kernel does not perform as well as before. 
 This is expected since we still enforce some degree of invariance, even though it is noisy. 
 However, it is clear that it is making use of the knowledge of the invariance since the performance is fairly good.
-Also, when we are learning the invariance, it again successfully recover the physics.
-For energy consevation
-
-
-
+For energy consevation, it is reassuring that the invariance kernel is still remains invariant, while the learnt invariance might deviate a little since the extra parameters in the polynomial might fit to the damped data; but overall it conserves energy relatively well compare to the ground truth.
+Also, when we are learning the invariance, it again successfully recover the physics even under the effect of damping.
 
 \section{Damped Pendulum}
-Again, the setting is almost the same as the undamped pendulum, and $\gamma=0.1$. 
-Also, this time we kept at 10 data points since the phase space is smaller than that of SHM. 
-The results is summarised in table \ref{tab:damped_pendulum_performance} and figure \ref{fig:damped_pendulum_prediction}, and the learnt $\epsilon$ is $0.0014$, again not too high.
-We again see an improvement using invariance kernel in this damped nonlinear case. 
+Again, the setting of damped pendulum is the same as the undamped pendulum.
+The results is summarised in table \ref{tab:damped_pendulum_performance} and figure \ref{fig:damped_pendulum_prediction}, \ref{fig:damped_pendulum_energy}.
+With the learnt polynomial in \ref{fig:damped_pendulum_learnt}.
 
 \begin{table}[H]
   \centering
@@ -984,40 +985,52 @@ MSE & 0.5983 & 0.0323 & 0.0877 \\
 
 \begin{figure}[H]
         \centering
-        \includegraphics[width=\linewidth]{../codes/figures/damped_pendulum_predicted.pdf}
+        \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_predicted.pdf}
         \caption{damped pendulum predicted trajectory}
         \label{fig:damped_pendulum_prediction}
 \end{figure}
 
-
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/damped_pendulum_learnt.pdf}
-  \centering
-  \caption{Learnt invariance for damped pendulum}
-  \label{fig:damped_pendulum_learnt}
-\end{figure}
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/damped_pendulum_energy.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_energy.pdf}
   \centering
   \caption{Energy conservation for damped pendulum}
   \label{fig:damped_pendulum_energy}
 \end{figure}
 
 
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_learnt.pdf}
+  \centering
+  \caption{Learnt invariance for damped pendulum}
+  \label{fig:damped_pendulum_learnt}
+\end{figure}
+
+We see similar performance as in damped SHM, with invariance kernels performs slightly worse than undamped version but still much better than the RBF.
+The energy conservation still holds mostly for invariance kernels.
+However, this time, the learnt polynomial is not as good as the undamped case with much more deviation; this is expected due to the damping.
 
 \section{2D SHM}
 Here we again use the same set of input space as the 1D space, but double the dimensions. 
-The results are summarised in table \ref{tab:SHM_2d_performance} and figure \ref{fig:shm_2d_prediction}.
-Since 4 dimensional space is difficult to visualise, only individual prediction of the trajectory is provided. 
+Here we actaully have the input space of $q_1, q_2$ being between $\pm 5$ and $p_1, p_2$ between $\pm 0.5$. 
+This is done so that when we scale the data with MinMax scaler, the points will be less clustered.
+We use 30 points in this setting.
+\textbf{One very important note} is that when we are learning invariance, we initialise the hyperparameters of the base RBF kernel (lengthscales and variance local grids as well as likelihood variance) at the values trained by the known invariance.
+We also intialise the polynomial coefficients at the true theoretical values.
+These are done due to the fact the optimiser is often stuck at local minima.
+We intialise the values there so that if it is indeed the true invariance, the optimiser should regonise it and not optimise too much since that is roughly the true minimum.
+Therefore, we would expect to get similar performance and marginal likelihood.
+
+The results are summarised in table \ref{tab:SHM_2d_performance} and figure \ref{fig:shm_2d_prediction}, \ref{fig:shm_2d_energy}.
+Since it is difficult to visualise 4 dimensional space, we will plot them individually.
+
 \begin{table}[H]
   \centering
   \begin{tabular}{l l l l}
     \hline
 Method           & RBF & Known Invariance&  Learnt Invariance\\
   \hline
-Log Marginal Likelihood & 382.50 & 439.74 & 430.80  \\
-MSE & 8.6260 & 2.8882 & 4.1416 \\
+Log Marginal Likelihood & 387.08 & 441.60 & 438.42  \\
+MSE & 1.1252 & 0.7374 & 0.7359 \\
                     \hline
   \end{tabular}
   \caption{2D SHM Invariance performance}
@@ -1025,51 +1038,60 @@ MSE & 8.6260 & 2.8882 & 4.1416 \\
 \end{table}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_2d_predicted.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_predicted.pdf}
   \centering
   \caption{2D SHM prediction}
   \label{fig:shm_2d_prediction}
 \end{figure}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_2d_energy.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_energy.pdf}
   \centering
   \caption{2D SHM energy}
   \label{fig:shm_2d_energy}
 \end{figure}
 
+Firstly, we can see that the invariance kernel still performs very well compared to RBF, although not as good as the 1D case as expected since higher dimensional problem is deemed to be more difficult.
+We can see the learnt invariance again is almost exactly the same as the known form, which is reassuring.
+Also, the conservation of energy is again pretty well obeyed.
+
 \section{Double Pendulum}
 With double pendulum, we have angles being between $\pm 60^\circ$ and angular velocity between $\pm 10^\circ$.
-The results are summarised in table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}.
+The results are summarised in table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}, \ref{fig:double_pendulum_energy}.
+Again we used 30 points to train, but this time we do not use scaling since perhaps due to its nonlinear nature, it made the performance much worse by possibly modifying its underlying distribution.
+
 \begin{table}[H]
   \centering
   \begin{tabular}{l l l l}
     \hline
 Method           & RBF & Known Invariance&  Learnt Invariance\\
   \hline
-    Log Marginal Likelihood & 452.34 & 469.75 & 465.85 \\
-MSE & 0.5592 & 0.2030 & 0.1995 \\
+Log Marginal Likelihood & 455.89 & 471.01 & 494.37  \\
+MSE & 0.3879 & 0.0286 & 0.0362 \\
     \hline
   \end{tabular}
-  \caption{Double pendulum Invariance performance}
+  \caption{Double pendulum invariance performance}
   \label{tab:double_pendulum_performance}
 \end{table}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/double_pendulum_predicted.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_predicted.pdf}
   \centering
-  \caption{2D SHM prediction}
+  \caption{Double pendulum prediction}
   \label{fig:double_pendulum_prediction}
 \end{figure}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/double_pendulum_energy.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_energy.pdf}
   \centering
-  \caption{2D SHM energy}
+  \caption{Double pendulum energy}
   \label{fig:double_pendulum_energy}
 \end{figure}
-
-
+Now it is interesting to obsesrve that the marginal likelihood of the learnt form is even better than known form.
+This is likely due to "overfitting" of the large number of parameters from the polynomials (140 in total).
+Also, we are only expanding up to the cubic term, therefore we do not expect very good learning for the invariance.
+However, in our case, the approximation is fairly good, possibly due to relatively small value of $q, p$ so the polynomial approximation is good.
+Nevertheless, it is clear that there is still some errors with learning invariance from figure \ref{fig:double_pendulum_energy} since it only flattens toward the end of the trajectory.
 
 \chapter{Conclusion}
 
