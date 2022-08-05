@@ -150,6 +150,8 @@ def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None):
         kernel.Ka2.variance = gpflow.Parameter(old_model.kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
         kernel.Kv1.variance = gpflow.Parameter(old_model.kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
         kernel.Kv2.variance = gpflow.Parameter(old_model.kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+        kernel.local_invar_grid = old_model.kernel.local_invar_grid
+        m.likelihood.variance = gpflow.Parameter(old_model.likelihood.variance, transform=positive(lower=1e-6-1e-12))
         '''
         set_trainable(kernel.Ka1.lengthscales, False)
         set_trainable(kernel.Ka2.lengthscales, False)
