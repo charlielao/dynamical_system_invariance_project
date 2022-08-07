@@ -3,44 +3,75 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
 The style file: plainnat.bst
 Database file #1: refs.bib
-You've used 4 entries,
+Warning--entry type for "inductiveBias" isn't style-file defined
+--line 160 of file refs.bib
+Warning--to sort, need author or key in inductiveBias
+Warning--empty year in inductiveBias
+Warning--empty journal in HNN
+Warning--empty year in HNN
+Warning--empty year in HNN
+Warning--empty journal in NeuralODE
+Warning--empty year in NeuralODE
+Warning--empty year in NeuralODE
+Warning--empty journal in Cranmer2020
+Warning--empty journal in GraphSymbolicPhysics
+Warning--empty year in GraphSymbolicPhysics
+Warning--empty year in GraphSymbolicPhysics
+Warning--empty journal in Cuomo2022
+Warning--empty journal in Heinonen2018
+Warning--empty year in PIML
+Warning--empty year in PIML
+Warning--empty journal in Liu2021
+Warning--empty journal in flexiblePhysics
+Warning--empty year in flexiblePhysics
+Warning--empty year in flexiblePhysics
+Warning--empty journal in Rath2020
+Warning--empty journal in DissipativeHNN
+Warning--empty year in DissipativeHNN
+Warning--empty year in DissipativeHNN
+Warning--empty journal in Tycho2021
+Warning--empty journal in Mark2017
+Warning--empty year in Mark2017
+Warning--empty year in Mark2017
+You've used 26 entries,
             2773 wiz_defined-function locations,
-            617 strings with 5611 characters,
-and the built_in function-call counts, 1700 in all, are:
-= -- 129
-> -- 116
-< -- 3
-+ -- 40
-- -- 36
-* -- 132
-:= -- 283
-add.period$ -- 13
-call.type$ -- 4
-change.case$ -- 21
-chr.to.int$ -- 4
-cite$ -- 8
-duplicate$ -- 81
-empty$ -- 134
-format.name$ -- 42
-if$ -- 342
+            758 strings with 10299 characters,
+and the built_in function-call counts, 12157 in all, are:
+= -- 1000
+> -- 917
+< -- 8
++ -- 308
+- -- 282
+* -- 1068
+:= -- 1953
+add.period$ -- 91
+call.type$ -- 26
+change.case$ -- 169
+chr.to.int$ -- 26
+cite$ -- 81
+duplicate$ -- 516
+empty$ -- 853
+format.name$ -- 319
+if$ -- 2455
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 7
-newline$ -- 29
-num.names$ -- 16
-pop$ -- 56
+missing$ -- 28
+newline$ -- 151
+num.names$ -- 100
+pop$ -- 383
 preamble$ -- 1
-purify$ -- 20
+purify$ -- 146
 quote$ -- 0
-skip$ -- 59
+skip$ -- 387
 stack$ -- 0
-substring$ -- 17
-swap$ -- 5
+substring$ -- 146
+swap$ -- 21
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 29
-warning$ -- 0
-while$ -- 13
+type$ -- 271
+warning$ -- 28
+while$ -- 81
 width$ -- 0
-write$ -- 58
+write$ -- 340
+(There were 29 warnings)

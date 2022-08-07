@@ -1448,6 +1448,16 @@ INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmr17.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx8.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx6.tfm
+INPUT ../figures/prior.pdf
+INPUT ../figures/prior.pdf
+INPUT ../figures/prior.pdf
+INPUT ../figures/prior.pdf
+INPUT ../figures/prior.pdf
+INPUT ../figures/posterior.pdf
+INPUT ../figures/posterior.pdf
+INPUT ../figures/posterior.pdf
+INPUT ../figures/posterior.pdf
+INPUT ../figures/posterior.pdf
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
 INPUT ../codes/figures/shm_trajectory_1D.pdf
 INPUT ../codes/figures/shm_trajectory_1D.pdf
@@ -1603,8 +1613,8 @@ INPUT ./main.bbl
 INPUT main.bbl
 INPUT ./main.bbl
 INPUT main.bbl
-INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmti10.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm
+INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmti10.tfm
 INPUT main.aux
 INPUT ./main.out
 INPUT ./main.out

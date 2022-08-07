@@ -1,15 +1,88 @@
-\begin{thebibliography}{4}
+\begin{thebibliography}{26}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
+\bibitem[ind()]{inductiveBias}
+View of a model of inductive bias learning.
+\newblock URL
+  \url{https://www.jair.org/index.php/jair/article/view/10253/24418}.
+
+\bibitem[Brain et~al.()Brain, PetCube, and Yosinski]{HNN}
+Sam Greydanus~Google Brain, Misko~Dzamba PetCube, and Jason Yosinski.
+\newblock Hamiltonian neural networks.
+
+\bibitem[Bronstein et~al.(2017)Bronstein, Bruna, Lecun, Szlam, and
+  Vandergheynst]{Bronstein2017}
+Michael~M. Bronstein, Joan Bruna, Yann Lecun, Arthur Szlam, and Pierre
+  Vandergheynst.
+\newblock Geometric deep learning: Going beyond euclidean data.
+\newblock \emph{IEEE Signal Processing Magazine}, 34:\penalty0 18--42, 7 2017.
+\newblock ISSN 10535888.
+\newblock \doi{10.1109/MSP.2017.2693418}.
+
+\bibitem[Chen et~al.()Chen, Rubanova, Bettencourt, and Duvenaud]{NeuralODE}
+Ricky T~Q Chen, Yulia Rubanova, Jesse Bettencourt, and David Duvenaud.
+\newblock Neural ordinary differential equations.
+
+\bibitem[Cranmer et~al.(2020)Cranmer, Greydanus, Hoyer, Research, Battaglia,
+  Spergel, and Ho]{Cranmer2020}
+Miles Cranmer, Sam Greydanus, Stephan Hoyer, Google Research, Peter Battaglia,
+  David Spergel, and Shirley Ho.
+\newblock Lagrangian neural networks.
+\newblock 2020.
+
+\bibitem[Cranmer et~al.()Cranmer, Xu, Battaglia, and Ho]{GraphSymbolicPhysics}
+Miles~D Cranmer, Rui Xu, Peter Battaglia, and Shirley Ho.
+\newblock Learning symbolic physics with graph networks.
+
+\bibitem[Cuomo et~al.(2022)Cuomo, Schiano, Cola, Giampaolo, Rozza, Raissi, and
+  Piccialli]{Cuomo2022}
+Salvatore Cuomo, Vincenzo Schiano, Di~Cola, Fabio Giampaolo, Gianluigi Rozza,
+  Maziar Raissi, and Francesco Piccialli.
+\newblock Scientific machine learning through physics-informed neural networks:
+  Where we are and what's next.
+\newblock 2022.
+
 \bibitem[Glendinning(1994)]{glendinning_1994}
 Paul Glendinning.
 \newblock \emph{Stability, instability and Chaos: An introduction to the theory
   of nonlinear differential equations}.
 \newblock Cambridge University Press, 1994.
+
+\bibitem[Heinonen et~al.(2018)Heinonen, Yıldız, Mannerström, Intosalmi, and
+  Lähdesmäki]{Heinonen2018}
+Markus Heinonen, C~¸~Agatay Yıldız, Henrik Mannerström, Jukka Intosalmi,
+  and Harri Lähdesmäki.
+\newblock Learning unknown ode models with gaussian processes.
+\newblock 2018.
+\newblock URL \url{http://www.}
+
+\bibitem[Jagtap et~al.(2020)Jagtap, Kharazmi, and Karniadakis]{Jagtap2020}
+Ameya~D. Jagtap, Ehsan Kharazmi, and George~Em Karniadakis.
+\newblock Conservative physics-informed neural networks on discrete domains for
+  conservation laws: Applications to forward and inverse problems.
+\newblock \emph{Computer Methods in Applied Mechanics and Engineering}, 365, 6
+  2020.
+\newblock ISSN 00457825.
+\newblock \doi{10.1016/J.CMA.2020.113028}.
+
+\bibitem[Karniadakis et~al.()Karniadakis, Kevrekidis, Lu, Perdikaris, Wang, and
+  Yang]{PIML}
+George~Em Karniadakis, Ioannis~G Kevrekidis, Lu~Lu, Paris Perdikaris, Sifan
+  Wang, and Liu Yang.
+\newblock Physics-informed machine learning.
+\newblock \emph{Nature Reviews Physics}.
+\newblock \doi{10.1038/s42254-021-00314-5}.
+\newblock URL \url{www.nature.com/natrevphys}.
+
+\bibitem[Liu and Tegmark(2021)]{Liu2021}
+Ziming Liu and Max Tegmark.
+\newblock Machine learning conservation laws from trajectories.
+\newblock 2021.
+\newblock \doi{10.1103/PhysRevLett.126.180604}.
 
 \bibitem[Matthews et~al.(2017)Matthews, {van der Wilk}, Nickson, Fujii,
   {Boukouvalas}, {Le{\'o}n-Villagr{\'a}}, Ghahramani, and Hensman]{GPflow2017}
@@ -21,15 +94,95 @@ Alexander G. de~G. Matthews, Mark {van der Wilk}, Tom Nickson, Keisuke. Fujii,
   (40):\penalty0 1--6, apr 2017.
 \newblock URL \url{http://jmlr.org/papers/v18/16-537.html}.
 
+\bibitem[Mrowca et~al.()Mrowca, Zhuang, Wang, Haber, Fei-Fei, Tenenbaum, and
+  Yamins]{flexiblePhysics}
+Damian Mrowca, Chengxu Zhuang, Elias Wang, Nick Haber, Li~Fei-Fei, Joshua~B
+  Tenenbaum, and Daniel L~K Yamins.
+\newblock Flexible neural representation for physics prediction.
+
+\bibitem[Papastamatiou et~al.(2022)Papastamatiou, Sofos, and
+  Karakasidis]{Papastamatiou2022}
+Konstantinos Papastamatiou, Filippos Sofos, and Theodoros~E Karakasidis.
+\newblock Machine learning symbolic equations for diffusion with physics-based
+  descriptions articles you may be interested in machine learning symbolic
+  equations for diffusion with physics-based descriptions.
+\newblock \emph{AIP Advances}, 12:\penalty0 25004, 2022.
+\newblock \doi{10.1063/5.0082147}.
+\newblock URL \url{http://creativecommons.org/licenses/by/4.0/}.
+
+\bibitem[Qian et~al.(2020)Qian, Kramer, Peherstorfer, and Willcox]{Qian2020}
+Elizabeth Qian, Boris Kramer, Benjamin Peherstorfer, and Karen Willcox.
+\newblock Lift \& learn: Physics-informed machine learning for large-scale
+  nonlinear dynamical systems.
+\newblock \emph{Physica D: Nonlinear Phenomena}, 406, 5 2020.
+\newblock ISSN 01672789.
+\newblock \doi{10.1016/J.PHYSD.2020.132401}.
+
+\bibitem[Raissi et~al.(2019)Raissi, Perdikaris, and Karniadakis]{Raissi2019}
+M.~Raissi, P.~Perdikaris, and G.~E. Karniadakis.
+\newblock Physics-informed neural networks: A deep learning framework for
+  solving forward and inverse problems involving nonlinear partial differential
+  equations.
+\newblock \emph{Journal of Computational Physics}, 378:\penalty0 686--707, 2
+  2019.
+\newblock ISSN 0021-9991.
+\newblock \doi{10.1016/J.JCP.2018.10.045}.
+
+\bibitem[Raissi and Karniadakis(2018)]{Raissi2018}
+Maziar Raissi and George~Em Karniadakis.
+\newblock Hidden physics models: Machine learning of nonlinear partial
+  differential equations.
+\newblock \emph{Journal of Computational Physics}, 357:\penalty0 125--141, 3
+  2018.
+\newblock ISSN 10902716.
+\newblock \doi{10.1016/J.JCP.2017.11.039}.
+
 \bibitem[Rasmussen and Williams(2006)]{rasmussen_williams_2006}
 Carl~Edward Rasmussen and Christopher K~I Williams.
 \newblock \emph{Gaussian process for machine learning}.
 \newblock The MIT Press, 2006.
+
+\bibitem[Rath et~al.(2020)Rath, Albert, Bischl, and Toussaint]{Rath2020}
+Katharina Rath, Christopher~G Albert, Bernd Bischl, and Udo~Von Toussaint.
+\newblock Symplectic gaussian process regression of hamiltonian flow maps
+  symplectic gaussian process regression of hamiltonian flow maps symplectic
+  gaussian process regression of hamiltonian flow maps.
+\newblock 2020.
+
+\bibitem[Sosanya and Greydanus()]{DissipativeHNN}
+Andrew Sosanya and Sam Greydanus.
+\newblock Dissipative hamiltonian neural networks: Learning dissipative and
+  conservative dynamics separately.
 
 \bibitem[Strogatz(2019)]{strogatz_2019}
 Steven Strogatz.
 \newblock \emph{Nonlinear Dynamics and Chaos: With applications to physics,
   Biology, Chemistry and Engineering}.
 \newblock CRC Press, 2019.
+
+\bibitem[Udrescu and Tegmark(2020)]{Udrescu2020}
+Silviu~Marian Udrescu and Max Tegmark.
+\newblock Ai feynman: A physics-inspired method for symbolic regression.
+\newblock \emph{Science Advances}, 6, 4 2020.
+\newblock ISSN 23752548.
+\newblock
+  \doi{10.1126/SCIADV.AAY2631/ASSET/DEA58C72-32B7-4207-BD40-91D257F0D857/ASSETS/GRAPHIC/AAY2631-F2.JPEG}.
+\newblock URL \url{https://www.science.org/doi/10.1126/sciadv.aay2631}.
+
+\bibitem[van~der Ouderaa and van~der Wilk(2021)]{Tycho2021}
+Tycho~FA van~der Ouderaa and Mark van~der Wilk.
+\newblock Learning invariant weights in neural networks.
+\newblock 2021.
+
+\bibitem[Wilk et~al.()Wilk, Bauer, John, and Hensman]{Mark2017}
+Mark Van~Der Wilk, Matthias Bauer, S~T John, and James Hensman.
+\newblock Learning invariances using the marginal likelihood.
+
+\bibitem[Zhong et~al.(2021)Zhong, Dey, and Chakraborty]{Zhong2021}
+Yaofeng~Desmond Zhong, Biswadip Dey, and Amit Chakraborty.
+\newblock Benchmarking energy-conserving neural networks for learning dynamics
+  from data.
+\newblock \emph{Proceedings of Machine Learning Research}, 144:\penalty0 1--12,
+  2021.
 
 \end{thebibliography}

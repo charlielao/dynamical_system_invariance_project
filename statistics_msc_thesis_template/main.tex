@@ -97,20 +97,26 @@
 
 
 \chapter{Introduction}
-Dynamical system is one of the richest theory that models the real world with wide application across all science and engineering. 
-Of course, it is an interesting area of mathematics to study on its own.
-In practice, it will be very valuable to be able to reliably predict the evolution of a system for many purpose; both from a theortical and practical point of view.
+Dynamical system is one of the richest theory that models the real world with wide application across all science and engineering and therefore it is very valuable to be able to reliably predict the evolution of a system for practical purposes.
 Recently, data intensive machine learning methods, such as deep learning, has shown some very powerful results. 
-However, the amount of data required are often enormous, and that will involve lots of manual labour to label and process the data.
-Sometimes, the data could be very difficult to come by.
-Therefore, data efficiency is the key in the future if we wish to study more complicated systems.
-Inductive bias is one way to achieve the goal.
-What was usually done is to embed the inductive bias into the model in some way so that the model "understands" this knowledge before seeing the data.
-Assuming the inductive bias is correct, we would expect the model to perform better, either in a data efficiency way or prediction performance way.
-One very powerful inductive bias is the use of symmetry and invariances, that puts strong constraints on the model to obey.
+However, the amount of data required to achieve reasonable performance are often enormous, will often involve lots of manual labour to label and process the data.
+Sometimes, the data could be very difficult to come by in biological and medical settings.
+Therefore, data efficiency is the key if we wish to study more complicated systems.
+Inductive bias, an intitial choice of hypothesis space (\cite{inductiveBias}), is one way to achieve this goal.
+What is usually done is to embed the inductive bias into the model in some way so that the model "understands" this knowledge before seeing the data.
+Assuming the inductive bias is correct, we may expect the model to perform better, either in a data efficiency way or prediction performance way.
+One very powerful inductive bias is the use of symmetry and invariances, that puts strong constraints on the model to obey, which is the basis of many powerful machine learning models, such as Convolution Neural Network, utilising the translational symmetry in natural images.
+Marginal likelihood indicates how well the data is explained by the model as was shown to be beneficial in parameter tuning in Bayesian model and in particular in identifying the correct invariance. 
+paper 1 and paper 2 has demonstrated using marginal likelihood as a objective is useful in learning the invariance, in particular invariance under Affine transformation.
+Gaussian Process (GP) was used thanks to its ability to estimate marginal likelihood accurately, and the inductive bias was embedded in the kernel function of the GP.
+In this report, we aim to extend on the work to learn invariance in dynamical systems, in particular the conservation of energy.
 
+In the rest of the report, we will cover the essential theortical background to understand GP and dynamical system in section 2. We will also describe related work in the area of GP in dynamical system, physics informed machine learning as well as invariance and symmetry in machine learning in this section.
+In section 3, we will derive the theoretical apsects and the constructions of the invariance kernels in dynamical system.
+Following that, we illustrate the implemented results on various dynamical systems in section 4 along with discussions.
+Finally, we conclude in section 5.
 
-
+ 
 \chapter{Background}
 Here we will cover the background knowledge required to understand the remaining thesis, including Gaussian Process, dynamical systems as well as symmetry and invariances. 
 This section will also cover related work in the field.
@@ -141,16 +147,42 @@ $$
       A & C \\
       C^T & B\\
     \end{bmatrix}
-  \right)
-$$, 
+  \right), 
+$$ 
 then 
 \begin{equation}
   x|y\sim \mathcal{N}\left(\mathbf{\mu}_x+CB^{-1}(y-\mathbf{\mu}_y),A-CB^{-1}C^T\right)
   \label{equ:normal_condtion}
 \end{equation}
 
+Below we demonstrated an example adapted from \cite{GPflow2017} to shown case the fitting procedure of a GP.
+Different kernels defined by their various functional form imposes different prior knowledge on the GP prior.
+For instance, one of the most commonly used kernel, RBF, requires smoothness; Matern requires once differentiability; Periodic kernel requires the prior to have periodic structure obviously.
+Below in figure \ref{fig:prior} we showed 5 samples drawn from each of the kernel.
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../figures/prior.pdf}
+  \centering
+  \caption{Samples from different GP priors of RBF, Matern and Periodic kernel}
+  \label{fig:prior}
+\end{figure}
+
+Now we intend to fit a GP to a function, arbitrarily defined for demonstration purpose, $(x+x^2)\sin(x)$.
+We randomly sampled five points and the fit is as shown below in figure \ref{fig:posterior}.
+We also sampled 10 posteriors.
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../figures/posterior.pdf}
+  \centering
+  \caption{An example of fitting a GP to a function}
+  \label{fig:posterior}
+\end{figure}
+
+We can see the function fit well around the data points and fall back to the GP prior (RBF in this case) away from the data.
+
 \subsection{GPflow}
-GPflow is used throughout the project (\cite{GPflow2017}).
+Now we can in principle build our own GP objects using basic linear algebra and statistical libraries from scratch. 
+It is a much better idea to avoid errors and improve development speed by using a well-tested, robust and efficient library called GPflow, which is used throughout the project (\cite{GPflow2017}).
 It is a Python package built on TensorFlow to allow efficient and fast computation on GPUs to do GP inferences.
 A particular powerful feature is that it allows the choosing of hyperparameter such as lengthscales and variance of a kernel automatic by calculating the gradient (using automatic differentiation feature of Tensorflow) and perform optimisation.
 In later sections, we will need to optimise more parameters than aforementioned ones with respect to maginal likelihood objective.
@@ -211,14 +243,62 @@ Here the more relevant ones is the conservation of energy, which is related to t
 
 \section{Related Work}
 There are many existing literature in the field of learning invariance as well as physics informed machine learning.
+
 \subsection{Physics Informed Machine Learning}
-\subsubsection{Hamiltonian Neural Network}
+There are many physics informed machine learning techniques as outlined in \cite{Cuomo2022, PIML}
+For example, in Physics Informed Neural Network (PINN) from \cite{Raissi2019}, the authors embedded the form of partial differential equations (PDEs) that describe the physics of the problem into the loss function so that the neural network model understands the PDE; they also allow the parameters\/coefficients in the PDEs to be learnt. 
+There are many variants of such as \cite{Qian2020}.
+In \cite{Raissi2018}, it even uses a GP to model the evolution of the state by using the PDE form as a linear operator (we will see similar idea in our work) to evolve the GP; since the linear transform of GP is still a GP, we will get joint GP.
+However, they are still restricted to known PDE form and only learning the parameters. 
+Furthermore, they all does not use the knowledge of conservation laws to their advantage.
+Moreover, for nonlinear dynamics, it has to use a linear approximation for the method to work.
+There are also versions of PINN that takes conservation of energy into account such as \cite{Jagtap2020}.
+However, it still suffers from other problems described above.
+
+\subsubsection{Energy Conserving Neural Networks}
+There are other approaches like Hamiltonian Neural Network \cite{HNN}, which enforces the law of Hamiltonian mechanics on the neural network.
+As a results, HNN automatically conserves the Hamiltonian or almost equivalently, the energy.
+There are also variants origin from this, such as the more general Lagrangian Neural Network, \cite{Cranmer2020}, or other energy conserving nerual networks described in \cite{Zhong2021}.
+However, due to their strong invariance enforcing nature, they often do not do very well with dissipative systems; 
+\cite{DissipativeHNN} models the dissipative part explicitly resolves this problem.
+Nevertheless, these systems can only work on a very specific types of dynamical system, namely the ones that follow Sympletic form, or more simply obeys the Hamiltonian mechanics, which is only a small subset of all dynamical systems.
+There are a lot more general dynamical systems that has some sort of invariance property that is not able to utilise these energy conserving neural networks.
+
+\subsubsection{ODE approach}
+Or we can directly works on the ODE that describes the physics of the system. 
+In some sense, this is similar to the PINN. 
+Neural ODE \cite{NeuralODE} is a great example of this; 
+however, again it does not use any knowledge of the invariances and symmetries.
+Further, it cannot recover the law of physics. 
+
 \subsubsection{Symbolic approach}
-\subsection{ODE approach}
-\subsection{Symmetry and Invariance}
+There are many existing literatures to recover the law of physics from trajectory using various form of symbolic regression, such as \cite{Udrescu2020, Papastamatiou2022} or some form of graphical representation \cite{GraphSymbolicPhysics, flexiblePhysics}.
+In \cite{Liu2021}, it even able to deduce the conserved quantitiy (along with its symbolic form) from trajectory.
+Nevertheless, it does not include any predictive ability.
+
+\subsection{Symmetry and Invariance in Machine Learning}
+
 \subsubsection{Learning Invariance using Marginal Likelihood}
+This paper forms the basis of this report.
+In \cite{Mark2017}, the author proposes learning the form of invariances of the problem by parameterising the symmetry and maximise them with respect to the marginal liklihood.
+The main problem studied in the paper is the MNIST dataset, and that the symmetry under consideration is all form of Affine transformation, such as rotation, shear, translation; and the invariance in this case is the label of the digit. 
+It suggests embedding the invariance in the model (GP in this case) as an alternative to data augementation.
+The authors created a special kind of kernel for GP that respects the symmetry of the problem.
+The results are very good compare to the baseline RBF kernel, and it also is able to recover the true paramertised invariance. 
+The logical flow and setup of this report roughly follows that of this paper as well as the HNN paper. 
+A related paper that uses a neural network instead of GP is \cite{Tycho2021}, which also optimise the marginal likelihood.
+
 \subsubsection{Geometric Deep Learning}
+Geometric deep learning proposed by \cite{Bronstein2017}, is a unifying framework that aims to explain the success of several popular neural network architecture. 
+For example, Convolution Neural Network uses the translation symmetry embedded in natural images. 
+Another example is Graph Neural Network utilises the permutation symmetry that the graphs is invariant under permutation.
+Following this framework, multiple papers are proposed that aims to exploit further symmetry groups.
+
 \subsection{GP in dynamical systems}
+There are already a number of research work that uses GP to predict dynamical systems.
+One of them is the aforementioned \cite{Raissi2018}.
+There is also \cite{Rath2020}, that utilise the sympletic nature of Hamiltonian systems and directly predict the flowmaps of the system; in some sense similar to HNN.
+There is also \cite{Heinonen2018}, that also uses GP to model the ODE models in a nonparametric manner; but again it odes not uses invariance. 
 
 
 
@@ -678,6 +758,17 @@ Instead, we need to consider all combinations of polynomials; i.e. multivariate 
 Therefore, for 2D we have $L(a,v)=f_1a_1+f_2a_2+g_1v_1+g_2v_2.$
 We will paramertise each of $f_1, f_2, g_1, g_2$ with $$\sum_{i,j,k,l=0}^{n}c_{ijkl}p_1^ip_2^jq_1^kq_2^l$$
 Therefore, there will be many more coefficients.
+
+\section{Partially Observed System}
+Partially observed data can be very common in dynamical system.
+With examples of physical system, we can imagine not observing $p$ and only observe $q$ (of course we do not possess the knowledge that $\dot{q}=p$).
+If we have a 2D system, we might only observe 1 set of dimension due to data recording mechanism, or perhaps some situation where we project 3D objects on to the wall and we can only observe the 2D shadows.
+In a more general sense, we can imagine if we have a system with unquantifiable friction.
+We may not be able to write down the form of friction analytically due to complex interaction of the system with the enviroment (i.e. not simply a damped system as disccused above).
+Nevertheless, the law of physics and conservation of energy will still hold in the broad sense; 
+in other words, if we take into account of every single force of the interactions (including the enviroment), the total energy will be conserved so the invariance holds. 
+In practice, we can only observe the system so that the rest of the physics not taking into account is not observed, so it is again a partially observed problem.
+We can then set the unobserved part being a latent variable, $z$,  and then use the invariance constraints to inference it.
 
 \chapter{Experiments}
 \section{Data Generation}
