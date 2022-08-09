@@ -127,15 +127,24 @@ def get_grid_of_points_2D(grid_range, grid_density):
     grid_points = tf.stack([tf.reshape(grid_xx1,[-1]),tf.reshape(grid_xx2,[-1]),tf.reshape(grid_vv1,[-1]), tf.reshape(grid_vv2,[-1])], axis=1)
     return grid_points
 
-def callback(step, variables, values):
-    print(step, end='\r')
 
 def get_GPR_model(kernel, mean_function, data, iterations):
+#    def callback(step, variables, values):
+#        print(step, end='\r')
+
+    def callback(step, variables, values):
+        if step%10==0:
+            stored_f.append(variables[0].numpy())
+            stored_g.append(variables[1].numpy())
+            stored_coeff.append(variables)
+    stored_f = []; stored_g =[] 
+    stored_coeff = []
+
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
-    return m
+    return m, stored_f, stored_g, stored_coeff
 
 def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None):
     X, Y = data
