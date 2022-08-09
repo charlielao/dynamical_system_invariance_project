@@ -3,10 +3,6 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
 The style file: plainnat.bst
 Database file #1: refs.bib
-Warning--entry type for "inductiveBias" isn't style-file defined
---line 160 of file refs.bib
-Warning--to sort, need author or key in inductiveBias
-Warning--empty year in inductiveBias
 Warning--empty journal in HNN
 Warning--empty year in HNN
 Warning--empty year in HNN
@@ -35,43 +31,43 @@ Warning--empty year in Mark2017
 Warning--empty year in Mark2017
 You've used 26 entries,
             2773 wiz_defined-function locations,
-            758 strings with 10299 characters,
-and the built_in function-call counts, 12157 in all, are:
-= -- 1000
-> -- 917
-< -- 8
-+ -- 308
-- -- 282
-* -- 1068
-:= -- 1953
-add.period$ -- 91
+            761 strings with 10294 characters,
+and the built_in function-call counts, 12293 in all, are:
+= -- 1012
+> -- 927
+< -- 9
++ -- 311
+- -- 285
+* -- 1077
+:= -- 1992
+add.period$ -- 92
 call.type$ -- 26
-change.case$ -- 169
+change.case$ -- 170
 chr.to.int$ -- 26
-cite$ -- 81
-duplicate$ -- 516
-empty$ -- 853
-format.name$ -- 319
-if$ -- 2455
+cite$ -- 78
+duplicate$ -- 521
+empty$ -- 857
+format.name$ -- 323
+if$ -- 2477
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 28
-newline$ -- 151
-num.names$ -- 100
-pop$ -- 383
+missing$ -- 29
+newline$ -- 152
+num.names$ -- 104
+pop$ -- 376
 preamble$ -- 1
-purify$ -- 146
+purify$ -- 147
 quote$ -- 0
-skip$ -- 387
+skip$ -- 386
 stack$ -- 0
-substring$ -- 146
+substring$ -- 166
 swap$ -- 21
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 271
-warning$ -- 28
-while$ -- 81
+warning$ -- 26
+while$ -- 85
 width$ -- 0
-write$ -- 340
-(There were 29 warnings)
+write$ -- 344
+(There were 26 warnings)

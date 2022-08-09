@@ -86,7 +86,10 @@
 \end{abstract}
 
 \begin{acknowledgements}
-    ANY ACKNOWLEDGEMENTS GO HERE
+I would like to thank Dr Andrew Duncan and Dr Mark van der Wilk for being amazing supervisors, who provide guidance that I cannot complete the project without, and making time even though they are incredbily busy. 
+I also like to thank the Statistics Department for providing the computing resources to make this project happen.
+Lastly, I would like the thank my family for their support.
+
 \end{acknowledgements}
 
 % add glossary?
@@ -102,12 +105,12 @@ Recently, data intensive machine learning methods, such as deep learning, has sh
 However, the amount of data required to achieve reasonable performance are often enormous, will often involve lots of manual labour to label and process the data.
 Sometimes, the data could be very difficult to come by in biological and medical settings.
 Therefore, data efficiency is the key if we wish to study more complicated systems.
-Inductive bias, an intitial choice of hypothesis space (\cite{inductiveBias}), is one way to achieve this goal.
+Inductive bias, an intitial choice of hypothesis space (\cite{Baxter2000}), is one way to achieve this goal.
 What is usually done is to embed the inductive bias into the model in some way so that the model "understands" this knowledge before seeing the data.
 Assuming the inductive bias is correct, we may expect the model to perform better, either in a data efficiency way or prediction performance way.
 One very powerful inductive bias is the use of symmetry and invariances, that puts strong constraints on the model to obey, which is the basis of many powerful machine learning models, such as Convolution Neural Network, utilising the translational symmetry in natural images.
 Marginal likelihood indicates how well the data is explained by the model as was shown to be beneficial in parameter tuning in Bayesian model and in particular in identifying the correct invariance. 
-paper 1 and paper 2 has demonstrated using marginal likelihood as a objective is useful in learning the invariance, in particular invariance under Affine transformation.
+\cite{Mark2017} and \cite{Tycho2021} has demonstrated using marginal likelihood as a objective is useful in learning the invariance, in particular invariance under Affine transformation.
 Gaussian Process (GP) was used thanks to its ability to estimate marginal likelihood accurately, and the inductive bias was embedded in the kernel function of the GP.
 In this report, we aim to extend on the work to learn invariance in dynamical systems, in particular the conservation of energy.
 
@@ -130,8 +133,25 @@ We then then write
 $$
 f(\mathbf{x})\sim\mathcal{GP}(m(\mathbf{x}),k(\mathbf{x},\mathbf{x'})).
 $$
+In a noise free scenario, where we observe $f$ directly, we will have
+$$
+\begin{bmatrix}
+  f\\f^*
+\end{bmatrix}
+\sim \mathcal{N}
+\left(\mathbf{0}, \begin{bmatrix}K(X, X) & K(X, X^*) \\ K(X^*, X) & K(X^*, X^*) \end{bmatrix}\right),
+$$
+where we have $X, f$ being the training data and target, with $X^*, f^*$ the testing points and targets.
 If we assume the signal is not noise free such that we assume a Gaussian noise $y=f+\epsilon$, where $\epsilon\sim\mathcal{N}(0, \sigma_n^2)$.
-Then we will have 
+We will instead have
+$$
+\begin{bmatrix}
+  y\\f^*
+\end{bmatrix}
+\sim \mathcal{N}
+\left(\mathbf{0}, \begin{bmatrix}K(X, X)+\sigma^2_n\mathbb{I} & K(X, X^*) \\ K(X^*, X) & K(X^*, X^*) \end{bmatrix}\right),
+$$
+
 An important identity we use throughout the thesis is the Gaussian conditional formula; if
 $$
   \begin{bmatrix}
@@ -154,11 +174,28 @@ then
   x|y\sim \mathcal{N}\left(\mathbf{\mu}_x+CB^{-1}(y-\mathbf{\mu}_y),A-CB^{-1}C^T\right)
   \label{equ:normal_condtion}
 \end{equation}
+We can therefore predict our new points with 
+
+\begin{equation*}
+\begin{gathered}
+f^*|X, y, X* \sim \mathcal{N} \left(\overline{f^*}, \mathrm{cov}(f^*)\right)\\ 
+\overline{f^*} = K(X^*, X)[K(X,X)+\sigma^2_n\mathbb{I}]^{-1}y\\
+\mathrm{cov}(f^*) = K(X^*, X^*) - K(X^*, X)[K(X, X)+\sigma^2_n\mathbb{I}]^{-1}K(X, X^*)
+\end{gathered}
+\end{equation*}
+ 
 
 Below we demonstrated an example adapted from \cite{GPflow2017} to shown case the fitting procedure of a GP.
 Different kernels defined by their various functional form imposes different prior knowledge on the GP prior.
 For instance, one of the most commonly used kernel, RBF, requires smoothness; Matern requires once differentiability; Periodic kernel requires the prior to have periodic structure obviously.
 Below in figure \ref{fig:prior} we showed 5 samples drawn from each of the kernel.
+\begin{equation*}
+  \begin{gathered}
+    k_{RBF}(r) = \exp(-\frac{r^2}{2l^2}) \\
+    k_{\text {Matern }}(r)=\frac{2^{1-\nu}}{\Gamma(\nu)}\left(\frac{\sqrt{2 \nu} r}{\ell}\right)^{\nu} K_{\nu}\left(\frac{\sqrt{2 \nu} r}{\ell}\right) \\
+    k_{periodic RBF}=\exp \left(-\frac{2 \sin ^{2}\left(\frac{r}{2}\right)}{\ell^{2}}\right)
+  \end{gathered}
+\end{equation*}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../figures/prior.pdf}
@@ -385,8 +422,82 @@ We can then condition the first row on the second row using equation \ref{equ:no
   \label{equ:invariance_condition}
 \end{equation}
 
+
+\section{Learning Invariance}
+Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which allowed us to derive the energy and thereafter the invariance equation. 
+However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then the system is pretty much solved that we can just use an ODE integrator to obtain the trajectories. 
+Therefore, we should find a way for the system to learn the form of invariance from data directly.
+One way to do so is to parameterise our invariance function and allow the system to learn the coefficients by maximising the log marginal likelihood.
+\subsection{1D system}
+A simple way to parameterise an unknown function, when the problem is relatively bounded is to use polynomial basis to paramertise the unknown function $L(a,v)$.
+In 1D cases, for our examples, they are simple enough so that $L(a,v)$ is a sum of a function of $a$ and $p$ only, $f_pa$ and a different function of $v$ and $q$ only, $g_q(v)$ so that $L(a,v)=f_p(a)+g_q(v)$.
+In the 1D SHM case, $f_p(a)=mpa$ and $g_q(v)=kqv$.
+For simple pendulum, we have $f_p(a)=\ell pa$ and $g_q(v)=\sin qv$.
+We will therefore set $$f_p(a)=\sum_{i=0}^{n_f}c_{f,i}p^i,g_q(a)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
+where $c_{f,i}, c_{g,i}$ are the parameter we will optimise based on marginal likelihood and we will evaluate different degree of polynomial $n_f, n_g$ and see which gives the best results. 
+
+\subsection{2D system}
+In 2D, things are a bit more complicated. For example, it is very clear that in double pendulum, the invariance function is not seperable.
+Instead, we need to consider all combinations of polynomials; i.e. multivariate polynomial.
+Therefore, for 2D we have $L(a,v)=f_1a_1+f_2a_2+g_1v_1+g_2v_2.$
+We will paramertise each of $f_1, f_2, g_1, g_2$ with $$\sum_{i,j,k,l=0}^{n}c_{ijkl}p_1^ip_2^jq_1^kq_2^l$$
+Therefore, there will be many more coefficients.
+
+\section{Partially Observed System}
+Partially observed data can be very common in dynamical system.
+With examples of physical system, we can imagine not observing $p$ and only observe $q$ (of course we do not possess the knowledge that $\dot{q}=p$).
+If we have a 2D system, we might only observe 1 set of dimension due to data recording mechanism, or perhaps some situation where we project 3D objects on to the wall and we can only observe the 2D shadows.
+In a more general sense, we can imagine if we have a system with unquantifiable friction.
+We may not be able to write down the form of friction analytically due to complex interaction of the system with the enviroment (i.e. not simply a damped system as disccused above).
+Nevertheless, the law of physics and conservation of energy will still hold in the broad sense; 
+in other words, if we take into account of every single force of the interactions (including the enviroment), the total energy will be conserved so the invariance holds. 
+In practice, we can only observe the system so that the rest of the physics not taking into account is not observed, so it is again a partially observed problem.
+We can then set the unobserved part being a latent variable, $z$,  and then use the invariance constraints to inference it.
+
+\chapter{Experiments}
+\section{Data Generation}
+To generate the data, we use a Runge-Kutta integrator to generate data using the equation of motions for each problem. 
+We also added some small Gaussian noise $10^{-8}$ to the dynamics to reflect the real world better as well as stablising the integrator.
+Since we aim to predict the value of dynamics at any point in the input space, we use the dynamics as targets , Y. 
+This is done by combining forward and backward finite difference (midpoint method) to compute the gradient. 
+We also choose the time step to be $0.01$ to ensure sufficient accuracy for the integrator.
+For training data, X, we choose a few random starting point within a range (datails depends on the task as described later) in the input space and generate data from there for a number of timesteps (which is fixed at 10 points per trajectory in this report). 
+To assess the performance, we generate the test set using the same input range, we will pick three different starting points and then average the result.
+Without loss of generality, we choose $m=k=1$ and $g=\ell=1$ for 1D and 2D SHM and simple pendulum for simplicity of presentation. 
+For the damping, we will choose $\gamma= 0.1$, which is fairly strongly damped as shown in figure \ref{fig:damped_pendulum_trajectory}, \ref{fig:damped_shm_trajectory}. 
+For double pendulum, we also set $m_1=m_2=\ell_1=\ell_2=g=1.$
+
+\section{Evaluation Method}
+We will mainly use the mean squared error (MSE) between the trajectory prediction and ground truth as our evaluation metrics. 
+We also illustrate the amount of energy (using the exact expression) along the trajectory to demonstrate that invariance is obeyed.
+For learning the invariance in 1D case, we can also further compare the true invariance and the learnt invariance up to a multiplicative constant.
+However, it is not possible to visualise in 2D cases so we will simply assess the conservation of energy (invariance) performance.
+
+\section{Implementation Technicalities}
+We will need to add jitter, a diagnoal matrix of small value, to the $LKL^T$ matrix in equation \ref{equ:invariance_condition}.
+This is due to the fact that we need the invert it and it will be more stable numerically if we add a little bit of jitter in the range of $10^{-6}$ to $10^{-4}$, and its effect on the model will be explained in the sections below.
+Similarly, for stability, when backpropagating to optimise the hyperparameters with respect to marginal likelihood, we need to narrow range of search such that the value is more reasonable.
+It is particularly important in our dynamical systems since, for example, in SHM the equation of motion is $a=-q$ and $v=p$, so that is will be a 2D plane extends to infinity;
+as a result, if the GP learns "correctly", the lengthscales of some directions will be very large or $\infty$, and that will be problematic and it would not affect the performance a lot if we limit the lengthscales for a much smaller value.
+Therefore, here I would set the range of both lengthscales and variable to be around the twice to three times the maximum range possible.
+For example, if we have maximum range of $\pm 3$, my upper bound for search is set to $10$ and lower bound is $10^{-3}$.
+Another change we made in 2D SHM is to scale the data using MinMax scaler to squash them to be between $\pm 1$. 
+This is done since the polynomial behaves better around this region.
+
+\subsection*{Invariance points $X_L$}
+In low dimensions, we could simply allow $X_L$ to be a evenly spaced grid in the input space, and we will call the number of points in each dimension the \textbf{invariance density}.
+So that if I have an invariance density of $40$, it means my $X_L$ will contain $1600$ points. 
+However, conditioning on a grid of invariance points is simply not scalable in high dimensions. 
+If we have an invariance density of 10 in a $\pm 5$ range for 2D SHM (spacing of 1), then we will have 10000 points. 
+We can easily run out of memory and also taking the matrix inverse are very difficult and time consuming.
+As a result, to make the approach scalable to high dimensional space, we will use the idea of local invariance. 
+The idea is straightforward, we simply sample uniformly (30-80 points) in the local region around the training and testing points and set them as $X_L$ (we choose a torus shape around the data points so that we will not have invariance points too close to the data points, which will be unstable).
+Note that we only sampled once, so that the same local grid will be centred on every training and testing points; this is done to remove the randomness for stability and dependence on the data.
+This works on the assumption that only the region around testing points will be the most important to predict in terms of conditioning; and to use the same kernel, we also have to condition on the region around training points, which is also important to help maximising the marginal likelihood objective when we are learning the invariance function.
+Another evidence that supports the use of local invariance, which have much fewer points than using a grid, is demonstrated below where we show that there is a diminishing return in increasing the number of invariance points so that actually not that many invariance points is needed to achieve a good performance. 
+
 \section{1D System}
-\subsection{Linear}
+\subsection{Linear SHM}
 We will first examine one of the most simple dynamical system, an 1D simple harmonic motion (SHM). 
 An example would be a mass spring system as shown in figure with mass $m$ and spring constant $k$, an example trajectory is shown in figure \ref{fig:shm_trajectory}. 
 
@@ -426,7 +537,7 @@ $$
 $$
 
 \begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/shm_trajectory_1D.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_trajectory_1D.pdf}
   \centering
   \caption{Example trajectory of SHM}
   \label{fig:shm_trajectory}
@@ -505,7 +616,7 @@ q_L\otimes q_L=\begin{pmatrix}
   q_{L,\ell}q_{L,1} & q_{L,\ell}q_{L,2} & \dots & q_{L,\ell}^2 \\
 \end{pmatrix},
 $$ 
-These matrix expressions are derived as follows bt computing the covariance manually. 
+These matrix expressions are derived as follows by computing the covariance manually. 
 For $B$, we wish to calculate 
 
 \begin{align*}
@@ -527,7 +638,7 @@ D_{ij} &= \mathrm{Cov}(L[\mathbf{f}(X_L)], L[\mathbf{f}(X_L)])_{ij} \\
        &= \mathrm{Cov}(mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i}), mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i})) \\
        &= m^2p_{L,i}p_{L,j}K_{RBF,a}(\mathbf{x}_{L,i},\mathbf{x}_{L,j}) + k^2q_{L,i}q_{L,j}K_{RBF,v}(\mathbf{x}_{L,i},\mathbf{x}_{L,j})
 \end{align*}
-using the bilnear property of the covariance operator and the fact that $v$ and $a$ are independent.
+using the linear property of the covariance operator and the fact that $v$ and $a$ are independent.
 Since we assume invariance on these invariance points, we will condition on $L([\mathbf{f}(X_L)])=0.$
 Now we can simply use the Gaussian conditional formula to obtain the Schur Complement using equation \ref{equ:normal_condtion}.
 $$
@@ -535,284 +646,9 @@ $$
 $$
 we will then call the resulting covariance our Invariance Kernel for 1D SHM, $K_L$.
 
-\subsection{Non Linear}
-The idea is pretty much the same for nonlinear system compared to linear; however, the fitting is expected to be more difficult.
-A simple nonlinear system in every day life is a simple pendulum as shown in figure below.
-The governing equation is 
-$$
-\frac{d^2q}{dt^2}=-\frac{g}{\ell}\sin q, 
-$$
-where $q$ is the angle of displacement this time and we have example trajectory in \ref{fig:pendulum_trajectory}, where we can see the effect of nonlinearity on the shape. 
-The nonlinear dynamics arises from the sine term above, which will complicate the derivation for invariance kernel slightly. 
-However, since $\sin x \approx x$ at small angle, this system is approximately linear under small displacement. 
-There is no analytical solution to this nonlinear problem in general, besides the small displacement case, which will be 1D SHM.
-
-\begin{figure}[H] 
-  \includegraphics[width=0.6\linewidth]{../codes/figures/pendulum_trajectory_1D.pdf}
-  \centering
-  \caption{Example trajectory of pendulum}
-  \label{fig:pendulum_trajectory}
-\end{figure}
-
-This time we have energy, $E=\frac{m\ell^2p^2}{2}+mg\ell(1-\cos q)$, and by setting the time derivative to 0, we have 
-$$L(a, v)=\frac{dE}{dt}=m\ell^2pa+mg\ell(\sin q)v=0.$$
-If we cancel out the common term $m\ell$ since their product cannot be zero, we have $$L(a,v)=\ell pa+g(\sin q)v=0$$
-Most of the terms are unchanged from the linear case. 
-However, this time, 
-$$
-B=\begin{pmatrix}
-    K_{RBF,a} \\ K_{RBF,v} \\
-\end{pmatrix}\odot \begin{pmatrix}
-    \ell P_L \\ g\sin(Q_L)
-\end{pmatrix}, D=K_{RBF,a}\odot \ell^2(p_L\otimes p_L) + K_{RBF,v}\odot g^2(\sin(q_L)\otimes \sin(q_L)),
-$$
-where 
-$$
-\sin(Q_L) = g\begin{pmatrix}
-  \sin(q_{L,1})  & \dots & \sin(q_{L,\ell})  \\
-  \vdots & \text{reqeats n rows} &  \vdots\\
-  \sin(q_{L,1})  & \dots & \sin(q_{L,\ell})  \\
-\end{pmatrix},
-$$
-$$
-\sin(q_L)\otimes \sin(q_L)=\begin{pmatrix}
-  \sin(q_{L,1})^2 & \sin(q_{L,1})\sin(q_{L,2}) & \dots & \sin(q_{L,1})\sin(q_{L,\ell}) \\
-  \vdots & \vdots & \vdots & \vdots \\
-  \sin(q_{L,\ell})\sin(q_{L,1}) & \sin(q_{L,\ell})\sin(q_{L,2}) & \dots & \sin(q_{L,\ell})^2 \\
-\end{pmatrix},
-$$
-derived in exactly the same way as the linear case. 
-
-\begin{figure}[H]
-     \centering
-     \begin{subfigure}[b]{0.5\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{../codes/figures/prior_shm_rbf.pdf}
-        \caption{RBF prior}
-        \label{fig:prior_shm_rbf}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.5\linewidth}
-         \centering
-         \includegraphics[width=\linewidth]{../codes/figures/prior_shm_invariance.pdf}
-         \caption{SHM invariance prior}
-         \label{fig:prior_shm_invariance}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.5\linewidth}
-         \centering
-         \includegraphics[width=\linewidth]{../codes/figures/prior_pendulum_invariance.pdf}
-         \caption{Pendulum invariance prior}
-         \label{fig:prior_pendulum_invariance}
-     \end{subfigure}
-        \caption{Priors}
-        \label{fig:priors}
-\end{figure}
-
-\section{Damped System}
-In previous sections, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
-However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
-Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero, i.e. soft invariance.
-To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation, where we have $K+\sigma_n^2 \mathbb{I}$;
-Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
-For the data, we will model the system as a damped SHM or pendulum with linear velocity dependent force.
-If we denote $\omega_0^2=k/m$ or $\omega_0^2=g/\ell$
-We will have the equation of motion for SHM and pendulum respectively
-$$
-\frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2q=0; \frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2\sin q=0 ,
-$$
-and the $\gamma$ is the damping factor that controls how much frictional force there is. 
-Note that we will only focus on underdamping case ($\gamma < \omega_0^2$)so that the system still oscillate but with gradually reduced amplitude instead of critical damped ($\gamma=\omega_0^2$) or overdamped ($\gamma>\omega_0^2$) case where the system simply slowly decays to still.
-An example trajectory for damped SHM and damped pendulum is shown below in figure \ref{fig:damped_trajectory}.
-
-\begin{figure}[H]
-     \centering
-     \begin{subfigure}[b]{\linewidth}
-        \centering
-        \includegraphics[width=0.5\linewidth]{../codes/figures/damped_shm_trajectory_1D.pdf}
-        \caption{Example trajectory of damped SHM}
-        \label{fig:damped_shm_trajectory}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{\linewidth}
-        \centering
-        \includegraphics[width=0.5\linewidth]{../codes/figures/damped_pendulum_trajectory_1D.pdf}
-        \caption{Example trajectory of damped pendulum}
-        \label{fig:damped_pendulum_trajectory}
-     \end{subfigure}
-        \caption{Example trajectories of damped systmes}
-        \label{fig:damped_trajectory}
-\end{figure}
-
-\section{2D System}
-A 2D system is not that different from an 1D system. The major difference being there will be two more variables. 
-We will again look at two simple examples, a linear 2D SHM, and a nonlinear double pendulum.
-\subsection{Linear}
-A simple extension to 1D SHM to 2D is just allowing the spring to be at an angle so that the system is now in a 2D space.
-Again, the equations are simple that we have two equations for the two coordinates.
-$$
-\begin{cases}
-    \frac{d^2{q_1}}{dt^2} = -\frac{k}{m}q_1\\
-    \frac{d^2{q_2}}{dt^2} = -\frac{k}{m}q_2\\
-\end{cases}
-$$
-The analytical solution is exactly the same, but now there are two of them with differing amplitudes and phases depending on the initial condition. 
-And now we have $$\mathbf{f}(X)=\begin{pmatrix}
-    \mathbf{a_1}(X)\\
-    \mathbf{a_2}(X)\\
-    \mathbf{v_1}(X)\\
-    \mathbf{v_2}(X)\\
-\end{pmatrix},$$
-where $\mathbf{a_1}$ and $\mathbf{a_2}$ are the dynamics or time derivative for $\mathbf{p_1}$ and $\mathbf{p_2}$ respectively; similarly $\mathbf{v_1}$ and $\mathbf{v_2}$ are the time derivative of $\mathbf{q_1}$ and $\mathbf{q_2}$.
-In this system, the energy is the sum of energy in the two directions so $E=\frac{m(p_1^2+p_2^2)}{2}+\frac{k(q_1^2+q_2^2)}{2}$ and so the invariance $L(a_1, a_2, v_1, v_2)=\frac{dE}{dt}=mp_1a_1+mp_2a_2+kq_1v_1+kq_2v_2=0.$
-Now our naive baseline GP has the kernel
-$$
-K(X,X')=\begin{pmatrix}
-K_{RBF,a_1}(X,X') & 0 & 0 & 0 \\
-0 & K_{RBF,a_2}(X,X') & 0 & 0 \\
-0 & 0 & K_{RBF,v_1}(X,X') & 0 \\
-0 & 0 & 0 & K_{RBF,v_2}(X,X') \\
-\end{pmatrix}.
-$$
-We will then have the joint distribution of
-$$
-\begin{pmatrix}
-    \mathbf{f}(X)\\L[\mathbf{f}(X_L)]\\
-\end{pmatrix}
-\sim\mathcal{N}
-\left(
-\begin{pmatrix}
-    0_{4n} \\ 0_{\ell}
-\end{pmatrix},
-\begin{pmatrix}
-    A & B \\
-    C & D\\
-\end{pmatrix}
-\right),
-$$
-with 
-
-$$
-A=K(X, X'), 
-B=\begin{pmatrix}
-    K_{RBF, a_1}\\
-    K_{RBF, a_2}\\
-    K_{RBF, v_1}\\
-    K_{RBF, v_2}\\
-\end{pmatrix}\odot
-\begin{pmatrix}
-mP_{1L}  \\
-mP_{2L}  \\
-kQ_{1L}  \\
-kQ_{2L}  \\
-\end{pmatrix},
-C=B^T 
-$$
-
-\begin{gather*}
-D=K_{RBF,a_1}m^2\odot(p_{1L}\otimes p_{1L}) + K_{RBF,a_2}m^2\odot(p_{2L}\otimes p_{2L})\\+K_{RBF,v_1}k^2\odot(q_{1L}\otimes q_{1L})+K_{RBF,v_2}k^2\odot(q_{2L}\otimes p_{2L})
-\end{gather*}
-
-where the terms are defined the exact same way as before, but now with respect to different coordinates, and the derivation are also the same.
-We will then again take the Schur Complement.
-\subsection{Non Linear}
-Now we will to introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
-It has two mass blobs $m_1$ and $m_2$ as well as two lengths for the pendlum stem $\ell_1$ and $\ell_2$.
-The defining equations are as follows:
-$$
-\begin{cases}
-\frac{d^2q_1}{dt^2}=\frac{-g\left(2 m_{1}+m_{2}\right) \sin q_1-m_{2} g \sin \left(q_1-2 q_2\right)-2 \sin \left(q_1-q_2\right) m_{2}\left(p_2^{2} l_{2}+p_1^{2} l_{1} \cos \left(q_1-q_2\right)\right)}{l_{1}\left(2 m_{1}+m_{2}-m_{2} \cos \left(2 q_1-2 q_2\right)\right)} \\
-\frac{d^2q_2}{dt^2}=\frac{2 \sin \left(q_1-q_2\right)\left(p_1^{2} l_{1}\left(m_{1}+m_{2}\right)+g\left(m_{1}+m_{2}\right) \cos q_1+p_2{ }^{2} l_{2} m_{2} \cos \left(q_1-q_2\right)\right)}{l_{2}\left(2 m_{1}+m_{2}-m_{2} \cos \left(2 q_1-2 q_2\right)\right)}
-\end{cases}
-$$
-As we can see, it is very complicated in term of the form.
-We also have form of energy 
-$$
-E = -(m_1+m_2)gl_1\cos q_1-m_2gl_2\cos q_2+ \frac{m_1l^2_1p_1^2}{2}+\frac{m_2}{2}(l^2_1p_1^2+l^2_2p_2^2+2l_1l_2p_1p_2\cos(q_1-q_2))
-$$
-While the form is more complicated, the underlying principle to construct the invariance kernel. 
-We again differentiate with respect to time and set it to zero to obtain the invariance equation to obtain 
-\begin{gather*}
-L(a_1, a_2, v_1, v_2)=\frac{dE}{dt} = (m_1+m_2)gl_1\sin\theta_1v_1+m_2gl_2\sin\theta_2v_2+m_1l_1^2\dot{\theta}_1a_1+\\m_2(l_1^2\dot{\theta}_1a_1+l_2^2\dot{\theta}_2a_2+l_1l_2(\dot{\theta}_2\cos(\theta_1-\theta_2)a_1+\dot{\theta}_1\cos(\theta_1-\theta_2)a_2-\dot{\theta_1}\dot{\theta_2}\sin(\theta_1-\theta_2)(v_1-v_2)))=0
-\end{gather*}
-The form of the invariance matrix is too cubersome to write down, but the derivation is as straightforward as before. 
 
 
 
-\section{Learning Invariance}
-Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which allowed us to derive the energy and thereafter the invariance equation. 
-However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then the system is pretty much solved that we can just use an ODE integrator to obtain the trajectories. 
-Therefore, we should find a way for the system to learn the form of invariance from data directly.
-One way to do so is to parameterise our invariance function and allow the system to learn the coefficients by maximising the log marginal likelihood.
-\subsection{1D system}
-A simple way to parameterise an unknown function, when the problem is relatively bounded is to use polynomial basis to paramertise the unknown function $L(a,v)$.
-In 1D cases, for our examples, they are simple enough so that $L(a,v)$ is a sum of a function of $a$ and $p$ only, $f_pa$ and a different function of $v$ and $q$ only, $g_q(v)$ so that $L(a,v)=f_p(a)+g_q(v)$.
-In the 1D SHM case, $f_p(a)=mpa$ and $g_q(v)=kqv$.
-For simple pendulum, we have $f_p(a)=\ell pa$ and $g_q(v)=\sin qv$.
-We will therefore set $$f_p(a)=\sum_{i=0}^{n_f}c_{f,i}p^i,g_q(a)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
-where $c_{f,i}, c_{g,i}$ are the parameter we will optimise based on marginal likelihood and we will evaluate different degree of polynomial $n_f, n_g$ and see which gives the best results. 
-
-\subsection{2D system}
-In 2D, things are a bit more complicated. For example, it is very clear that in double pendulum, the invariance function is not seperable.
-Instead, we need to consider all combinations of polynomials; i.e. multivariate polynomial.
-Therefore, for 2D we have $L(a,v)=f_1a_1+f_2a_2+g_1v_1+g_2v_2.$
-We will paramertise each of $f_1, f_2, g_1, g_2$ with $$\sum_{i,j,k,l=0}^{n}c_{ijkl}p_1^ip_2^jq_1^kq_2^l$$
-Therefore, there will be many more coefficients.
-
-\section{Partially Observed System}
-Partially observed data can be very common in dynamical system.
-With examples of physical system, we can imagine not observing $p$ and only observe $q$ (of course we do not possess the knowledge that $\dot{q}=p$).
-If we have a 2D system, we might only observe 1 set of dimension due to data recording mechanism, or perhaps some situation where we project 3D objects on to the wall and we can only observe the 2D shadows.
-In a more general sense, we can imagine if we have a system with unquantifiable friction.
-We may not be able to write down the form of friction analytically due to complex interaction of the system with the enviroment (i.e. not simply a damped system as disccused above).
-Nevertheless, the law of physics and conservation of energy will still hold in the broad sense; 
-in other words, if we take into account of every single force of the interactions (including the enviroment), the total energy will be conserved so the invariance holds. 
-In practice, we can only observe the system so that the rest of the physics not taking into account is not observed, so it is again a partially observed problem.
-We can then set the unobserved part being a latent variable, $z$,  and then use the invariance constraints to inference it.
-
-\chapter{Experiments}
-\section{Data Generation}
-To generate the data, we use a Runge-Kutta integrator to generate data using the equation of motions for each problem. 
-We also added some small Gaussian noise $10^{-8}$ to the dynamics to reflect the real world better as well as stablising the integrator.
-Since we aim to predict the value of dynamics at any point in the input space, we use the dynamics as targets , Y. 
-This is done by combining forward and backward finite difference (midpoint method) to compute the gradient. 
-We also choose the time step to be $0.01$ to ensure sufficient accuracy for the integrator.
-For training data, X, we choose a few random starting point within a range (datails depends on the task as described later) in the input space and generate data from there for a number of timesteps (which is fixed at 10 points per trajectory in this report). 
-To assess the performance, we generate the test set using the same input range, we will pick three different starting points and then average the result.
-Without loss of generality, we choose $m=k=1$ and $g=\ell=1$ for 1D and 2D SHM and simple pendulum for simplicity of presentation. 
-For the damping, we will choose $\gamma= 0.1$, which is fairly strongly damped as shown in figure \ref{fig:damped_pendulum_trajectory}, \ref{fig:damped_shm_trajectory}. 
-For double pendulum, we also set $m_1=m_2=\ell_1=\ell_2=g=1.$
-
-\section{Evaluation Method}
-We will mainly use the mean squared error (MSE) between the trajectory prediction and ground truth as our evaluation metrics. 
-We also illustrate the amount of energy (using the exact expression) along the trajectory to demonstrate that invariance is obeyed.
-For learning the invariance in 1D case, we can also further compare the true invariance and the learnt invariance up to a multiplicative constant.
-However, it is not possible to visualise in 2D cases so we will simply assess the conservation of energy (invariance) performance.
-
-\section{Implementation Technicalities}
-We will need to add jitter, a diagnoal matrix of small value, to the $LKL^T$ matrix in equation \ref{equ:invariance_condition}.
-This is due to the fact that we need the invert it and it will be more stable numerically if we add a little bit of jitter in the range of $10^{-6}$ to $10^{-4}$, and its effect on the model will be explained in the sections below.
-Similarly, for stability, when backpropagating to optimise the hyperparameters with respect to marginal likelihood, we need to narrow range of search such that the value is more reasonable.
-It is particularly important in our dynamical systems since, for example, in SHM the equation of motion is $a=-q$ and $v=p$, so that is will be a 2D plane extends to infinity;
-as a result, if the GP learns "correctly", the lengthscales of some directions will be very large or $\infty$, and that will be problematic and it would not affect the performance a lot if we limit the lengthscales for a much smaller value.
-Therefore, here I would set the range of both lengthscales and variable to be around the twice to three times the maximum range possible.
-For example, if we have maximum range of $\pm 3$, my upper bound for search is set to $10$ and lower bound is $10^{-3}$.
-Another change we made in 2D SHM is to scale the data using MinMax scaler to squash them to be between $\pm 1$. 
-This is done since the polynomial behaves better around this region.
-
-\subsection*{Invariance points $X_L$}
-In low dimensions, we could simply allow $X_L$ to be a evenly spaced grid in the input space, and we will call the number of points in each dimension the \textbf{invariance density}.
-So that if I have an invariance density of $40$, it means my $X_L$ will contain $1600$ points. 
-However, conditioning on a grid of invariance points is simply not scalable in high dimensions. 
-If we have an invariance density of 10 in a $\pm 5$ range for 2D SHM (spacing of 1), then we will have 10000 points. 
-We can easily run out of memory and also taking the matrix inverse are very difficult and time consuming.
-As a result, to make the approach scalable to high dimensional space, we will use the idea of local invariance. 
-The idea is straightforward, we simply sample uniformly (30-80 points) in the local region around the training and testing points and set them as $X_L$ (we choose a torus shape around the data points so that we will not have invariance points too close to the data points, which will be unstable).
-Note that we only sampled once, so that the same local grid will be centred on every training and testing points; this is done to remove the randomness for stability and dependence on the data.
-This works on the assumption that only the region around testing points will be the most important to predict in terms of conditioning; and to use the same kernel, we also have to condition on the region around training points, which is also important to help maximising the marginal likelihood objective when we are learning the invariance function.
-Another evidence that supports the use of local invariance, which have much fewer points than using a grid, is demonstrated below where we show that there is a diminishing return in increasing the number of invariance points so that actually not that many invariance points is needed to achieve a good performance. 
-
-\section{SHM}
 We start with the 1D SHM case, and for the data we will have only one trajectory starting randomly in $-3\le q\le3$ and $p$ to be between $\pm 0.3$.
 We chose $p$ to be smaller so that the future trajectory does not overshoot the upper bound of $q$ too much. 
 We allow the integrator to run for $0.1$ seconds so there will be in total 10 training points (10 time steps). 
@@ -889,7 +725,82 @@ From the energy plot in figure \ref{fig:shm_energy}, we again see both the known
 In this case, the learnt invariance performs almost exactly as the known form, as we can also see in figure \ref{fig:shm_learnt}, and has successfully recovered the physics. 
 
 
-\section{Pendulum}
+\subsection{Nonlinear Pendulum}
+The idea is pretty much the same for nonlinear system compared to linear; however, the fitting is expected to be more difficult.
+A simple nonlinear system in every day life is a simple pendulum as shown in figure below.
+The governing equation is 
+$$
+\frac{d^2q}{dt^2}=-\frac{g}{\ell}\sin q, 
+$$
+where $q$ is the angle of displacement this time and we have example trajectory in \ref{fig:pendulum_trajectory}, where we can see the effect of nonlinearity on the shape. 
+The nonlinear dynamics arises from the sine term above, which will complicate the derivation for invariance kernel slightly. 
+However, since $\sin x \approx x$ at small angle, this system is approximately linear under small displacement. 
+There is no analytical solution to this nonlinear problem in general, besides the small displacement case, which will be 1D SHM.
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_trajectory_1D.pdf}
+  \centering
+  \caption{Example trajectory of pendulum}
+  \label{fig:pendulum_trajectory}
+\end{figure}
+
+This time we have energy, $E=\frac{m\ell^2p^2}{2}+mg\ell(1-\cos q)$, and by setting the time derivative to 0, we have 
+$$L(a, v)=\frac{dE}{dt}=m\ell^2pa+mg\ell(\sin q)v=0.$$
+If we cancel out the common term $m\ell$ since their product cannot be zero, we have $$L(a,v)=\ell pa+g(\sin q)v=0$$
+Most of the terms are unchanged from the linear case. 
+However, this time, 
+$$
+B=\begin{pmatrix}
+    K_{RBF,a} \\ K_{RBF,v} \\
+\end{pmatrix}\odot \begin{pmatrix}
+    \ell P_L \\ g\sin(Q_L)
+\end{pmatrix}, D=K_{RBF,a}\odot \ell^2(p_L\otimes p_L) + K_{RBF,v}\odot g^2(\sin(q_L)\otimes \sin(q_L)),
+$$
+where 
+$$
+\sin(Q_L) = g\begin{pmatrix}
+  \sin(q_{L,1})  & \dots & \sin(q_{L,\ell})  \\
+  \vdots & \text{reqeats n rows} &  \vdots\\
+  \sin(q_{L,1})  & \dots & \sin(q_{L,\ell})  \\
+\end{pmatrix},
+$$
+$$
+\sin(q_L)\otimes \sin(q_L)=\begin{pmatrix}
+  \sin(q_{L,1})^2 & \sin(q_{L,1})\sin(q_{L,2}) & \dots & \sin(q_{L,1})\sin(q_{L,\ell}) \\
+  \vdots & \vdots & \vdots & \vdots \\
+  \sin(q_{L,\ell})\sin(q_{L,1}) & \sin(q_{L,\ell})\sin(q_{L,2}) & \dots & \sin(q_{L,\ell})^2 \\
+\end{pmatrix},
+$$
+derived in exactly the same way as the linear case. 
+We can look at the different priors in figure \ref{fig:priors}, which showcases the baseline kernel RBF, SHM invariance kernel, as well as the pendulum invariance kernel.
+We can see while the mean remains zero, the uncertainty parts reflects the form of invariance; such as the plane of SHM and the sinusoidal nature of pendulum invariance in \ref{fig:prior_pendulum_invariance} (left).
+
+\begin{figure}[H]
+     \centering
+     \begin{subfigure}[b]{0.8\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{../codes/figures/prior_shm_rbf.pdf}
+        \caption{RBF prior}
+        \label{fig:prior_shm_rbf}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.8\linewidth}
+         \centering
+         \includegraphics[width=\linewidth]{../codes/figures/prior_shm_invariance.pdf}
+         \caption{SHM invariance prior}
+         \label{fig:prior_shm_invariance}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.8\linewidth}
+         \centering
+         \includegraphics[width=\linewidth]{../codes/figures/prior_pendulum_invariance.pdf}
+         \caption{Pendulum invariance prior}
+         \label{fig:prior_pendulum_invariance}
+     \end{subfigure}
+        \caption{Priors}
+        \label{fig:priors}
+\end{figure}
+
 In this task, the experiment setup is essentially exactly the same as the SHM case. 
 However, since this time the dynamics is more complicated, we will draw three different starting points for training between $q=\pm 150^{\circ}$ and $\pm 10^{\circ}$ for $p$, so in total 30 points.
 This time, since it is a harder task, we will use an invariance density of 30 between $\pm 150^{\circ}$.
@@ -1007,7 +918,42 @@ While the lower the jitter, the higher the performance should be in theory; the 
 As a result,  we will also choose the smallest amount of jitter that still gives stable performance.  
 Note that, in both cases of varying jitter and invariance density; all of them are much better than the RBF in performance anyways.
 
-\section{Damped SHM}
+\section{Damped System}
+In previous sections, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
+However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
+Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero, i.e. soft invariance.
+To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation, where we have $K+\sigma_n^2 \mathbb{I}$;
+Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
+For the data, we will model the system as a damped SHM or pendulum with linear velocity dependent force.
+If we denote $\omega_0^2=k/m$ or $\omega_0^2=g/\ell$
+We will have the equation of motion for SHM and pendulum respectively
+$$
+\frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2q=0; \frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2\sin q=0 ,
+$$
+and the $\gamma$ is the damping factor that controls how much frictional force there is. 
+Note that we will only focus on underdamping case ($\gamma < \omega_0^2$)so that the system still oscillate but with gradually reduced amplitude instead of critical damped ($\gamma=\omega_0^2$) or overdamped ($\gamma>\omega_0^2$) case where the system simply slowly decays to still.
+An example trajectory for damped SHM and damped pendulum is shown below in figure \ref{fig:damped_trajectory}.
+
+\begin{figure}[H]
+     \centering
+     \begin{subfigure}[b]{\linewidth}
+        \centering
+        \includegraphics[width=0.5\linewidth]{../codes/figures/damped_shm_trajectory_1D.pdf}
+        \caption{Example trajectory of damped SHM}
+        \label{fig:damped_shm_trajectory}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{\linewidth}
+        \centering
+        \includegraphics[width=0.5\linewidth]{../codes/figures/damped_pendulum_trajectory_1D.pdf}
+        \caption{Example trajectory of damped pendulum}
+        \label{fig:damped_pendulum_trajectory}
+     \end{subfigure}
+        \caption{Example trajectories of damped systmes}
+        \label{fig:damped_trajectory}
+\end{figure}
+
+\subsection{Damped SHM}
 For damped system, we have exactly the same setup as the original undamped SHM.
 The results is again summarised in table \ref{tab:damped_shm_performance} and figure \ref{fig:damped_shm_prediction}, \ref{fig:damped_shm_energy}.
 The learnt $f(p)$ and $g(q)$ is shown in figure \ref{fig:damped_shm_learnt}.
@@ -1055,7 +1001,7 @@ However, it is clear that it is making use of the knowledge of the invariance si
 For energy consevation, it is reassuring that the invariance kernel is still remains invariant, while the learnt invariance might deviate a little since the extra parameters in the polynomial might fit to the damped data; but overall it conserves energy relatively well compare to the ground truth.
 Also, when we are learning the invariance, it again successfully recover the physics even under the effect of damping.
 
-\section{Damped Pendulum}
+\subsection{Damped Pendulum}
 Again, the setting of damped pendulum is the same as the undamped pendulum.
 The results is summarised in table \ref{tab:damped_pendulum_performance} and figure \ref{fig:damped_pendulum_prediction}, \ref{fig:damped_pendulum_energy}.
 With the learnt polynomial in \ref{fig:damped_pendulum_learnt}.
@@ -1100,7 +1046,78 @@ We see similar performance as in damped SHM, with invariance kernels performs sl
 The energy conservation still holds mostly for invariance kernels.
 However, this time, the learnt polynomial is not as good as the undamped case with much more deviation; this is expected due to the damping.
 
-\section{2D SHM}
+\section{2D System}
+A 2D system is not that different from an 1D system. The major difference being there will be two more variables. 
+We will again look at two simple examples, a linear 2D SHM, and a nonlinear double pendulum.
+\subsection{Linear SHM}
+A simple extension to 1D SHM to 2D is just allowing the spring to be at an angle so that the system is now in a 2D space.
+Again, the equations are simple that we have two equations for the two coordinates.
+$$
+\begin{cases}
+    \frac{d^2{q_1}}{dt^2} = -\frac{k}{m}q_1\\
+    \frac{d^2{q_2}}{dt^2} = -\frac{k}{m}q_2\\
+\end{cases}
+$$
+The analytical solution is exactly the same, but now there are two of them with differing amplitudes and phases depending on the initial condition. 
+And now we have $$\mathbf{f}(X)=\begin{pmatrix}
+    \mathbf{a_1}(X)\\
+    \mathbf{a_2}(X)\\
+    \mathbf{v_1}(X)\\
+    \mathbf{v_2}(X)\\
+\end{pmatrix},$$
+where $\mathbf{a_1}$ and $\mathbf{a_2}$ are the dynamics or time derivative for $\mathbf{p_1}$ and $\mathbf{p_2}$ respectively; similarly $\mathbf{v_1}$ and $\mathbf{v_2}$ are the time derivative of $\mathbf{q_1}$ and $\mathbf{q_2}$.
+In this system, the energy is the sum of energy in the two directions so $E=\frac{m(p_1^2+p_2^2)}{2}+\frac{k(q_1^2+q_2^2)}{2}$ and so the invariance $L(a_1, a_2, v_1, v_2)=\frac{dE}{dt}=mp_1a_1+mp_2a_2+kq_1v_1+kq_2v_2=0.$
+Now our naive baseline GP has the kernel
+$$
+K(X,X')=\begin{pmatrix}
+K_{RBF,a_1}(X,X') & 0 & 0 & 0 \\
+0 & K_{RBF,a_2}(X,X') & 0 & 0 \\
+0 & 0 & K_{RBF,v_1}(X,X') & 0 \\
+0 & 0 & 0 & K_{RBF,v_2}(X,X') \\
+\end{pmatrix}.
+$$
+We will then have the joint distribution of
+$$
+\begin{pmatrix}
+    \mathbf{f}(X)\\L[\mathbf{f}(X_L)]\\
+\end{pmatrix}
+\sim\mathcal{N}
+\left(
+\begin{pmatrix}
+    0_{4n} \\ 0_{\ell}
+\end{pmatrix},
+\begin{pmatrix}
+    A & B \\
+    C & D\\
+\end{pmatrix}
+\right),
+$$
+with 
+
+$$
+A=K(X, X'), 
+B=\begin{pmatrix}
+    K_{RBF, a_1}\\
+    K_{RBF, a_2}\\
+    K_{RBF, v_1}\\
+    K_{RBF, v_2}\\
+\end{pmatrix}\odot
+\begin{pmatrix}
+mP_{1L}  \\
+mP_{2L}  \\
+kQ_{1L}  \\
+kQ_{2L}  \\
+\end{pmatrix},
+C=B^T 
+$$
+
+\begin{gather*}
+D=K_{RBF,a_1}m^2\odot(p_{1L}\otimes p_{1L}) + K_{RBF,a_2}m^2\odot(p_{2L}\otimes p_{2L})\\+K_{RBF,v_1}k^2\odot(q_{1L}\otimes q_{1L})+K_{RBF,v_2}k^2\odot(q_{2L}\otimes p_{2L})
+\end{gather*}
+
+where the terms are defined the exact same way as before, but now with respect to different coordinates, and the derivation are also the same.
+We will then again take the Schur Complement.
+
 Here we again use the same set of input space as the 1D space, but double the dimensions. 
 Here we actaully have the input space of $q_1, q_2$ being between $\pm 5$ and $p_1, p_2$ between $\pm 0.5$. 
 This is done so that when we scale the data with MinMax scaler, the points will be less clustered.
@@ -1146,7 +1163,28 @@ Firstly, we can see that the invariance kernel still performs very well compared
 We can see the learnt invariance again is almost exactly the same as the known form, which is reassuring.
 Also, the conservation of energy is again pretty well obeyed.
 
-\section{Double Pendulum}
+\subsection{Non Linear Double Pendulum}
+Now we will to introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
+It has two mass blobs $m_1$ and $m_2$ as well as two lengths for the pendlum stem $\ell_1$ and $\ell_2$.
+The defining equations are as follows:
+$$
+\begin{cases}
+\frac{d^2q_1}{dt^2}=\frac{-g\left(2 m_{1}+m_{2}\right) \sin q_1-m_{2} g \sin \left(q_1-2 q_2\right)-2 \sin \left(q_1-q_2\right) m_{2}\left(p_2^{2} l_{2}+p_1^{2} l_{1} \cos \left(q_1-q_2\right)\right)}{l_{1}\left(2 m_{1}+m_{2}-m_{2} \cos \left(2 q_1-2 q_2\right)\right)} \\
+\frac{d^2q_2}{dt^2}=\frac{2 \sin \left(q_1-q_2\right)\left(p_1^{2} l_{1}\left(m_{1}+m_{2}\right)+g\left(m_{1}+m_{2}\right) \cos q_1+p_2{ }^{2} l_{2} m_{2} \cos \left(q_1-q_2\right)\right)}{l_{2}\left(2 m_{1}+m_{2}-m_{2} \cos \left(2 q_1-2 q_2\right)\right)}
+\end{cases}
+$$
+As we can see, it is very complicated in term of the form.
+We also have form of energy 
+$$
+E = -(m_1+m_2)gl_1\cos q_1-m_2gl_2\cos q_2+ \frac{m_1l^2_1p_1^2}{2}+\frac{m_2}{2}(l^2_1p_1^2+l^2_2p_2^2+2l_1l_2p_1p_2\cos(q_1-q_2))
+$$
+While the form is more complicated, the underlying principle to construct the invariance kernel. 
+We again differentiate with respect to time and set it to zero to obtain the invariance equation to obtain 
+\begin{gather*}
+L(a_1, a_2, v_1, v_2)=\frac{dE}{dt} = (m_1+m_2)gl_1\sin\theta_1v_1+m_2gl_2\sin\theta_2v_2+m_1l_1^2\dot{\theta}_1a_1+\\m_2(l_1^2\dot{\theta}_1a_1+l_2^2\dot{\theta}_2a_2+l_1l_2(\dot{\theta}_2\cos(\theta_1-\theta_2)a_1+\dot{\theta}_1\cos(\theta_1-\theta_2)a_2-\dot{\theta_1}\dot{\theta_2}\sin(\theta_1-\theta_2)(v_1-v_2)))=0
+\end{gather*}
+The form of the invariance matrix is too cubersome to write down, but the derivation is as straightforward as before. 
+
 With double pendulum, we have angles being between $\pm 60^\circ$ and angular velocity between $\pm 10^\circ$.
 The results are summarised in table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}, \ref{fig:double_pendulum_energy}.
 Again we used 30 points to train, but this time we do not use scaling since perhaps due to its nonlinear nature, it made the performance much worse by possibly modifying its underlying distribution.

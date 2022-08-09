@@ -5,10 +5,11 @@
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[ind()]{inductiveBias}
-View of a model of inductive bias learning.
-\newblock URL
-  \url{https://www.jair.org/index.php/jair/article/view/10253/24418}.
+\bibitem[Baxter(2000)]{Baxter2000}
+Jonathan Baxter.
+\newblock A model of inductive bias learning.
+\newblock \emph{Journal of Artificial Intelligence Research}, 12:\penalty0
+  149--198, 2000.
 
 \bibitem[Brain et~al.()Brain, PetCube, and Yosinski]{HNN}
 Sam Greydanus~Google Brain, Misko~Dzamba PetCube, and Jason Yosinski.

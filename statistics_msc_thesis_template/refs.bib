@@ -157,10 +157,17 @@
    title = {Learning Invariant Weights in Neural Networks},
    year = {2021},
 }
-@web_page{inductiveBias,
-   title = {View of A Model of Inductive Bias Learning},
-   url = {https://www.jair.org/index.php/jair/article/view/10253/24418},
+
+@article{Baxter2000,
+   abstract = {A major problem in machine learning is that of inductive bias: how to choose a learner's hypothesis space so that it is large enough to contain a solution to the problem being learnt, yet small enough to ensure reliable generalization from reasonably-sized training sets. Typically such bias is supplied by hand through the skill and insights of experts. In this paper a model for automatically learning bias is investigated. The central assumption of the model is that the learner is embedded within an environment of related learning tasks. Within such an environment the learner can sample from multiple tasks, and hence it can search for a hypothesis space that contains good solutions to many of the problems in the environment. Under certain restrictions on the set of all hypothesis spaces available to the learner, we show that a hypothesis space that performs well on a sufficiently large number of training tasks will also perform well when learning novel tasks in the same environment. Explicit bounds are also derived demonstrating that learning multiple tasks within an environment of related tasks can potentially give much better generalization than learning a single task.},
+   author = {Jonathan Baxter},
+   journal = {Journal of Artificial Intelligence Research},
+   pages = {149-198},
+   title = {A Model of Inductive Bias Learning},
+   volume = {12},
+   year = {2000},
 }
+
 @article{Mark2017,
    abstract = {Generalising well in supervised learning tasks relies on correctly extrapolating the training data to a large region of the input space. One way to achieve this is to constrain the predictions to be invariant to transformations of the input that are known to be irrelevant (e.g. translation). Commonly, this is done through data augmentation , where the training set is enlarged by applying hand-crafted transformations to the inputs. We argue that invariances should instead be incorporated in the model structure, and learned using the marginal likelihood, which correctly rewards the reduced complexity of invariant models. We demonstrate this for Gaussian process models, due to the ease with which their marginal likelihood can be estimated. Our main contribution is a variational inference scheme for Gaussian processes containing invariances described by a sampling procedure. We learn the sampling procedure by backpropagating through it to maximise the marginal likelihood.},
    author = {Mark Van Der Wilk and Matthias Bauer and S T John and James Hensman},
