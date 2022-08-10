@@ -1,4 +1,4 @@
-\begin{thebibliography}{26}
+\begin{thebibliography}{29}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -79,11 +79,27 @@ George~Em Karniadakis, Ioannis~G Kevrekidis, Lu~Lu, Paris Perdikaris, Sifan
 \newblock \doi{10.1038/s42254-021-00314-5}.
 \newblock URL \url{www.nature.com/natrevphys}.
 
+\bibitem[Kondor(2008)]{Kondor2008}
+Risi Kondor.
+\newblock Group theoretical methods in machine learning.
+\newblock 2008.
+
+\bibitem[Lemos(2018)]{lemos_2018}
+Nivaldo~A. Lemos.
+\newblock \emph{Analytical Mechanics}.
+\newblock Cambridge University Press, 2018.
+
 \bibitem[Liu and Tegmark(2021)]{Liu2021}
 Ziming Liu and Max Tegmark.
 \newblock Machine learning conservation laws from trajectories.
 \newblock 2021.
 \newblock \doi{10.1103/PhysRevLett.126.180604}.
+
+\bibitem[Marsden et~al.(2008)Marsden, Sirovich, and
+  Antman]{marsden_sirovich_antman_2008}
+J.~E. Marsden, L.~Sirovich, and S.~S. Antman.
+\newblock \emph{Multiscale methods: Averaging and homogenization}.
+\newblock Springer New York, 2008.
 
 \bibitem[Matthews et~al.(2017)Matthews, {van der Wilk}, Nickson, Fujii,
   {Boukouvalas}, {Le{\'o}n-Villagr{\'a}}, Ghahramani, and Hensman]{GPflow2017}

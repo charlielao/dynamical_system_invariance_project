@@ -270,12 +270,22 @@ Invariances are functions of the states that describe a dynamical system, and is
 An example would be from the field of physics, the conservation of energy, which will be unchanged throught out the trajectories of the system.
 There are other types of symmetry, such as translational symmetry, rotational symmetry, permutation symmetry, which are widely explored in geometric deep learning literature. 
 More formally, we can describe symmetry using group theory.
-In physics, there is a deeper connection between symmetry and invariance, namely the Neother's Theorem.
+Refering to \cite{Kondor2008}, we have symmetries being invariant if we have a group $G$ acting on $\mathcal{X}$ by $x\mapsto T_g(x)$ for $g\in G$, where $T$ is some sort of transformation function. 
+Then we should have $f(T_g(x))=f(x)$ for any function $f$.
+For instance, if it is a rotational symmetric group then we will have $T$ corresponds to the angle of rotation, and we expect $f$ to be invariant under rotation.
+In dynamical system, it has a slightly different interpretation.
+From \cite{marsden_sirovich_antman_2008}, in this description of dynamical system, we consider a generator $\mathcal{L}$, which generates the evolution of some function quantitiy that depends on the input over time.
+If we have the ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[L]=\frac{dL}{dt}=f(x)\cdot \nabla_x L(x),$$ where $L$  is some function, following by simple chain rule.
+If we would like $L$ to be the invariance, we would then require $\mathcal{L}[L]=0$. 
+This will then define what we mean by invariance in the context of dynamical system, some quantity depending on the input that does not change along the evolution of the system.
+
+At first sight, there seems no apparent symmetry involved that is obvious like the rotational symmetry case. 
+In physics, there is a deeper connection between symmetry and invariance, namely the Neother's Theorem, which is rather involved in theoretical classical physics and interested readers can refer to \cite{lemos_2018}.
 In plain words, every conservation law is associated with an underlying symmetry.
 For instance, conservation of momentum is obeyed when there is a translation symmetry of the system. 
 Similarly, rotational symmetry is associated with the conservation of angular momentum.
-There are more abstract conservation law, such as conservation of electrical charge is related to Gauge Symmetry, an advanced physics idea that we will not go into too much detail. 
-Here the more relevant ones is the conservation of energy, which is related to the symmetry of the system under temporal translation.
+There are more abstract conservation law, such as conservation of electrical charge is related to Gauge Symmetry.
+Here the more relevant ones is the conservation of energy, which is related to the symmetry of the system under temporal translation, i.e. the quantity is unchanged as time passes.
 
 
 \section{Related Work}
@@ -346,8 +356,9 @@ We will then apply the construction to various systems, namely linear and nonlin
 If we are given a dynamical system of dimension d with variables $\mathbf{q}, \mathbf{p}$, where $\mathbf{q} = (q_1, q_2,\dots,q_d)$ is the vector of positional coordinates, and $\mathbf{p}=(p_1, p_2, \dots, p_d)$ is the vector of velocity coordinates of the states of the dynamical system.
 We are interested to predict the future trajectories of the state of the system.
 Therefore, we would like to know the time derivative of these coordinates so we can update them according to Euler's integrator. 
-These time derivatives are referred to as the dynamics of a dynamical system, which governs the evolution of the dynamical system, and is a function of the coordinates $\mathbf{q}$ and $\mathbf{p}$ 
+These time derivatives are referred to as the dynamics of a dynamical system, which governs the evolution of the dynamical system, and is a function of the coordinates $\mathbf{q}$ and $\mathbf{p}$. 
 For our systems, we will denote the dynamics of $\mathbf{p}$ as $\frac{d\mathbf{p}}{dt}=\mathbf{a}(\mathbf{q}, \mathbf{p})$, and that of $\mathbf{q}$ as $\frac{d\mathbf{q}}{dt}=\mathbf{v}(\mathbf{q}, \mathbf{p})$.
+Astute readers or someone with physics background would notice $p$ is related to the velocity, which in principle should be exactly equal to $v$; while this is true in physical dynamical system, the setup is generally applicable to non physical dynamical systems too, so that we will pretend to not have this knowledge. 
 Once we have the dynamics, we can integrate up to obtain the future trajectories. 
 Notation wise, we will collect the two dynamics term and call them $$\mathbf{f(\mathbf{q}, \mathbf{p})}=\begin{pmatrix}
     \mathbf{a(\mathbf{q}, \mathbf{p})}\\\mathbf{v(\mathbf{q}, \mathbf{p})}
@@ -436,6 +447,13 @@ For simple pendulum, we have $f_p(a)=\ell pa$ and $g_q(v)=\sin qv$.
 We will therefore set $$f_p(a)=\sum_{i=0}^{n_f}c_{f,i}p^i,g_q(a)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
 where $c_{f,i}, c_{g,i}$ are the parameter we will optimise based on marginal likelihood and we will evaluate different degree of polynomial $n_f, n_g$ and see which gives the best results. 
 
+\subsection{Damped System}
+In previous sections, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
+However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
+Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero, i.e. soft invariance.
+To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation, where we have $K+\sigma_n^2 \mathbb{I}$;
+Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
+
 \subsection{2D system}
 In 2D, things are a bit more complicated. For example, it is very clear that in double pendulum, the invariance function is not seperable.
 Instead, we need to consider all combinations of polynomials; i.e. multivariate polynomial.
@@ -454,7 +472,7 @@ in other words, if we take into account of every single force of the interaction
 In practice, we can only observe the system so that the rest of the physics not taking into account is not observed, so it is again a partially observed problem.
 We can then set the unobserved part being a latent variable, $z$,  and then use the invariance constraints to inference it.
 
-\chapter{Experiments}
+\chapter{Implementation}
 \section{Data Generation}
 To generate the data, we use a Runge-Kutta integrator to generate data using the equation of motions for each problem. 
 We also added some small Gaussian noise $10^{-8}$ to the dynamics to reflect the real world better as well as stablising the integrator.
@@ -499,34 +517,17 @@ Another evidence that supports the use of local invariance, which have much fewe
 \section{1D System}
 \subsection{Linear SHM}
 We will first examine one of the most simple dynamical system, an 1D simple harmonic motion (SHM). 
-An example would be a mass spring system as shown in figure with mass $m$ and spring constant $k$, an example trajectory is shown in figure \ref{fig:shm_trajectory}. 
+An example would be a mass spring system as shown in figure with mass $m$ and spring constant $k$, and an example trajectory is shown in figure \ref{fig:shm_trajectory}. 
+The $q$ is the displacement of the block from its origin, and $p$ would be the instanteous velocity.
 
-% HORIZONTAL spring - axis, rest position
 \begin{figure}[H]
-    \centering
-\begin{tikzpicture}
-  \def\H{1.1}  % wall height
-  \def\T{0.3}  % wall thickness
-  \def\W{3.7}  % ground length
-  \def\D{0.25} % ground depth
-  \def\h{0.7}  % mass height
-  \def\w{0.8}  % mass width
-  \def\x{2.0}  % mass x position
-  \def\y{1.22*\H} % x axis y position
-  
-  % AXIS
-  \draw[ell] (0,1.3*\h) --++ (\x,0) node[midway,fill=white,inner sep=0] {$k$};
-  
-  % SPRING & MASS
-  \draw[spring] (0,\h/2) --++ (\x,0);
-  \draw[ground] (0,0) |-++ (-\T,\H) |-++ (\T+\W,-\H-\D) -- (\W,0) -- cycle;
-  \draw (0,\H) -- (0,0) -- (\W,0);
-  \draw[mass] (\x,0) rectangle++ (\w,\h) node[midway] {$m$};
-  
-\end{tikzpicture}
+        \centering
+        \includegraphics[width=0.8\linewidth]{../figures/shm.pdf}
+        \caption{SHM illustration}
+        \label{fig:shm_diagram}
 \end{figure}
 
-The equation of motion of the system is $$m\frac{d^2q}{dt^2}=-kq,$$ where $q$ is the displacement.
+The equation of motion of the system is $$m\frac{d^2q}{dt^2}=-kq.$$
 And the analytical solution would be of the form $q=A\sin(\omega_0t+\phi),$ where $\omega=\frac{k}{m}$ and $A, \phi$ depends on the initial condition, which dictates the amplitude and phase of the motion. 
 For this case, we have 
 $$
@@ -646,10 +647,8 @@ $$
 $$
 we will then call the resulting covariance our Invariance Kernel for 1D SHM, $K_L$.
 
-
-
-
-We start with the 1D SHM case, and for the data we will have only one trajectory starting randomly in $-3\le q\le3$ and $p$ to be between $\pm 0.3$.
+Now we look at how it works in practice.
+For the data we only have one trajectory starting randomly in $-3\le q\le3$ and $p$ to be between $\pm 0.3$.
 We chose $p$ to be smaller so that the future trajectory does not overshoot the upper bound of $q$ too much. 
 We allow the integrator to run for $0.1$ seconds so there will be in total 10 training points (10 time steps). 
 We will then draw three test points from the same range as training, to assess the performance of the predictive power for 3 seconds (300 points) and average the MSE over the three trajectories. 
@@ -692,7 +691,7 @@ MSE & 3.5563 & 0.1057 & 0.0927 \\
 \end{figure}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_learnt.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_learnt_over_time.pdf}
   \centering
   \caption{Learnt invariance for SHM}
   \label{fig:shm_learnt}
@@ -722,17 +721,25 @@ MSE & 3.5563 & 0.1057 & 0.0927 \\
 We can clearly see the naive RBF kernel failed to learn at all as it does not have enough example data to genealise, as we can see from \ref{fig:posterior_shm_rbf}, so that it is only able to predict well in the region where the data are. 
 On the other hand, from \ref{fig:posterior_shm_invariance} and the prediction performance, we can see the invariance kernel has much better generalisation ability.
 From the energy plot in figure \ref{fig:shm_energy}, we again see both the known and learnt invariance obeys the invariance very well while the RBF kernel does not at all.
-In this case, the learnt invariance performs almost exactly as the known form, as we can also see in figure \ref{fig:shm_learnt}, and has successfully recovered the physics. 
+In this case, the learnt invariance performs almost exactly as the known form, as we can also see in figure \ref{fig:shm_learnt}, and has successfully recovered the physics as it trains. 
 
 
 \subsection{Nonlinear Pendulum}
-The idea is pretty much the same for nonlinear system compared to linear; however, the fitting is expected to be more difficult.
-A simple nonlinear system in every day life is a simple pendulum as shown in figure below.
+The idea is pretty much the same for nonlinear system compared to linear; however, the fitting of statistical model is expected to be more difficult.
+A simple nonlinear system in every day life is a simple pendulum as shown in figure below, where $q$ is the angle of displacement from the vertical dotted line, and $p$ is the angular velocity.
+
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\linewidth]{../figures/pendulum.pdf}
+        \caption{Pendulum illustration}
+        \label{fig:pendulum_diagram}
+\end{figure}
+
 The governing equation is 
 $$
 \frac{d^2q}{dt^2}=-\frac{g}{\ell}\sin q, 
 $$
-where $q$ is the angle of displacement this time and we have example trajectory in \ref{fig:pendulum_trajectory}, where we can see the effect of nonlinearity on the shape. 
+and we have example trajectory in \ref{fig:pendulum_trajectory}, where we can see the effect of nonlinearity on the shape. 
 The nonlinear dynamics arises from the sine term above, which will complicate the derivation for invariance kernel slightly. 
 However, since $\sin x \approx x$ at small angle, this system is approximately linear under small displacement. 
 There is no analytical solution to this nonlinear problem in general, besides the small displacement case, which will be 1D SHM.
@@ -773,6 +780,7 @@ $$
 $$
 derived in exactly the same way as the linear case. 
 We can look at the different priors in figure \ref{fig:priors}, which showcases the baseline kernel RBF, SHM invariance kernel, as well as the pendulum invariance kernel.
+
 We can see while the mean remains zero, the uncertainty parts reflects the form of invariance; such as the plane of SHM and the sinusoidal nature of pendulum invariance in \ref{fig:prior_pendulum_invariance} (left).
 
 \begin{figure}[H]
@@ -801,7 +809,7 @@ We can see while the mean remains zero, the uncertainty parts reflects the form 
         \label{fig:priors}
 \end{figure}
 
-In this task, the experiment setup is essentially exactly the same as the SHM case. 
+For the implementation of pendulum invariance model, the experiment setup is essentially exactly the same as the SHM case. 
 However, since this time the dynamics is more complicated, we will draw three different starting points for training between $q=\pm 150^{\circ}$ and $\pm 10^{\circ}$ for $p$, so in total 30 points.
 This time, since it is a harder task, we will use an invariance density of 30 between $\pm 150^{\circ}$.
 We again have the prediction performance summarised in table \ref{tab:pendulum_performance} as well as figures \ref{fig:pendulum_prediction}, \ref{fig:pendulum_energy} and the posteriors in \ref{fig:posterior_pendulum}.
@@ -836,7 +844,7 @@ MSE & 0.0500 & 0.0025 & 0.0020 \\
 \end{figure}
 
 \begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_learnt.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_learnt_over_time.pdf}
   \centering
   \caption{Learnt invariance for pendulum}
   \label{fig:pendulum_learnt}
@@ -861,15 +869,22 @@ MSE & 0.0500 & 0.0025 & 0.0020 \\
         \label{fig:posterior_pendulum}
 \end{figure}
 
-
-
 From table \ref{tab:pendulum_performance}, figure \ref{fig:pendulum_prediction}, \ref{fig:pendulum_energy}.
 This time, again the RBF kernel performs poorly.
 The known kernel performs very well again, almost exactly the same as the ground truth.
 However, this time, the learnt invariance is slightly worse; this is expected since we are approximating a sine function with a cubic polynomial, and so some level of deviation is expected.
-As we can see from figure \ref{fig:pendulum_learnt}, the learning is pretty accurate.
+As we can see from figure \ref{fig:pendulum_learnt}, the learning is increasingly accurate as it trains over time.
 From the posteriors in \ref{fig:posterior_pendulum}, we see RBF generalise much better due to extra data points, but it is still very far from giving a reasonable prediction. 
 
+We can also compare the data efficiency in this case as shown in figure \ref{fig:data_efficiency}. 
+We see that with invariance kernel, it is at least ten times more data efficient than the baseline.
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/data_efficiency.pdf}
+  \centering
+  \caption{Data efficiency for pendulum}
+  \label{fig:data_efficiency}
+\end{figure}
 
 \section{Invariance Density}
 Here we will to explore how different invariance density affect the performance of the kernel as well as the degree of freedom.
@@ -896,34 +911,8 @@ Lastly, we see the degree of freedom does not vary much either, while in theory 
 Overall, we see there is not that big an advantage to increase our invariance density beyond a certain point due to diminishing return in performance and $N^6$ computational cost.
 Therefore, from this point we will choose the smallest invariance density that give reasonable performance.  
 
-\section{Effect of Jitter}
-Since we need a little bit of jitter to stabilise the computation of our invariance kernel as explained above, and that adding jitter is the same as adding noise to the invariance (since we are adding it on the diagonal of $LKL^T$ submatrix), we need to make sure it is not too large and too noisy, which will destroy the point of having invariance to start with. 
-So we will again assess the performance in the similar way as above using different amount of jitter.
-The results is shown in figure \ref{fig:vary_jitter}.
-
-\begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/vary_jitter.pdf}
-  \centering
-  \caption{Effect of varying jitter}
-  \label{fig:vary_jitter}
-\end{figure}
-
-For marginal likelihood, we see it decreases as jitter increases as expected because then the invariance is not as strong a contraint.
-For MSE, we expect to see steady decrease in performance.
-However, here we see a dip initially.
-Again, there is not a big difference, and that the lowest jitter might not be enough to stablise the model so that the worse performance could be due to numerical instability.
-We see a similar pattern in energy conservation, where we see energy consevation is not as enforced when we have noisy invariance.
-Degree of freedom increases with jitter as expected since we are relaxing the constraints.
-While the lower the jitter, the higher the performance should be in theory; the instability of matrix inversion and numerical errors could cause a drop in performance.
-As a result,  we will also choose the smallest amount of jitter that still gives stable performance.  
-Note that, in both cases of varying jitter and invariance density; all of them are much better than the RBF in performance anyways.
 
 \section{Damped System}
-In previous sections, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
-However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
-Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero, i.e. soft invariance.
-To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation, where we have $K+\sigma_n^2 \mathbb{I}$;
-Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
 For the data, we will model the system as a damped SHM or pendulum with linear velocity dependent force.
 If we denote $\omega_0^2=k/m$ or $\omega_0^2=g/\ell$
 We will have the equation of motion for SHM and pendulum respectively
@@ -954,7 +943,7 @@ An example trajectory for damped SHM and damped pendulum is shown below in figur
 \end{figure}
 
 \subsection{Damped SHM}
-For damped system, we have exactly the same setup as the original undamped SHM.
+For damped SHM, we have exactly the same setup as the original undamped SHM.
 The results is again summarised in table \ref{tab:damped_shm_performance} and figure \ref{fig:damped_shm_prediction}, \ref{fig:damped_shm_energy}.
 The learnt $f(p)$ and $g(q)$ is shown in figure \ref{fig:damped_shm_learnt}.
 
@@ -1049,8 +1038,17 @@ However, this time, the learnt polynomial is not as good as the undamped case wi
 \section{2D System}
 A 2D system is not that different from an 1D system. The major difference being there will be two more variables. 
 We will again look at two simple examples, a linear 2D SHM, and a nonlinear double pendulum.
+
 \subsection{Linear SHM}
-A simple extension to 1D SHM to 2D is just allowing the spring to be at an angle so that the system is now in a 2D space.
+A simple extension to 1D SHM to 2D is just allowing the spring to be at an angle so that the system is now in a 2D space as shown in figure \ref{fig:shm_2d_diagram}, and the system is still constrained in the plane.
+
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\linewidth]{../figures/2dshm.pdf}
+        \caption{2D SHM illustration}
+        \label{fig:shm_2d_diagram}
+\end{figure}
+
 Again, the equations are simple that we have two equations for the two coordinates.
 $$
 \begin{cases}
@@ -1118,7 +1116,7 @@ D=K_{RBF,a_1}m^2\odot(p_{1L}\otimes p_{1L}) + K_{RBF,a_2}m^2\odot(p_{2L}\otimes 
 where the terms are defined the exact same way as before, but now with respect to different coordinates, and the derivation are also the same.
 We will then again take the Schur Complement.
 
-Here we again use the same set of input space as the 1D space, but double the dimensions. 
+For implementation, we again use the same set of input space as the 1D space, but double the dimensions. 
 Here we actaully have the input space of $q_1, q_2$ being between $\pm 5$ and $p_1, p_2$ between $\pm 0.5$. 
 This is done so that when we scale the data with MinMax scaler, the points will be less clustered.
 We use 30 points in this setting.
@@ -1127,6 +1125,14 @@ We also intialise the polynomial coefficients at the true theoretical values.
 These are done due to the fact the optimiser is often stuck at local minima.
 We intialise the values there so that if it is indeed the true invariance, the optimiser should regonise it and not optimise too much since that is roughly the true minimum.
 Therefore, we would expect to get similar performance and marginal likelihood.
+We use three different ways to verify indeed it is learning the correct invariance.
+\begin{enumerate}
+  \item Fix the polynomials coefficients, which are randomly initialised, of 50 points and optimise the other hyperparameters (lengthscale, variance etc.); then we will evaluate their performance and marginal likelihood compare to the correct one; which is expected to be the best in both measure. 
+  \item We will then find the correlation between the marginal likelihood and predictive performance, which is expect to be positive.
+  \item Lastly, we will allow the polynomial coefficients to be optimised, and we should see better marginal likelihood with better perdicitve performance or similar as fixing the polynomial coefficients.
+\end{enumerate}
+
+We can also assess its energy conserving performance since the true invariance will allows the energy to be conserved. 
 
 The results are summarised in table \ref{tab:SHM_2d_performance} and figure \ref{fig:shm_2d_prediction}, \ref{fig:shm_2d_energy}.
 Since it is difficult to visualise 4 dimensional space, we will plot them individually.
@@ -1165,7 +1171,15 @@ Also, the conservation of energy is again pretty well obeyed.
 
 \subsection{Non Linear Double Pendulum}
 Now we will to introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
-It has two mass blobs $m_1$ and $m_2$ as well as two lengths for the pendlum stem $\ell_1$ and $\ell_2$.
+It has two mass blobs $m_1$ and $m_2$ as well as two lengths for the pendlum stem $\ell_1$ and $\ell_2$ as shown in figure \ref{fig:double_pendulum_diagram}.
+
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\linewidth]{../figures/doublependulum.pdf}
+        \caption{Double Pendulum illustration}
+        \label{fig:double_pendulum_diagram}
+\end{figure}
+
 The defining equations are as follows:
 $$
 \begin{cases}
@@ -1185,7 +1199,9 @@ L(a_1, a_2, v_1, v_2)=\frac{dE}{dt} = (m_1+m_2)gl_1\sin\theta_1v_1+m_2gl_2\sin\t
 \end{gather*}
 The form of the invariance matrix is too cubersome to write down, but the derivation is as straightforward as before. 
 
-With double pendulum, we have angles being between $\pm 60^\circ$ and angular velocity between $\pm 10^\circ$.
+For our experiment, with double pendulum, we have angles being between $\pm 60^\circ$ and angular velocity between $\pm 10^\circ$.
+We again initialised the polynomial coefficients at the correct theoretical value.
+However, this time, because we are approximating, we do not expect that intial value to perform great so we can only used the third evaluation procedure to verify it is learning the invariance along with its energy conserving performance.
 The results are summarised in table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}, \ref{fig:double_pendulum_energy}.
 Again we used 30 points to train, but this time we do not use scaling since perhaps due to its nonlinear nature, it made the performance much worse by possibly modifying its underlying distribution.
 
@@ -1233,14 +1249,34 @@ Conclusion goes here.
 \bibliography{refs}
 
 
-%\clearpage
-% %% reset page counter and start appendix pages with A
-%\pagenumbering{arabic}
-%\renewcommand*{\thepage}{A\arabic{page}}
-%\appendix
-%
-%\chapter{Appendix title}
-%
-%Appendix goes here.
+\clearpage
+%% reset page counter and start appendix pages with A
+\pagenumbering{arabic}
+\renewcommand*{\thepage}{A\arabic{page}}
+\appendix
+
+\chapter{Appendix}
+
+\section{Effect of Jitter}
+Since we need a little bit of jitter to stabilise the computation of our invariance kernel as explained above, and that adding jitter is the same as adding noise to the invariance (since we are adding it on the diagonal of $LKL^T$ submatrix), we need to make sure it is not too large and too noisy, which will destroy the point of having invariance to start with. 
+So we will again assess the performance in the similar way as above using different amount of jitter.
+The results is shown in figure \ref{fig:vary_jitter}.
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/vary_jitter.pdf}
+  \centering
+  \caption{Effect of varying jitter}
+  \label{fig:vary_jitter}
+\end{figure}
+
+For marginal likelihood, we see it decreases as jitter increases as expected because then the invariance is not as strong a contraint.
+For MSE, we expect to see steady decrease in performance.
+However, here we see a dip initially.
+Again, there is not a big difference, and that the lowest jitter might not be enough to stablise the model so that the worse performance could be due to numerical instability.
+We see a similar pattern in energy conservation, where we see energy consevation is not as enforced when we have noisy invariance.
+Degree of freedom increases with jitter as expected since we are relaxing the constraints.
+While the lower the jitter, the higher the performance should be in theory; the instability of matrix inversion and numerical errors could cause a drop in performance.
+As a result,  we will also choose the smallest amount of jitter that still gives stable performance.  
+Note that, in both cases of varying jitter and invariance density; all of them are much better than the RBF in performance anyways.
 
 \end{document}
