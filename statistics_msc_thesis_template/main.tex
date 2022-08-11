@@ -82,7 +82,13 @@
 
 
 \begin{abstract}
-    ABSTRACT GOES HERE
+Predicting the evolution of dynamical systems reliably has important practical values as they are used to model lots of natural and engineered processes across biology, physics and engineering.
+Particuarly in physics, the idea of symmetry and invariance are very powerful inductive bias we can embed into our statistical models that will help use improve the performance of model in terms of predictive performance and data efficiency.
+Examples of such invariance including conservation of energy or conservation of momentum.
+\cite{Mark2017} has shown marginal likelihood is a good objective function to uncover the underlying invariance and symmetry of the data, which was affine symmetry in this case. 
+In this report, we extend his work and propose a Gaussian Process model that is able to capture the invariance and hence recover the law of physics automatically.
+We also show the discovered invariance as inductive bias greatly improved the data efficiency and predictive performance, which is tested on a variety of systems, including one and two-dimensional simple harmonic motion, nonlinear pendulum as well as double pendulum.
+We have also demonstrated that the model is robust even when the system is not ideal and has dissipative effect where the invariance no longer holds exactly. 
 \end{abstract}
 
 \begin{acknowledgements}
@@ -100,39 +106,43 @@ Lastly, I would like the thank my family for their support.
 
 
 \chapter{Introduction}
-Dynamical system is one of the richest theory that models the real world with wide application across all science and engineering and therefore it is very valuable to be able to reliably predict the evolution of a system for practical purposes.
+Dynamical systems are one of the richest theory that models the real world with wide application across all science and engineering and therefore it is very valuable to be able to reliably predict the evolution of a system for practical purposes.
 Recently, data intensive machine learning methods, such as deep learning, has shown some very powerful results. 
 However, the amount of data required to achieve reasonable performance are often enormous, will often involve lots of manual labour to label and process the data.
 Sometimes, the data could be very difficult to come by in biological and medical settings.
 Therefore, data efficiency is the key if we wish to study more complicated systems.
 Inductive bias, an intitial choice of hypothesis space (\cite{Baxter2000}), is one way to achieve this goal.
-What is usually done is to embed the inductive bias into the model in some way so that the model "understands" this knowledge before seeing the data.
-Assuming the inductive bias is correct, we may expect the model to perform better, either in a data efficiency way or prediction performance way.
-One very powerful inductive bias is the use of symmetry and invariances, that puts strong constraints on the model to obey, which is the basis of many powerful machine learning models, such as Convolution Neural Network, utilising the translational symmetry in natural images.
-Marginal likelihood indicates how well the data is explained by the model as was shown to be beneficial in parameter tuning in Bayesian model and in particular in identifying the correct invariance. 
-\cite{Mark2017} and \cite{Tycho2021} has demonstrated using marginal likelihood as a objective is useful in learning the invariance, in particular invariance under Affine transformation.
-Gaussian Process (GP) was used thanks to its ability to estimate marginal likelihood accurately, and the inductive bias was embedded in the kernel function of the GP.
-In this report, we aim to extend on the work to learn invariance in dynamical systems, in particular the conservation of energy.
+Researchers have embeded the inductive bias into the model in some way so that the model "understands" this knowledge before seeing the data.
+Assuming the inductive bias is correct, we would expect the model to perform better, either in a data efficiency or prediction performance way.
+One very powerful inductive bias is the use of symmetry and invariances, that puts strong constraints on the model. 
+It is the basis of many modern powerful machine learning models, such as Convolution Neural Network, utilising the translational symmetry in natural images.
+Nevertheless, in many of these models, the inductive bias is often built in to the structure by construction, which would require prior human knowledge.
+In order to learn inductive bias automatically, we need an objective function that encourages the model to discover the underlying symmetry and invariance underlying the data. 
+\cite{Mark2017} and \cite{Tycho2021} has demonstrated that using marginal likelihood as the objective is useful in learning the invariance, which is Affine transformation in their case.
+Marginal likelihood $p(Y)=\int p(Y|X)p(X)dX$ ($Y$ is the target and $X$ is the input) measures how well the data is explained by the model.
+This metric is common in Bayesian model selection and in our case: identifying the correct invariance. 
+Gaussian Process (GP) was particuarly useful for this purpose thanks to its ability to estimate marginal likelihood accurately, and the inductive bias was embedded in the kernel function of the GP.
+In this project, we aim to extend this work to learn invariance in dynamical systems to improve the data efficiency of system evolution prediction.
 
-In the rest of the report, we will cover the essential theortical background to understand GP and dynamical system in section 2. We will also describe related work in the area of GP in dynamical system, physics informed machine learning as well as invariance and symmetry in machine learning in this section.
-In section 3, we will derive the theoretical apsects and the constructions of the invariance kernels in dynamical system.
+In the rest of the report, we will cover the essential theortical background to understand GP, dynamical systems, as well as symmmetry and invariances in section 2. We will also describe related work in this section.
+In section 3, we will derive the theoretical apsects and the constructions of the invariance kernels in dynamical systems.
 Following that, we illustrate the implemented results on various dynamical systems in section 4 along with discussions.
-Finally, we conclude in section 5.
+Finally, we conclude in section 5 and discuss future work.
 
  
 \chapter{Background}
-Here we will cover the background knowledge required to understand the remaining thesis, including Gaussian Process, dynamical systems as well as symmetry and invariances. 
+In this chapter, we will cover the background knowledge required to understand the remaining report, including Gaussian Process, dynamical systems as well as symmetry and invariances. 
 This section will also cover related work in the field.
 
-
 \section{Gaussian Process}
-Gaussian Process (GP) can be thought of a distribution over functions. \cite{rasmussen_williams_2006}
+Gaussian Process (GP) can be thought of a distribution over functions, \cite{rasmussen_williams_2006}.
 More formally, \begin{quote}GP is a collection of random variables, any finite number of which have a joint Gaussian distribution\end{quote}
-We will be able to specify a GP on $f(\mathbf{x})$ by mean function $m(\mathbf{x})=\mathbb{E}[f(\mathbf{x})]$ as well as the kernel function $k(\mathbf{x}, \mathbf{x'})=\mathbb{E}[f(\mathbf{x})-m(\mathbf{x})(f(\mathbf{x'}-m{\mathbf{x'}}))]$.
+We will be able to specify a GP prior on $f(\mathbf{x})$ by mean function $m(\mathbf{x})=\mathbb{E}[f(\mathbf{x})]$ as well as the kernel function $K(\mathbf{x}, \mathbf{x'})=\mathbb{E}[f(\mathbf{x})-m(\mathbf{x})(f(\mathbf{x'})-m(\mathbf{x'}))]$, which is the covariance function.
 We then then write
 $$
-f(\mathbf{x})\sim\mathcal{GP}(m(\mathbf{x}),k(\mathbf{x},\mathbf{x'})).
+f(\mathbf{x})\sim\mathcal{GP}(m(\mathbf{x}),K(\mathbf{x},\mathbf{x'})).
 $$
+Without loss of generality, we will now assume $m(\mathbf{x})=\mathbf{0}$, a common zero mean prior.
 In a noise free scenario, where we observe $f$ directly, we will have
 $$
 \begin{bmatrix}
@@ -152,7 +162,7 @@ $$
 \left(\mathbf{0}, \begin{bmatrix}K(X, X)+\sigma^2_n\mathbb{I} & K(X, X^*) \\ K(X^*, X) & K(X^*, X^*) \end{bmatrix}\right),
 $$
 
-An important identity we use throughout the thesis is the Gaussian conditional formula; if
+An important identity we use throughout the thesis is the Gaussian conditional formula: if
 $$
   \begin{bmatrix}
     x\\y
@@ -185,10 +195,10 @@ f^*|X, y, X* \sim \mathcal{N} \left(\overline{f^*}, \mathrm{cov}(f^*)\right)\\
 \end{equation*}
  
 
-Below we demonstrated an example adapted from \cite{GPflow2017} to shown case the fitting procedure of a GP.
-Different kernels defined by their various functional form imposes different prior knowledge on the GP prior.
+Below we demonstrated an example adapted from \cite{GPflow2017} to showcase the fitting procedure of a GP.
+Different kernels defined by their various functional form as below imposes different prior knowledge on the GP prior.
 For instance, one of the most commonly used kernel, RBF, requires smoothness; Matern requires once differentiability; Periodic kernel requires the prior to have periodic structure obviously.
-Below in figure \ref{fig:prior} we showed 5 samples drawn from each of the kernel.
+Below in figure \ref{fig:prior} we showed 5 samples drawn from GP prior from each of the kernel, with mean zero.
 \begin{equation*}
   \begin{gathered}
     k_{RBF}(r) = \exp(-\frac{r^2}{2l^2}) \\
@@ -218,12 +228,10 @@ We also sampled 10 posteriors.
 We can see the function fit well around the data points and fall back to the GP prior (RBF in this case) away from the data.
 
 \subsection{GPflow}
-Now we can in principle build our own GP objects using basic linear algebra and statistical libraries from scratch. 
-It is a much better idea to avoid errors and improve development speed by using a well-tested, robust and efficient library called GPflow, which is used throughout the project (\cite{GPflow2017}).
-It is a Python package built on TensorFlow to allow efficient and fast computation on GPUs to do GP inferences.
-A particular powerful feature is that it allows the choosing of hyperparameter such as lengthscales and variance of a kernel automatic by calculating the gradient (using automatic differentiation feature of Tensorflow) and perform optimisation.
-In later sections, we will need to optimise more parameters than aforementioned ones with respect to maginal likelihood objective.
-
+While we can in principle build our own GP objects using linear algebra and statistical libraries, such as Numpy, Scipy, from scratch, it is better to avoid errors and improve development speed by using a well-tested, robust and efficient library called GPflow, which will be used throughout the project (\cite{GPflow2017}).
+It is a Python library built on TensorFlow to allow efficient and fast computation on GPUs to do GP inferences.
+A particular powerful feature is that it allows atuomatic tuning of hyperparameter such as lengthscales and variance of a kernel by computing the gradient (using automatic differentiation feature of Tensorflow) and perform optimisation.
+In later sections, when we will need to optimise more parameters than aforementioned ones with respect to maginal likelihood objective, the library will be proved to be very useful.
 
 \section{Dynamical Systems}
 Dynamical system, which describes the evolution of a system in time, can be broadly classified to two catergories: differential equations and difference equations, with the former being continous time and the latter being discrete time. (\cite{strogatz_2019}). 
@@ -275,8 +283,8 @@ Then we should have $f(T_g(x))=f(x)$ for any function $f$.
 For instance, if it is a rotational symmetric group then we will have $T$ corresponds to the angle of rotation, and we expect $f$ to be invariant under rotation.
 In dynamical system, it has a slightly different interpretation.
 From \cite{marsden_sirovich_antman_2008}, in this description of dynamical system, we consider a generator $\mathcal{L}$, which generates the evolution of some function quantitiy that depends on the input over time.
-If we have the ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[L]=\frac{dL}{dt}=f(x)\cdot \nabla_x L(x),$$ where $L$  is some function, following by simple chain rule.
-If we would like $L$ to be the invariance, we would then require $\mathcal{L}[L]=0$. 
+If we have the ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[E]=\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),$$ where $E$  is some function, following by simple chain rule.
+If we would like $E$ to be the invariance, we would then require $\mathcal{L}[E]=0$. 
 This will then define what we mean by invariance in the context of dynamical system, some quantity depending on the input that does not change along the evolution of the system.
 
 At first sight, there seems no apparent symmetry involved that is obvious like the rotational symmetry case. 
@@ -406,14 +414,21 @@ $$
 with all the off diagonal terms being zero block matrix because of the independence prior assumption.
 This naive kernel will be our baseline to be compared to throughout the whole project.
 Now we can start considering the invariance. 
-If we assume the invariance is true throughout the input space $\mathbb{R}^{2d}$, then we can condition the GP on the a grid of points, which we referred to invariance points, $X_L$, and assume there are $\ell$ of them, and we will call the invariance constraints $L$.
+If we assume the invariance is true throughout the input space $\mathbb{R}^{2d}$, then we can condition the GP on the a grid of points, which we referred to invariance points, $X_L$, and assume there are $\ell$ of them, and we will call the invariance constraints $\mathcal{L}[E]$ as shown in section 2.3.
 
-The form of $L$ will depend on the system as well as $X_L$, and examples will be given in the following sections to make it clear.
-Since the invariance function will always be a linear function on the dynamics by the fact that it is the time derivative
+The form of $\mathcal{L}[E]$ will depend on the system as well as $X_\mathcal{L}$, and examples will be given in the following sections to make it clear.
+Since the conservation of energy, $E$, is one of the most common invariance in physical systems, we will focus on making use of this constraint.
+Therefore, we have $E=\text{energy}.$
+We can see the invariance constraints will always be a linear function on the dynamics $\mathbf{f}=\begin{pmatrix}
+  \mathbf{a} \\ \mathbf{v}
+\end{pmatrix}$ almost by definition because of chain rule.
+We have $\text{energy}=E(\theta, \mathbf{p}, \mathbf{q})$, where $\theta$ are constants that parameterised the energy function, like mass or gravity.
+Then we have 
 $$
-\text{energy}=E(\theta, \mathbf{p}, \mathbf{q});  \frac{dE}{dt}= \sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i
+\mathcal{L}[E] = \frac{dE}{dt}=\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} =\sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i
 $$
-We can see it is always a linear combination of something independent of the dynamics.
+We can therefore see it is always a linear combination of dynamics with coefficients independent of dynamics.
+As a result, $\mathcal{L}[E]$ can be seen to be a linear transformation of $\mathbf{f}$, and \textbf{now we call this transformation operator $L$}, which will be a function of $p, q$ and $\theta$.
 If we apply this linear transformation $L$ on $\mathbf{f}(X_L)$, $L(\mathbf{f}(X_L))$ will again be a GP with a transformed kernel.
 Therefore, we have 
 $$\begin{pmatrix}
@@ -425,7 +440,7 @@ $$\begin{pmatrix}
     KL^T & LKL^T\\
 \end{pmatrix}\right)
 $$
-We can then condition the first row on the second row using equation \ref{equ:normal_condtion} to obtain
+To impose the invariance constraints, we then condition the first row on the second row using equation \ref{equ:normal_condtion} to obtain
 \begin{equation}
   \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} \left(0_{2nd}, \begin{pmatrix}
     K-LK(LKL^T)^{-1}KL^T
@@ -433,33 +448,36 @@ We can then condition the first row on the second row using equation \ref{equ:no
   \label{equ:invariance_condition}
 \end{equation}
 
-
-\section{Learning Invariance}
-Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which allowed us to derive the energy and thereafter the invariance equation. 
-However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then the system is pretty much solved that we can just use an ODE integrator to obtain the trajectories. 
-Therefore, we should find a way for the system to learn the form of invariance from data directly.
-One way to do so is to parameterise our invariance function and allow the system to learn the coefficients by maximising the log marginal likelihood.
-\subsection{1D system}
-A simple way to parameterise an unknown function, when the problem is relatively bounded is to use polynomial basis to paramertise the unknown function $L(a,v)$.
-In 1D cases, for our examples, they are simple enough so that $L(a,v)$ is a sum of a function of $a$ and $p$ only, $f_pa$ and a different function of $v$ and $q$ only, $g_q(v)$ so that $L(a,v)=f_p(a)+g_q(v)$.
-In the 1D SHM case, $f_p(a)=mpa$ and $g_q(v)=kqv$.
-For simple pendulum, we have $f_p(a)=\ell pa$ and $g_q(v)=\sin qv$.
-We will therefore set $$f_p(a)=\sum_{i=0}^{n_f}c_{f,i}p^i,g_q(a)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
-where $c_{f,i}, c_{g,i}$ are the parameter we will optimise based on marginal likelihood and we will evaluate different degree of polynomial $n_f, n_g$ and see which gives the best results. 
-
-\subsection{Damped System}
-In previous sections, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
+\section{Damped System}
+Up to now, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
 However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
 Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero, i.e. soft invariance.
 To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation, where we have $K+\sigma_n^2 \mathbb{I}$;
 Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
 
+
+\section{Learning Invariance}
+Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which allowed us to derive the energy, $E$ and thereafter the invariance equation $L$ accordingly. 
+However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then the system is pretty much solved that we can just use an ODE integrator to obtain the trajectories. 
+Therefore, we should find a way for the system to learn the form of invariance from data directly.
+The way we chose to do so is to parameterise our invariance function and allow the system to learn the coefficients by maximising the log marginal likelihood.
+
+\subsection{1D system}
+There are many different ways to paramerterise an unknown function, including but not limited to Fourier representation, neural networks, wavelets, splines.
+As the problem is relatively bounded, we chose to use polynomial basis to paramertise the unknown function $L(p,q)$.
+In 1D cases, for our examples, they are simple enough so that $L(p,q)$ is seperable so that we have a function of $p$ only, $f(p)$ and a different function of $q$ only, $g(q)$ so that they can be learnt seperately.
+In the 1D SHM case, $f(p)=mp$ and $g(q)=kq$.
+For simple pendulum, we have $f(p)=\ell p$ and $g(q)=\sin q$.
+We will therefore set $$f(p)=\sum_{i=0}^{n_f}c_{f,i}p^i,\ g(q)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
+where $c_{f,i}, c_{g,i}$ are the parameters we will optimise based on marginal likelihood and we will evaluate different degree of polynomial $n_f, n_g$ and see which combinations produce the best results. 
+
 \subsection{2D system}
-In 2D, things are a bit more complicated. For example, it is very clear that in double pendulum, the invariance function is not seperable.
+In 2D, things are a bit more complicated. 
+For example, it is very clear that in double pendulum, the invariance constraints is not seperable.
 Instead, we need to consider all combinations of polynomials; i.e. multivariate polynomial.
-Therefore, for 2D we have $L(a,v)=f_1a_1+f_2a_2+g_1v_1+g_2v_2.$
+Therefore, for 2D we have $L(p_1, p_2, q_1, q_2)$ being the combination of $f_1(p_1), f_2(p_2), g_1(q_1), g_2(q_2)$.
 We will paramertise each of $f_1, f_2, g_1, g_2$ with $$\sum_{i,j,k,l=0}^{n}c_{ijkl}p_1^ip_2^jq_1^kq_2^l$$
-Therefore, there will be many more coefficients.
+Therefore, there will be many more coefficients to be optimised.
 
 \section{Partially Observed System}
 Partially observed data can be very common in dynamical system.
@@ -529,11 +547,11 @@ The $q$ is the displacement of the block from its origin, and $p$ would be the i
 
 The equation of motion of the system is $$m\frac{d^2q}{dt^2}=-kq.$$
 And the analytical solution would be of the form $q=A\sin(\omega_0t+\phi),$ where $\omega=\frac{k}{m}$ and $A, \phi$ depends on the initial condition, which dictates the amplitude and phase of the motion. 
-For this case, we have 
+For this case, we have dynamics 
 $$
-\mathbf{f}(X)=\begin{pmatrix}
-    \mathbf{a}(X)\\
-    \mathbf{v}(X)\\
+\mathbf{f}(\mathbf{x})=\begin{pmatrix}
+    a(\mathbf{x})\\
+    v(\mathbf{x})\\
 \end{pmatrix}
 $$
 
@@ -545,8 +563,8 @@ $$
 \end{figure}
 
 We also have the energy, $E=\frac{mp^2}{2}+\frac{kq^2}{2},$
-Therefore, to obtain our invariance $L$, we use the conservation of energy $\frac{dE}{dt}=0$ so we finally have $$L(a, v)=mpa+kqv=0$$
-While $L$ is not able to be into a matrix form, it is a linear operator as shown below. 
+Therefore, to obtain our invariance $L$, we use the conservation of energy $\frac{dE}{dt}=0$ so we finally have $$L[\mathbf{f}]=mpa+kqv=0$$
+While $L$ is not able to be put into a matrix form using our representation, it is a linear operator as shown below. 
 If we have $$X_L\equiv\begin{pmatrix}
     \mathbf{x}_{L,1}\\
     \vdots\\
@@ -585,11 +603,13 @@ $$
 $$
 where
 $$
+\begin{gathered}
 A=K(X,X), B=\begin{pmatrix}
-    K_{RBF,a} \\ K_{RBF,v} \\
+    K_{RBF,a}(X, X_L) \\ K_{RBF,v}(X, X_L) \\
 \end{pmatrix}\odot \begin{pmatrix}
     mP_L \\ kQ_L
-\end{pmatrix}, C=B^T, D=K_{RBF,a}\odot m^2(p_L\otimes p_L) + K_{RBF,v}\odot k^2(q_L\otimes q_L),
+\end{pmatrix}, C=B^T,\\ D=K_{RBF,a}(X_L, X_L)\odot m^2(p_L\otimes p_L) + K_{RBF,v}(X_L, X_L)\odot k^2(q_L\otimes q_L),
+\end{gathered}
 $$
 where $\odot$ is the elementwise product and $\otimes$ is the Kronecker product so that 
 $$
@@ -622,7 +642,7 @@ For $B$, we wish to calculate
 
 \begin{align*}
 B_{ij} &= \mathrm{Cov}(\mathbf{f}(X), L[\mathbf{f}(X_L)])_{ij} \\
-       &= \mathrm{Cov}(\mathbf{f}(X)_i, L\mathbf{f}(X_L)_j) \\ 
+       &= \mathrm{Cov}(\mathbf{f}(X)_i, L[\mathbf{f}(X_L)]_j) \\ 
        &= \begin{cases}
         \mathrm{Cov}(a(q_i, p_i), mp_{L,j}a(q_{L,j},p_{L,j}) + kq_{L,j}v(q_{L,j},p_{L,j})) & i\le n \\ 
         \mathrm{Cov}(v(q_i, p_i), mp_{L,j}a(q_{L,j},p_{L,j}) + kq_{L,j}v(q_{L,j},p_{L,j})) & i>n \\ 
@@ -633,14 +653,14 @@ B_{ij} &= \mathrm{Cov}(\mathbf{f}(X), L[\mathbf{f}(X_L)])_{ij} \\
        \end{cases}, \\
 \end{align*}
 and hence we have the form above. 
-For $D$, we have
+Similarly for $D$, we have
 \begin{align*}
 D_{ij} &= \mathrm{Cov}(L[\mathbf{f}(X_L)], L[\mathbf{f}(X_L)])_{ij} \\
        &= \mathrm{Cov}(mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i}), mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i})) \\
        &= m^2p_{L,i}p_{L,j}K_{RBF,a}(\mathbf{x}_{L,i},\mathbf{x}_{L,j}) + k^2q_{L,i}q_{L,j}K_{RBF,v}(\mathbf{x}_{L,i},\mathbf{x}_{L,j})
 \end{align*}
-using the linear property of the covariance operator and the fact that $v$ and $a$ are independent.
-Since we assume invariance on these invariance points, we will condition on $L([\mathbf{f}(X_L)])=0.$
+using the bilinear property of the covariance operator and the fact that $v$ and $a$ are independent.
+Since we assume invariance holds on these invariance points, we will condition on $L([\mathbf{f}(X_L)])=0.$
 Now we can simply use the Gaussian conditional formula to obtain the Schur Complement using equation \ref{equ:normal_condtion}.
 $$
 \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0\sim\mathcal{N}(0_{2n},A-BD^{-1}C),
@@ -757,11 +777,13 @@ If we cancel out the common term $m\ell$ since their product cannot be zero, we 
 Most of the terms are unchanged from the linear case. 
 However, this time, 
 $$
+\begin{gathered}
 B=\begin{pmatrix}
-    K_{RBF,a} \\ K_{RBF,v} \\
+    K_{RBF,a}(X, X_L) \\ K_{RBF,v}(X, X_L) \\
 \end{pmatrix}\odot \begin{pmatrix}
     \ell P_L \\ g\sin(Q_L)
-\end{pmatrix}, D=K_{RBF,a}\odot \ell^2(p_L\otimes p_L) + K_{RBF,v}\odot g^2(\sin(q_L)\otimes \sin(q_L)),
+\end{pmatrix},\\ D=K_{RBF,a}(X_L, X_L)\odot \ell^2(p_L\otimes p_L) + K_{RBF,v}(X_L, X_L)\odot g^2(\sin(q_L)\otimes \sin(q_L)),
+\end{gathered}
 $$
 where 
 $$
@@ -1238,10 +1260,13 @@ Also, we are only expanding up to the cubic term, therefore we do not expect ver
 However, in our case, the approximation is fairly good, possibly due to relatively small value of $q, p$ so the polynomial approximation is good.
 Nevertheless, it is clear that there is still some errors with learning invariance from figure \ref{fig:double_pendulum_energy} since it only flattens toward the end of the trajectory.
 
-\chapter{Conclusion}
+\chapter{Conclusion and Future Work}
+In this work, we have presented a new Gaussian Process model through an invariance kernel that is able to capture the invariance in a dynamical system and as a result, use it as an inductive bias to improve data efficiency and predictive performance in a wide range of one and two-dimensional physical systems. 
+We construct this special invariance kernel using simple Schur Complement calculation that conditions our GP prior on the points where the invariance should holds.
+To learn this invariance condition, we paramertise it with polynomials and optimise the coefficients by marginal likelihood objective. 
+We have also demonstrated it is also robust against dissiaptive effects. 
 
 
-Conclusion goes here. 
 
 
 % References: modify the file refs.bib
