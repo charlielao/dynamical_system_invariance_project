@@ -234,19 +234,20 @@ A particular powerful feature is that it allows atuomatic tuning of hyperparamet
 In later sections, when we will need to optimise more parameters than aforementioned ones with respect to maginal likelihood objective, the library will be proved to be very useful.
 
 \section{Dynamical Systems}
-Dynamical system, which describes the evolution of a system in time, can be broadly classified to two catergories: differential equations and difference equations, with the former being continous time and the latter being discrete time. (\cite{strogatz_2019}). 
-We will formalise our notion and notation using continous time (differential equation) description.
-There are many real world systems that can be modelled by a dynamical system, for example a huge class of problems in engineering and physics. 
-A simple example, which will also be explored later, is a damped pendulum, with equation of motion
+Dynamical system describes the evolution of a system in time, and can be broadly classified to two catergories: differential equations and difference equations, with the former being continous time and the latter being discrete time. (\cite{strogatz_2019}). 
+Here, we will illustrate the theory and notation using continous time (differential equation) description.
+There are many real world systems that can be modelled by a dynamical system; for example a huge class of problems in engineering and physics or biological processes. 
+A simple example, which will also be explored later, is a damped harmonic oscillator, with equation of motion
 $$
-m\frac{d^2x}{dt^2}+b\frac{dx}{dt}+kx=0.
+m\frac{d^2x}{dt^2}+b\frac{dx}{dt}+kx=0,
 $$
+where $m, k, b$ are constants that depend on the material and $x$ is the displacement of the mass.
 In general an $n^{th}$ degree differential equations can be written as 
 $$
 \frac{d^{n} x}{d t^{n}}=F\left(t, x, \frac{d x}{d t}, \ldots, \frac{d^{n-1} x}{d t^{n-1}}\right),
 $$
-(\cite{glendinning_1994}) and we will need $n$ initial conditions to specify a solution for the differential equations.
-We can also write $n^{th}$ degree ordinary differential equations (ODEs) as $n$ degree one coupled ODE. 
+where $F$ is just some function (\cite{glendinning_1994}) and we will need $n$ initial conditions to specify a solution for the differential equations.
+We can also write $n^{th}$ degree ordinary differential equations (ODEs) as $n$ degree one coupled ODEs \cite{strogatz_2019}. 
 For example, in the above case, we can write it as 
 $$
 \begin{cases}
@@ -263,105 +264,110 @@ $$
 \end{cases}
 $$
 
-We can then visualise the state of the system described by the $n$ variables in the "phase space", and this system will evolve or move in the phase space as time evolves. 
-For instance, the damped pendulum is of degree 2 so there will be two variables describing its evolution, which in this case will be $x$ and $\frac{dx}{dt}=\dot{x}$, which is the angular displacement as well as angular velocity.
-Another example would be a naive model describing exponential growth of a organism, such as some sort of bacteria population in a petri dish
+We can then visualise the state of the system described by the $n$ variables,$x_1, \dots, x_n$ in the "phase space", and this system will evolve or move in the phase space as time evolves. 
+For instance, the damped oscillator is of degree 2 so there will be two variables describing its evolution, which in this case will be $x$ and $\frac{dx}{dt}=\dot{x}$, which is the displacement as well as velocity.
+Another example would be a naive model describing exponential growth of a organism, such as bacteria population in a petri dish
 $$
 \dot{x}=rx,
 $$
 and this time it is one-dimensional with the phase variable being the population number.
-Another important concept is linearity and nonlinearity. 
+Another important concept is linearity and nonlinearity, which is referring to the $f_1, \dots ,f_n$ above.
+If they depend on $x_1, \dots, x_n$ linearly, then the system is linear, else it would be nonlinear.
 
 
 \section{Symmetry and Invariances}
-Invariances are functions of the states that describe a dynamical system, and is unchanged throughout the evolution of the system over time. 
-An example would be from the field of physics, the conservation of energy, which will be unchanged throught out the trajectories of the system.
-There are other types of symmetry, such as translational symmetry, rotational symmetry, permutation symmetry, which are widely explored in geometric deep learning literature. 
-More formally, we can describe symmetry using group theory.
-Refering to \cite{Kondor2008}, we have symmetries being invariant if we have a group $G$ acting on $\mathcal{X}$ by $x\mapsto T_g(x)$ for $g\in G$, where $T$ is some sort of transformation function. 
-Then we should have $f(T_g(x))=f(x)$ for any function $f$.
-For instance, if it is a rotational symmetric group then we will have $T$ corresponds to the angle of rotation, and we expect $f$ to be invariant under rotation.
+Invariances are functions of the phase statesof a dynamical system that are unchanged throughout the evolution of the system over time. 
+An example would be from physics, the conservation of energy, that energy will remain unchanged or constant throught out the trajectories of the system.
+This is related to the symmetry under time translation.
+There are other types of symmetry, such as translational symmetry, rotational symmetry, permutation symmetry, which are widely explored in geometric deep learning literature \cite{Bronstein2017}. 
+More formally, we can describe symmetry using a little group theory.
+Refering to \cite{Kondor2008}, we have symmetries and associated invariance if we have a symmetry group $G$ acting on $\mathcal{X}$ by $x\mapsto T_g(x)$ for $g\in G$, where $T$ is some transformation function parameterised by $g$. 
+Then we should have $f(T_g(x))=f(x)$ for any function $f$, in other words, invariant under symmetry transformation.
+For instance, if it is a rotational symmetric group then we will have $T$ corresponds to the rotation transformation of angle $g$, and we expect $f$ to be invariant under rotation.
 In dynamical system, it has a slightly different interpretation.
-From \cite{marsden_sirovich_antman_2008}, in this description of dynamical system, we consider a generator $\mathcal{L}$, which generates the evolution of some function quantitiy that depends on the input over time.
-If we have the ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[E]=\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),$$ where $E$  is some function, following by simple chain rule.
+From \cite{marsden_sirovich_antman_2008}, in this description of dynamical system, we consider a generator $\mathcal{L}$, which is an operator that generates the evolution of some function quantitiy that depends on the phase space over time.
+If we have the ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[E]=\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),$$ followed by simple chain rule, where $E$ is some function of the phase.
 If we would like $E$ to be the invariance, we would then require $\mathcal{L}[E]=0$. 
-This will then define what we mean by invariance in the context of dynamical system, some quantity depending on the input that does not change along the evolution of the system.
+This will then define what we mean by invariance in the context of dynamical system: some quantity depending on the input that does not change along the evolution of the system.
 
 At first sight, there seems no apparent symmetry involved that is obvious like the rotational symmetry case. 
-In physics, there is a deeper connection between symmetry and invariance, namely the Neother's Theorem, which is rather involved in theoretical classical physics and interested readers can refer to \cite{lemos_2018}.
-In plain words, every conservation law is associated with an underlying symmetry.
-For instance, conservation of momentum is obeyed when there is a translation symmetry of the system. 
+Neverthless, in physics, there is a deeper connection between symmetry and invariance, namely the Neother's Theorem, which is rather involved in theoretical classical physics and interested readers can refer to \cite{lemos_2018}.
+In plain words, every conservation law (invariance) is associated with an underlying symmetry.
+For instance, conservation of momentum is obeyed when there is a spatial translation symmetry of the system. 
 Similarly, rotational symmetry is associated with the conservation of angular momentum.
-There are more abstract conservation law, such as conservation of electrical charge is related to Gauge Symmetry.
+There are more abstract conservation law, such as conservation of electrical charge is related to gauge symmetry.
 Here the more relevant ones is the conservation of energy, which is related to the symmetry of the system under temporal translation, i.e. the quantity is unchanged as time passes.
 
 
 \section{Related Work}
-There are many existing literature in the field of learning invariance as well as physics informed machine learning.
+There are many existing literature in the field of learning invariance, prediction in dynamical systems, as well as physics based machine learning methods.
 
 \subsection{Physics Informed Machine Learning}
 There are many physics informed machine learning techniques as outlined in \cite{Cuomo2022, PIML}
-For example, in Physics Informed Neural Network (PINN) from \cite{Raissi2019}, the authors embedded the form of partial differential equations (PDEs) that describe the physics of the problem into the loss function so that the neural network model understands the PDE; they also allow the parameters\/coefficients in the PDEs to be learnt. 
+For example, in Physics Informed Neural Network (PINN) from \cite{Raissi2019}, the authors embedded the functional form of partial differential equations (PDEs) that describe the physics of the problem into the loss function so that the neural network model understands the PDE; they also allow the parameters\/coefficients in the PDEs to be learnt. 
 There are many variants of such as \cite{Qian2020}.
-In \cite{Raissi2018}, it even uses a GP to model the evolution of the state by using the PDE form as a linear operator (we will see similar idea in our work) to evolve the GP; since the linear transform of GP is still a GP, we will get joint GP.
-However, they are still restricted to known PDE form and only learning the parameters. 
+In \cite{Raissi2018}, it even uses a GP to model the evolution of the state by using the PDE form as a linear operator to evolve the GP; since the linear transform of GP is still a GP, we will get joint GP, then we can do inference.
+However, they are restricted to known PDE expression and only learn the coefficients instead of learning the whole physics from scratch. 
 Furthermore, they all does not use the knowledge of conservation laws to their advantage.
-Moreover, for nonlinear dynamics, it has to use a linear approximation for the method to work.
+Moreover, for nonlinear dynamics, it has to use a linear approximation for the method to work, which is very restrictive.
 There are also versions of PINN that takes conservation of energy into account such as \cite{Jagtap2020}.
 However, it still suffers from other problems described above.
 
 \subsubsection{Energy Conserving Neural Networks}
-There are other approaches like Hamiltonian Neural Network \cite{HNN}, which enforces the law of Hamiltonian mechanics on the neural network.
-As a results, HNN automatically conserves the Hamiltonian or almost equivalently, the energy.
-There are also variants origin from this, such as the more general Lagrangian Neural Network, \cite{Cranmer2020}, or other energy conserving nerual networks described in \cite{Zhong2021}.
+There are other approaches like Hamiltonian Neural Network (HNN) \cite{HNN}, which enforces the law of Hamiltonian mechanics (\cite{lemos_2018}), a model in theortical physics, on the neural network.
+As a result, HNN automatically conserves the Hamiltonian or almost equivalently, the energy.
+The experiments and setup of this report roughly follows that of the HNN paper.
+There are also variants originated from this, such as the more general Lagrangian Neural Network, \cite{Cranmer2020}, using another theoretical physics framework or other energy conserving nerual networks described in \cite{Zhong2021}.
 However, due to their strong invariance enforcing nature, they often do not do very well with dissipative systems; 
 \cite{DissipativeHNN} models the dissipative part explicitly resolves this problem.
-Nevertheless, these systems can only work on a very specific types of dynamical system, namely the ones that follow Sympletic form, or more simply obeys the Hamiltonian mechanics, which is only a small subset of all dynamical systems.
+Nevertheless, these systems can only work on a very specific types of dynamical system, namely the ones that follow Sympletic form, or more simply follows the Hamiltonian mechanics, which is only a small subset of all dynamical systems.
 There are a lot more general dynamical systems that has some sort of invariance property that is not able to utilise these energy conserving neural networks.
-
-\subsubsection{ODE approach}
-Or we can directly works on the ODE that describes the physics of the system. 
-In some sense, this is similar to the PINN. 
-Neural ODE \cite{NeuralODE} is a great example of this; 
-however, again it does not use any knowledge of the invariances and symmetries.
-Further, it cannot recover the law of physics. 
+Moreover, learnability of invariance is less involved here that they are able to learn the value of energy but not actually recover the form of physics. 
 
 \subsubsection{Symbolic approach}
-There are many existing literatures to recover the law of physics from trajectory using various form of symbolic regression, such as \cite{Udrescu2020, Papastamatiou2022} or some form of graphical representation \cite{GraphSymbolicPhysics, flexiblePhysics}.
-In \cite{Liu2021}, it even able to deduce the conserved quantitiy (along with its symbolic form) from trajectory.
-Nevertheless, it does not include any predictive ability.
+An alternative way to recover the law of physics from trajectory uses various form of symbolic regression, such as \cite{Udrescu2020, Papastamatiou2022} or some form of graphical representation \cite{GraphSymbolicPhysics, flexiblePhysics}.
+In \cite{Liu2021}, it even able to deduce functional form the conserved quantity (along with its symbolic form) from trajectory.
+However, again these are very physics focused examples, and the symbolic representation is often involves brute force; but of course it improves interpretability over functional approximation solution.
+
+\subsubsection{ODE approach}
+We can also directly works on the ODE that describes the physics of the system not dissimliar to PINN. 
+Neural ODE \cite{NeuralODE} is a great example of this; 
+however, again it does not use any knowledge of the invariances and symmetries.
 
 \subsection{Symmetry and Invariance in Machine Learning}
 
 \subsubsection{Learning Invariance using Marginal Likelihood}
-This paper forms the basis of this report.
-In \cite{Mark2017}, the author proposes learning the form of invariances of the problem by parameterising the symmetry and maximise them with respect to the marginal liklihood.
+This paper forms the basis of this project.
+In \cite{Mark2017}, the author proposes learning the form of invariances of the problem by parameterising the symmetry and optimise them with respect to the marginal liklihood.
 The main problem studied in the paper is the MNIST dataset, and that the symmetry under consideration is all form of Affine transformation, such as rotation, shear, translation; and the invariance in this case is the label of the digit. 
 It suggests embedding the invariance in the model (GP in this case) as an alternative to data augementation.
 The authors created a special kind of kernel for GP that respects the symmetry of the problem.
 The results are very good compare to the baseline RBF kernel, and it also is able to recover the true paramertised invariance. 
-The logical flow and setup of this report roughly follows that of this paper as well as the HNN paper. 
-A related paper that uses a neural network instead of GP is \cite{Tycho2021}, which also optimise the marginal likelihood.
+The logical flow and procedure of investigation of this report follows closely on this paper. 
+A related paper following that uses a neural network instead of GP is \cite{Tycho2021} using the same idea on the same problem also optimises the marginal likelihood.
 
 \subsubsection{Geometric Deep Learning}
 Geometric deep learning proposed by \cite{Bronstein2017}, is a unifying framework that aims to explain the success of several popular neural network architecture. 
 For example, Convolution Neural Network uses the translation symmetry embedded in natural images. 
 Another example is Graph Neural Network utilises the permutation symmetry that the graphs is invariant under permutation.
-Following this framework, multiple papers are proposed that aims to exploit further symmetry groups.
+Following this framework, multiple papers are proposed that aims to exploit further symmetry groups (5Gs Grids, Groups, Graphs, Geodesics, and Gauges).
+These show that how powerful the inductive bias of symmetry and invariances are.
 
 \subsection{GP in dynamical systems}
-There are already a number of research work that uses GP to predict dynamical systems.
+There are also a number of research work that use GP to predict dynamical system evolution.
 One of them is the aforementioned \cite{Raissi2018}.
-There is also \cite{Rath2020}, that utilise the sympletic nature of Hamiltonian systems and directly predict the flowmaps of the system; in some sense similar to HNN.
-There is also \cite{Heinonen2018}, that also uses GP to model the ODE models in a nonparametric manner; but again it odes not uses invariance. 
+There is also \cite{Rath2020}, that utilise the Sympletic nature of Hamiltonian systems to directly predict the flowmaps of the system, which is similar to HNN.
+There is also \cite{Heinonen2018}, that also uses GP to model the ODE models in a nonparametric manner; but again it does not use invariance, but is more like Neural ODE. 
 
 
 
 \chapter{Invariance Kernel}
-In this chapter we will start with general theoretical construction of invariance kernel given the knowlwedge of the invariance of the system.
-We will then apply the construction to various systems, namely linear and nonlinear system in both one and two dimensions.
+In this chapter we will start with general theoretical construction of invariance kernel given the knowledge of the invariance of the system.
+We will then describe how we deal with dissiaptive systems.
+Finally, we will demonstrate how we are able to learn invariances without any prior knowledge of the system.
+
 \section{General Construction}
-If we are given a dynamical system of dimension d with variables $\mathbf{q}, \mathbf{p}$, where $\mathbf{q} = (q_1, q_2,\dots,q_d)$ is the vector of positional coordinates, and $\mathbf{p}=(p_1, p_2, \dots, p_d)$ is the vector of velocity coordinates of the states of the dynamical system.
+If we are given a dynamical system of dimension $d$ with variables $\mathbf{q}, \mathbf{p}$, where $\mathbf{q} = (q_1, q_2,\dots,q_d)$ is the vector of positional coordinates, and $\mathbf{p}=(p_1, p_2, \dots, p_d)$ is the vector of velocity coordinates of the states of the dynamical system.
 We are interested to predict the future trajectories of the state of the system.
 Therefore, we would like to know the time derivative of these coordinates so we can update them according to Euler's integrator. 
 These time derivatives are referred to as the dynamics of a dynamical system, which governs the evolution of the dynamical system, and is a function of the coordinates $\mathbf{q}$ and $\mathbf{p}$. 
