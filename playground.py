@@ -17,9 +17,13 @@ Y =((X+X**2)*np.sin(X))
 x = np.linspace(-5, 5, 100)
 y = (x+x**2)*np.sin(x)
 # %%
+
+def callback(step, variables, values):
+    print([x for x in variables if x.name == "softplus:0"])
+
 m = gpflow.models.GPR(data=(X, Y), kernel=gpflow.kernels.RBF(), mean_function=None)
 opt = gpflow.optimizers.Scipy()
-opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=100))
+opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=0), step_callback=callback)
 
 xx = np.linspace(-5, 5, 100).reshape(100, 1)  # test points must be of shape (N, D)
 mean, var = m.predict_f(xx)
