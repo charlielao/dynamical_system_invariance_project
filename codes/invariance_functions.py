@@ -2,6 +2,7 @@ import gpflow
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+import time
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 
@@ -127,24 +128,24 @@ def get_grid_of_points_2D(grid_range, grid_density):
     grid_points = tf.stack([tf.reshape(grid_xx1,[-1]),tf.reshape(grid_xx2,[-1]),tf.reshape(grid_vv1,[-1]), tf.reshape(grid_vv2,[-1])], axis=1)
     return grid_points
 
+def callback(step, variables, values):
+    print(step, end='\r')
 
 def get_GPR_model(kernel, mean_function, data, iterations):
-#    def callback(step, variables, values):
-#        print(step, end='\r')
 
-    def callback(step, variables, values):
-        if step%10==0:
-            stored_f.append(variables[0].numpy())
-            stored_g.append(variables[1].numpy())
-            stored_coeff.append(variables)
-    stored_f = []; stored_g =[] 
-    stored_coeff = []
+#    def callback(step, variables, values):
+#        if step%10==0:
+#            stored_f.append(variables[0].numpy())
+#            stored_g.append(variables[1].numpy())
+#            stored_coeff.append(variables)
+#    stored_f = []; stored_g =[] 
+#    stored_coeff = []
 
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,1,None],Y[:,0,None]],1)),(Y.shape[0]*2,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
-    return m, stored_f, stored_g, stored_coeff
+    return m#, stored_f, stored_g, stored_coeff
 
 def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None):
     X, Y = data
@@ -161,18 +162,6 @@ def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None):
         kernel.Kv2.variance = gpflow.Parameter(old_model.kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
         kernel.local_invar_grid = old_model.kernel.local_invar_grid
         m.likelihood.variance = gpflow.Parameter(old_model.likelihood.variance, transform=positive(lower=1e-6-1e-12))
-        '''
-        set_trainable(kernel.Ka1.lengthscales, False)
-        set_trainable(kernel.Ka2.lengthscales, False)
-        set_trainable(kernel.Kv1.lengthscales, False)
-        set_trainable(kernel.Kv2.lengthscales, False)
-        set_trainable(kernel.Ka1.variance, False)
-        set_trainable(kernel.Ka2.variance, False)
-        set_trainable(kernel.Kv1.variance, False)
-        set_trainable(kernel.Kv2.variance, False)
-        set_trainable(m.likelihood.variance, False)
-        '''
-
 
 #   log_dir_scipy = f"{log_dir}/scipy"
 #    model_task = ModelToTensorBoard(log_dir_scipy, model)
@@ -297,6 +286,12 @@ def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, 
     predicted_future_variance_bottom[1, :] = predicted_future[0, :] - var*time_step
 
     for i in range(2, X.shape[0]):
+        if i==2:
+            start = time.time()
+        if i==8:
+            average_time_per_step = (time.time()-start)/6
+        if i>8:
+            print("%s seconds remaining"%round(average_time_per_step*(X.shape[0]-i)), end="\r")
         pred, var = m.predict_f(scalerX.transform(to_default_float(predicted_future[i-1,:].reshape(1,4))))
         pred = tf.roll(tf.transpose(pred), shift=-2, axis=1)
         var =  tf.roll(tf.transpose(var), shift=-2, axis=1)

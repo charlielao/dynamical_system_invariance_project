@@ -228,7 +228,7 @@ class DampedPolynomialInvariance(gpflow.kernels.Kernel):
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
 class PolynomialInvariance2D(gpflow.kernels.Kernel):
-    def __init__(self, invariance_range, invar_density, jitter_size, poly_d):
+    def __init__(self,  invariance_range, invar_density, jitter_size, poly_d):
         super().__init__(active_dims=[0, 1, 2, 3])
         #poly_d = [d, d, d, d]
         self.Ka1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
@@ -236,12 +236,23 @@ class PolynomialInvariance2D(gpflow.kernels.Kernel):
         self.Kv1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.poly_d = poly_d
-        self.prior_variance = 1e-6#gpflow.Parameter(tf.Variable(0.1,dtype=tf.float64), transform=tfp.bijectors.Sigmoid(to_default_float(1e-2), to_default_float(1.)))
-        self.f1_poly = gpflow.Parameter(tf.Variable(1e-6*np.random.laplace(size=(self.number_of_coefficients(self.poly_d[0]),1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.f2_poly = gpflow.Parameter(tf.Variable(1e-6*np.random.laplace(size=(self.number_of_coefficients(self.poly_d[1]),1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.g1_poly = gpflow.Parameter(tf.Variable(1e-6*np.random.laplace(size=(self.number_of_coefficients(self.poly_d[2]),1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
-        self.g2_poly = gpflow.Parameter(tf.Variable(1e-6*np.random.laplace(size=(self.number_of_coefficients(self.poly_d[3]),1)), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), prior=tfp.distributions.Laplace(to_default_float(0),to_default_float(self.prior_variance)))
+
+        init_poly = np.zeros((4, self.number_of_coefficients(self.poly_d)))
+        init_poly[0,3]=1
+        init_poly[1,4]=1
+        init_poly[2,1]=1
+        init_poly[3,2]=1
+        '''
+        init_poly[0,3]=2;init_poly[0,4]=1;init_poly[0,18]=-0.5;init_poly[0,27]=-0.5;init_poly[0,21]=1
+        init_poly[1,3]=1;init_poly[1,4]=1;init_poly[0,17]=-0.5;init_poly[0,26]=-0.5;init_poly[0,20]=1
+        init_poly[2,1]=2;init_poly[2,23]=-1;init_poly[0,29]=1
+        init_poly[3,2]=1;init_poly[3,23]=1;init_poly[0,29]=-1
+        '''
+        init_poly = tf.Variable(init_poly/2, dtype=tf.float64)
+        self.poly = gpflow.Parameter(init_poly, transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), trainable=True, name="poly")#, prior=tfp.distributions.Laplace(to_default_float(0),(self.prior_variance)), name="poly")
+
         self.jitter = jitter_size
+
         invariance_x1s = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_x2s = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_v1s = tf.linspace(-invariance_range,invariance_range,invar_density)
@@ -251,57 +262,60 @@ class PolynomialInvariance2D(gpflow.kernels.Kernel):
 
     def number_of_coefficients(self, d):
         c = 0
-        for m in range(1,d+1):
+        for m in range(d+1):
             c+=comb(4+m-1,m)
         return int(c)
 
     def inv_f1(self, X):
-        polynomial_X = tf.zeros((X.shape[0],1),dtype=tf.float64)
-        for d in range(1,self.poly_d[0]+1):
+        polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
+        for d in range(1,self.poly_d+1):
             indices = list(combinations_with_replacement(range(4),d))
             for index in indices:
                 sub_polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
                 for i in index:
-                    sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
+                   sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.f1_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X, self.poly[0,:, None]))
 
     def inv_f2(self, X):
-        polynomial_X = tf.zeros((X.shape[0],1),dtype=tf.float64)
-        for d in range(1, self.poly_d[1]+1):
+        polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
+        for d in range(1, self.poly_d+1):
             indices = list(combinations_with_replacement(range(4),d))
             for index in indices:
                 sub_polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
                 for i in index:
-                    sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
+                   sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.f2_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X, self.poly[1,:, None]))
 
     def inv_g1(self, X):
-        polynomial_X = tf.zeros((X.shape[0],1),dtype=tf.float64)
-        for d in range(1, self.poly_d[2]+1):
+        polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
+        for d in range(1, self.poly_d+1):
             indices = list(combinations_with_replacement(range(4),d))
             for index in indices:
                 sub_polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
                 for i in index:
-                    sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
+                   sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.g1_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X, self.poly[2,:, None]))
 
     def inv_g2(self, X):
-        polynomial_X = tf.zeros((X.shape[0],1),dtype=tf.float64)
-        for d in range(1, self.poly_d[3]+1):
+        polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
+        for d in range(1, self.poly_d+1):
             indices = list(combinations_with_replacement(range(4),d))
             for index in indices:
                 sub_polynomial_X = tf.ones((X.shape[0],1),dtype=tf.float64)
+#                for i in [0, 1, 2, 3]:
+#                    sub_polynomial_X = tf.multiply(sub_polynomial_X,tf.math.polyval(list(legendre(index.count(i))),X[:,i,None]))
                 for i in index:
-                    sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
+                   sub_polynomial_X = tf.multiply(sub_polynomial_X,X[:,i,None])
                 polynomial_X = tf.concat([polynomial_X, sub_polynomial_X], 1)
 
-        return tf.squeeze(tf.linalg.matmul(polynomial_X[:,1:], self.g2_poly))
+        return tf.squeeze(tf.linalg.matmul(polynomial_X, self.poly[3,:, None]))
+
 
 
     def K(self, X, X2=None):
@@ -441,4 +455,16 @@ def get_damped_polynomial_invariance(invar_range, invar_density, jitter_size, po
     invariance_kernel.Ka.lengthscales = gpflow.Parameter(invariance_kernel.Ka.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
     invariance_kernel.Kv.lengthscales = gpflow.Parameter(invariance_kernel.Kv.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
     return invariance_kernel
+
+def get_polynomial_invariance_2D(invar_range, invar_density, jitter_size, poly_d):
+    invariance_kernel = PolynomialInvariance2D(invar_range, invar_density, jitter_size, poly_d)
+    invariance_kernel.Ka1.variance = gpflow.Parameter(invariance_kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka2.variance = gpflow.Parameter(invariance_kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv1.variance = gpflow.Parameter(invariance_kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv2.variance = gpflow.Parameter(invariance_kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka1.lengthscales = gpflow.Parameter(invariance_kernel.Ka1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Ka2.lengthscales = gpflow.Parameter(invariance_kernel.Ka2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv1.lengthscales = gpflow.Parameter(invariance_kernel.Kv1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    invariance_kernel.Kv2.lengthscales = gpflow.Parameter(invariance_kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+    return invariance_kernel 
 
