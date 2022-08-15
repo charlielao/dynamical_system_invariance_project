@@ -154,13 +154,14 @@ $$
 where we have $X, f$ being the training data and target, with $X^*, f^*$ the testing points and targets.
 If we assume the signal is not noise free such that we assume a Gaussian noise $y=f+\epsilon$, where $\epsilon\sim\mathcal{N}(0, \sigma_n^2)$.
 We will instead have
-$$
+\begin{equation}
 \begin{bmatrix}
   y\\f^*
 \end{bmatrix}
 \sim \mathcal{N}
 \left(\mathbf{0}, \begin{bmatrix}K(X, X)+\sigma^2_n\mathbb{I} & K(X, X^*) \\ K(X^*, X) & K(X^*, X^*) \end{bmatrix}\right),
-$$
+\label{equ:joint_gp_noise}
+\end{equation}
 
 An important identity we use throughout the thesis is the Gaussian conditional formula: if
 $$
@@ -234,19 +235,20 @@ A particular powerful feature is that it allows atuomatic tuning of hyperparamet
 In later sections, when we will need to optimise more parameters than aforementioned ones with respect to maginal likelihood objective, the library will be proved to be very useful.
 
 \section{Dynamical Systems}
-Dynamical system, which describes the evolution of a system in time, can be broadly classified to two catergories: differential equations and difference equations, with the former being continous time and the latter being discrete time. (\cite{strogatz_2019}). 
-We will formalise our notion and notation using continous time (differential equation) description.
-There are many real world systems that can be modelled by a dynamical system, for example a huge class of problems in engineering and physics. 
-A simple example, which will also be explored later, is a damped pendulum, with equation of motion
+Dynamical system describes the evolution of a system in time, and can be broadly classified to two catergories: differential equations and difference equations, with the former being continous time and the latter being discrete time. (\cite{strogatz_2019}). 
+Here, we will illustrate the theory and notation using continous time (differential equation) description.
+There are many real world systems that can be modelled by a dynamical system; for example a huge class of problems in engineering and physics or biological processes. 
+A simple example, which will also be explored later, is a damped harmonic oscillator, with equation of motion
 $$
-m\frac{d^2x}{dt^2}+b\frac{dx}{dt}+kx=0.
+m\frac{d^2x}{dt^2}+b\frac{dx}{dt}+kx=0,
 $$
+where $m, k, b$ are constants that depend on the material and $x$ is the displacement of the mass.
 In general an $n^{th}$ degree differential equations can be written as 
 $$
 \frac{d^{n} x}{d t^{n}}=F\left(t, x, \frac{d x}{d t}, \ldots, \frac{d^{n-1} x}{d t^{n-1}}\right),
 $$
-(\cite{glendinning_1994}) and we will need $n$ initial conditions to specify a solution for the differential equations.
-We can also write $n^{th}$ degree ordinary differential equations (ODEs) as $n$ degree one coupled ODE. 
+where $F$ is just some function (\cite{glendinning_1994}) and we will need $n$ initial conditions to specify a solution for the differential equations.
+We can also write $n^{th}$ degree ordinary differential equations (ODEs) as $n$ degree one coupled ODEs \cite{strogatz_2019}. 
 For example, in the above case, we can write it as 
 $$
 \begin{cases}
@@ -263,110 +265,115 @@ $$
 \end{cases}
 $$
 
-We can then visualise the state of the system described by the $n$ variables in the "phase space", and this system will evolve or move in the phase space as time evolves. 
-For instance, the damped pendulum is of degree 2 so there will be two variables describing its evolution, which in this case will be $x$ and $\frac{dx}{dt}=\dot{x}$, which is the angular displacement as well as angular velocity.
-Another example would be a naive model describing exponential growth of a organism, such as some sort of bacteria population in a petri dish
+We can then visualise the state of the system described by the $n$ variables,$x_1, \dots, x_n$ in the "phase space", and this system will evolve or move in the phase space as time evolves. 
+For instance, the damped oscillator is of degree 2 so there will be two variables describing its evolution, which in this case will be $x$ and $\frac{dx}{dt}=\dot{x}$, which is the displacement as well as velocity.
+Another example would be a naive model describing exponential growth of a organism, such as bacteria population in a petri dish
 $$
 \dot{x}=rx,
 $$
 and this time it is one-dimensional with the phase variable being the population number.
-Another important concept is linearity and nonlinearity. 
+Another important concept is linearity and nonlinearity, which is referring to the $f_1, \dots ,f_n$ above.
+If they depend on $x_1, \dots, x_n$ linearly, then the system is linear, else it would be nonlinear.
 
 
 \section{Symmetry and Invariances}
-Invariances are functions of the states that describe a dynamical system, and is unchanged throughout the evolution of the system over time. 
-An example would be from the field of physics, the conservation of energy, which will be unchanged throught out the trajectories of the system.
-There are other types of symmetry, such as translational symmetry, rotational symmetry, permutation symmetry, which are widely explored in geometric deep learning literature. 
-More formally, we can describe symmetry using group theory.
-Refering to \cite{Kondor2008}, we have symmetries being invariant if we have a group $G$ acting on $\mathcal{X}$ by $x\mapsto T_g(x)$ for $g\in G$, where $T$ is some sort of transformation function. 
-Then we should have $f(T_g(x))=f(x)$ for any function $f$.
-For instance, if it is a rotational symmetric group then we will have $T$ corresponds to the angle of rotation, and we expect $f$ to be invariant under rotation.
+Invariances are functions of the phase statesof a dynamical system that are unchanged throughout the evolution of the system over time. 
+An example would be from physics, the conservation of energy, that energy will remain unchanged or constant throught out the trajectories of the system.
+This is related to the symmetry under time translation.
+There are other types of symmetry, such as translational symmetry, rotational symmetry, permutation symmetry, which are widely explored in geometric deep learning literature \cite{Bronstein2017}. 
+More formally, we can describe symmetry using a little group theory.
+Refering to \cite{Kondor2008}, we have symmetries and associated invariance if we have a symmetry group $G$ acting on $\mathcal{X}$ by $x\mapsto T_g(x)$ for $g\in G$, where $T$ is some transformation function parameterised by $g$. 
+Then we should have $f(T_g(x))=f(x)$ for any function $f$, in other words, invariant under symmetry transformation.
+For instance, if it is a rotational symmetric group then we will have $T$ corresponds to the rotation transformation of angle $g$, and we expect $f$ to be invariant under rotation.
 In dynamical system, it has a slightly different interpretation.
-From \cite{marsden_sirovich_antman_2008}, in this description of dynamical system, we consider a generator $\mathcal{L}$, which generates the evolution of some function quantitiy that depends on the input over time.
-If we have the ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[E]=\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),$$ where $E$  is some function, following by simple chain rule.
+From \cite{marsden_sirovich_antman_2008}, in this description of dynamical system, we consider a generator $\mathcal{L}$, which is an operator that generates the evolution of some function quantitiy that depends on the phase space over time.
+If we have the ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[E]=\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),$$ followed by simple chain rule, where $E$ is some function of the phase.
 If we would like $E$ to be the invariance, we would then require $\mathcal{L}[E]=0$. 
-This will then define what we mean by invariance in the context of dynamical system, some quantity depending on the input that does not change along the evolution of the system.
+This will then define what we mean by invariance in the context of dynamical system: some quantity depending on the input that does not change along the evolution of the system.
 
 At first sight, there seems no apparent symmetry involved that is obvious like the rotational symmetry case. 
-In physics, there is a deeper connection between symmetry and invariance, namely the Neother's Theorem, which is rather involved in theoretical classical physics and interested readers can refer to \cite{lemos_2018}.
-In plain words, every conservation law is associated with an underlying symmetry.
-For instance, conservation of momentum is obeyed when there is a translation symmetry of the system. 
+Neverthless, in physics, there is a deeper connection between symmetry and invariance, namely the Neother's Theorem, which is rather involved in theoretical classical physics and interested readers can refer to \cite{lemos_2018}.
+In plain words, every conservation law (invariance) is associated with an underlying symmetry.
+For instance, conservation of momentum is obeyed when there is a spatial translation symmetry of the system. 
 Similarly, rotational symmetry is associated with the conservation of angular momentum.
-There are more abstract conservation law, such as conservation of electrical charge is related to Gauge Symmetry.
+There are more abstract conservation law, such as conservation of electrical charge is related to gauge symmetry.
 Here the more relevant ones is the conservation of energy, which is related to the symmetry of the system under temporal translation, i.e. the quantity is unchanged as time passes.
 
 
 \section{Related Work}
-There are many existing literature in the field of learning invariance as well as physics informed machine learning.
+There are many existing literature in the field of learning invariance, prediction in dynamical systems, as well as physics based machine learning methods.
 
 \subsection{Physics Informed Machine Learning}
 There are many physics informed machine learning techniques as outlined in \cite{Cuomo2022, PIML}
-For example, in Physics Informed Neural Network (PINN) from \cite{Raissi2019}, the authors embedded the form of partial differential equations (PDEs) that describe the physics of the problem into the loss function so that the neural network model understands the PDE; they also allow the parameters\/coefficients in the PDEs to be learnt. 
+For example, in Physics Informed Neural Network (PINN) from \cite{Raissi2019}, the authors embedded the functional form of partial differential equations (PDEs) that describe the physics of the problem into the loss function so that the neural network model understands the PDE; they also allow the parameters\/coefficients in the PDEs to be learnt. 
 There are many variants of such as \cite{Qian2020}.
-In \cite{Raissi2018}, it even uses a GP to model the evolution of the state by using the PDE form as a linear operator (we will see similar idea in our work) to evolve the GP; since the linear transform of GP is still a GP, we will get joint GP.
-However, they are still restricted to known PDE form and only learning the parameters. 
+In \cite{Raissi2018}, it even uses a GP to model the evolution of the state by using the PDE form as a linear operator to evolve the GP; since the linear transform of GP is still a GP, we will get joint GP, then we can do inference.
+However, they are restricted to known PDE expression and only learn the coefficients instead of learning the whole physics from scratch. 
 Furthermore, they all does not use the knowledge of conservation laws to their advantage.
-Moreover, for nonlinear dynamics, it has to use a linear approximation for the method to work.
+Moreover, for nonlinear dynamics, it has to use a linear approximation for the method to work, which is very restrictive.
 There are also versions of PINN that takes conservation of energy into account such as \cite{Jagtap2020}.
 However, it still suffers from other problems described above.
 
 \subsubsection{Energy Conserving Neural Networks}
-There are other approaches like Hamiltonian Neural Network \cite{HNN}, which enforces the law of Hamiltonian mechanics on the neural network.
-As a results, HNN automatically conserves the Hamiltonian or almost equivalently, the energy.
-There are also variants origin from this, such as the more general Lagrangian Neural Network, \cite{Cranmer2020}, or other energy conserving nerual networks described in \cite{Zhong2021}.
+There are other approaches like Hamiltonian Neural Network (HNN) \cite{HNN}, which enforces the law of Hamiltonian mechanics (\cite{lemos_2018}), a model in theortical physics, on the neural network.
+As a result, HNN automatically conserves the Hamiltonian or almost equivalently, the energy.
+The experiments and setup of this report roughly follows that of the HNN paper.
+There are also variants originated from this, such as the more general Lagrangian Neural Network, \cite{Cranmer2020}, using another theoretical physics framework or other energy conserving nerual networks described in \cite{Zhong2021}.
 However, due to their strong invariance enforcing nature, they often do not do very well with dissipative systems; 
 \cite{DissipativeHNN} models the dissipative part explicitly resolves this problem.
-Nevertheless, these systems can only work on a very specific types of dynamical system, namely the ones that follow Sympletic form, or more simply obeys the Hamiltonian mechanics, which is only a small subset of all dynamical systems.
+Nevertheless, these systems can only work on a very specific types of dynamical system, namely the ones that follow Sympletic form, or more simply follows the Hamiltonian mechanics, which is only a small subset of all dynamical systems.
 There are a lot more general dynamical systems that has some sort of invariance property that is not able to utilise these energy conserving neural networks.
-
-\subsubsection{ODE approach}
-Or we can directly works on the ODE that describes the physics of the system. 
-In some sense, this is similar to the PINN. 
-Neural ODE \cite{NeuralODE} is a great example of this; 
-however, again it does not use any knowledge of the invariances and symmetries.
-Further, it cannot recover the law of physics. 
+Moreover, learnability of invariance is less involved here that they are able to learn the value of energy but not actually recover the form of physics. 
 
 \subsubsection{Symbolic approach}
-There are many existing literatures to recover the law of physics from trajectory using various form of symbolic regression, such as \cite{Udrescu2020, Papastamatiou2022} or some form of graphical representation \cite{GraphSymbolicPhysics, flexiblePhysics}.
-In \cite{Liu2021}, it even able to deduce the conserved quantitiy (along with its symbolic form) from trajectory.
-Nevertheless, it does not include any predictive ability.
+An alternative way to recover the law of physics from trajectory uses various form of symbolic regression, such as \cite{Udrescu2020, Papastamatiou2022} or some form of graphical representation \cite{GraphSymbolicPhysics, flexiblePhysics}.
+In \cite{Liu2021}, it even able to deduce functional form the conserved quantity (along with its symbolic form) from trajectory.
+However, again these are very physics focused examples, and the symbolic representation is often involves brute force; but of course it improves interpretability over functional approximation solution.
+
+\subsubsection{ODE approach}
+We can also directly works on the ODE that describes the physics of the system not dissimliar to PINN. 
+Neural ODE \cite{NeuralODE} is a great example of this; 
+however, again it does not use any knowledge of the invariances and symmetries.
 
 \subsection{Symmetry and Invariance in Machine Learning}
 
 \subsubsection{Learning Invariance using Marginal Likelihood}
-This paper forms the basis of this report.
-In \cite{Mark2017}, the author proposes learning the form of invariances of the problem by parameterising the symmetry and maximise them with respect to the marginal liklihood.
+This paper forms the basis of this project.
+In \cite{Mark2017}, the author proposes learning the form of invariances of the problem by parameterising the symmetry and optimise them with respect to the marginal liklihood.
 The main problem studied in the paper is the MNIST dataset, and that the symmetry under consideration is all form of Affine transformation, such as rotation, shear, translation; and the invariance in this case is the label of the digit. 
 It suggests embedding the invariance in the model (GP in this case) as an alternative to data augementation.
 The authors created a special kind of kernel for GP that respects the symmetry of the problem.
 The results are very good compare to the baseline RBF kernel, and it also is able to recover the true paramertised invariance. 
-The logical flow and setup of this report roughly follows that of this paper as well as the HNN paper. 
-A related paper that uses a neural network instead of GP is \cite{Tycho2021}, which also optimise the marginal likelihood.
+The logical flow and procedure of investigation of this report follows closely on this paper. 
+A related paper following that uses a neural network instead of GP is \cite{Tycho2021} using the same idea on the same problem also optimises the marginal likelihood.
 
 \subsubsection{Geometric Deep Learning}
 Geometric deep learning proposed by \cite{Bronstein2017}, is a unifying framework that aims to explain the success of several popular neural network architecture. 
 For example, Convolution Neural Network uses the translation symmetry embedded in natural images. 
 Another example is Graph Neural Network utilises the permutation symmetry that the graphs is invariant under permutation.
-Following this framework, multiple papers are proposed that aims to exploit further symmetry groups.
+Following this framework, multiple papers are proposed that aims to exploit further symmetry groups (5Gs Grids, Groups, Graphs, Geodesics, and Gauges).
+These show that how powerful the inductive bias of symmetry and invariances are.
 
 \subsection{GP in dynamical systems}
-There are already a number of research work that uses GP to predict dynamical systems.
+There are also a number of research work that use GP to predict dynamical system evolution.
 One of them is the aforementioned \cite{Raissi2018}.
-There is also \cite{Rath2020}, that utilise the sympletic nature of Hamiltonian systems and directly predict the flowmaps of the system; in some sense similar to HNN.
-There is also \cite{Heinonen2018}, that also uses GP to model the ODE models in a nonparametric manner; but again it odes not uses invariance. 
+There is also \cite{Rath2020}, that utilise the Sympletic nature of Hamiltonian systems to directly predict the flowmaps of the system, which is similar to HNN.
+There is also \cite{Heinonen2018}, that also uses GP to model the ODE models in a nonparametric manner; but again it does not use invariance, but is more like Neural ODE. 
 
 
 
 \chapter{Invariance Kernel}
-In this chapter we will start with general theoretical construction of invariance kernel given the knowlwedge of the invariance of the system.
-We will then apply the construction to various systems, namely linear and nonlinear system in both one and two dimensions.
+In this chapter we will start with general theoretical construction of invariance kernel given the knowledge of the invariance of the system.
+We will then describe how we deal with dissiaptive systems.
+Finally, we will demonstrate how we are able to learn invariances without any prior knowledge of the system.
+
 \section{General Construction}
-If we are given a dynamical system of dimension d with variables $\mathbf{q}, \mathbf{p}$, where $\mathbf{q} = (q_1, q_2,\dots,q_d)$ is the vector of positional coordinates, and $\mathbf{p}=(p_1, p_2, \dots, p_d)$ is the vector of velocity coordinates of the states of the dynamical system.
+If we are given a dynamical system of dimension $d$ with variables $\mathbf{q}, \mathbf{p}$, where $\mathbf{q} = (q_1, q_2,\dots,q_d)$ is the vector of positional coordinates, and $\mathbf{p}=(p_1, p_2, \dots, p_d)$ is the vector of velocity coordinates of the states of the dynamical system.
 We are interested to predict the future trajectories of the state of the system.
-Therefore, we would like to know the time derivative of these coordinates so we can update them according to Euler's integrator. 
-These time derivatives are referred to as the dynamics of a dynamical system, which governs the evolution of the dynamical system, and is a function of the coordinates $\mathbf{q}$ and $\mathbf{p}$. 
+Therefore, we would like to know the time derivative of these coordinates so we can update them using an integrator (e.g. Euler, Runge-Kutta). 
+These time derivatives are referred to as the dynamics of a dynamical system, which governs the evolution of the dynamical system, and is a function of the coordinates $\mathbf{q}$ and $\mathbf{p}$ (it could be explicitly time dependent but it will be a straightforward generalisation, and is not considered here). 
 For our systems, we will denote the dynamics of $\mathbf{p}$ as $\frac{d\mathbf{p}}{dt}=\mathbf{a}(\mathbf{q}, \mathbf{p})$, and that of $\mathbf{q}$ as $\frac{d\mathbf{q}}{dt}=\mathbf{v}(\mathbf{q}, \mathbf{p})$.
-Astute readers or someone with physics background would notice $p$ is related to the velocity, which in principle should be exactly equal to $v$; while this is true in physical dynamical system, the setup is generally applicable to non physical dynamical systems too, so that we will pretend to not have this knowledge. 
+Astute readers or someone with physics background would notice $p$ is related to the velocity, which in principle should be exactly equal to $v$; while this is true in physical dynamical system, the setup is generally applicable to non physical dynamical systems too, so that we will not use this knowledge. 
 Once we have the dynamics, we can integrate up to obtain the future trajectories. 
 Notation wise, we will collect the two dynamics term and call them $$\mathbf{f(\mathbf{q}, \mathbf{p})}=\begin{pmatrix}
     \mathbf{a(\mathbf{q}, \mathbf{p})}\\\mathbf{v(\mathbf{q}, \mathbf{p})}
@@ -374,7 +381,7 @@ Notation wise, we will collect the two dynamics term and call them $$\mathbf{f(\
 For simplicity of notation, the dependence on $\mathbf{q}, \mathbf{p}$ is now implicit. 
 We will put independent GP prior on $\mathbf{a}$ and $\mathbf{v}$ since there are no reason we should assume they are correlated. 
 For the choice of kernel, we chose the standard smooth kernel, the squared exponential kernel, or RBF, and we denote this kernel to be $K_{RBF}$. 
-We will also denote any set of coordinates of length $n$ and dimension $d$ as $$X\equiv\begin{pmatrix}
+We will also denote any set of points in the input space of length $n$ and dimension $d$ as $$X\equiv\begin{pmatrix}
     \mathbf{x}_1\\\mathbf{x}_2\\\vdots\\\mathbf{x}_n
 \end{pmatrix}=\begin{pmatrix}
     q_{11}& q_{21} &\dots& q_{d1} & p_{11} & p_{21} & \dots & p_{d1} \\
@@ -382,7 +389,7 @@ We will also denote any set of coordinates of length $n$ and dimension $d$ as $$
     \vdots &\vdots &\ddots &\vdots &\vdots &\vdots &\ddots &\vdots \\
     q_{1n}& q_{2n} &\dots& q_{dn} & p_{1n} & p_{2n} & \dots & p_{dn} \\
 \end{pmatrix}.$$
-Without loss of generality, we will choose to stack the dynamics vertically in $\mathbf{f}$; for example in a d dimensional system, we have $$\mathbf{f}(X)=\begin{pmatrix}
+Without loss of generality, we will choose to stack the dynamics vertically in $\mathbf{f}$; for example in a $d$-dimensional system, we have $$\mathbf{f}(X)=\begin{pmatrix}
     a_1(\mathbf{x}_1)\\
     \vdots\\
     a_1(\mathbf{x}_n)\\
@@ -410,7 +417,6 @@ K=\mathrm{Cov}(\mathbf{f}(X), \mathbf{f}(X'))=\begin{pmatrix}
 \end{pmatrix},
 $$
 \end{CentreLongEquation}
-
 with all the off diagonal terms being zero block matrix because of the independence prior assumption.
 This naive kernel will be our baseline to be compared to throughout the whole project.
 Now we can start considering the invariance. 
@@ -421,28 +427,29 @@ Since the conservation of energy, $E$, is one of the most common invariance in p
 Therefore, we have $E=\text{energy}.$
 We can see the invariance constraints will always be a linear function on the dynamics $\mathbf{f}=\begin{pmatrix}
   \mathbf{a} \\ \mathbf{v}
-\end{pmatrix}$ almost by definition because of chain rule.
-We have $\text{energy}=E(\theta, \mathbf{p}, \mathbf{q})$, where $\theta$ are constants that parameterised the energy function, like mass or gravity.
+\end{pmatrix}$ almost by definition because of chain rule as follows: 
+
+We have $\text{energy}=E(\mathbf{\theta}, \mathbf{p}, \mathbf{q})$, where $\mathbf{\theta}$ are constants that parameterised the energy function, like mass or gravity.
 Then we have 
 $$
 \mathcal{L}[E] = \frac{dE}{dt}=\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} =\sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i
 $$
 We can therefore see it is always a linear combination of dynamics with coefficients independent of dynamics.
-As a result, $\mathcal{L}[E]$ can be seen to be a linear transformation of $\mathbf{f}$, and \textbf{now we call this transformation operator $L$}, which will be a function of $p, q$ and $\theta$.
+As a result, $\mathcal{L}[E]$ can be seen to be a linear transformation of $\mathbf{f}$, and now we call this transformation operator $L$, which will be a function of $\mathbf{p}, \mathbf{q}$ and $\mathbf{\theta}$.
 If we apply this linear transformation $L$ on $\mathbf{f}(X_L)$, $L(\mathbf{f}(X_L))$ will again be a GP with a transformed kernel.
 Therefore, we have 
 $$\begin{pmatrix}
 \mathbf{f}(X)\\L[\mathbf{f}(X_L)]
 \end{pmatrix}
 \sim\mathcal{N}
-\left(\begin{pmatrix}0_{2nd}\\0_{\ell}\end{pmatrix}, \begin{pmatrix}
+\left(\begin{pmatrix}\mathbf{0}_{2nd}\\\mathbf{0}_{\ell}\end{pmatrix}, \begin{pmatrix}
     K & LK \\
     KL^T & LKL^T\\
 \end{pmatrix}\right)
 $$
 To impose the invariance constraints, we then condition the first row on the second row using equation \ref{equ:normal_condtion} to obtain
 \begin{equation}
-  \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} \left(0_{2nd}, \begin{pmatrix}
+  \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} \left(\mathbf{0}_{2nd}, \begin{pmatrix}
     K-LK(LKL^T)^{-1}KL^T
   \end{pmatrix}\right)
   \label{equ:invariance_condition}
@@ -452,37 +459,37 @@ To impose the invariance constraints, we then condition the first row on the sec
 Up to now, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
 However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
 Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero, i.e. soft invariance.
-To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation, where we have $K+\sigma_n^2 \mathbb{I}$;
-Here, since the white noise is uncorrelated, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
+To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation, where we have $K+\sigma_n^2 \mathbb{I}$ in equation \ref{equ:joint_gp_noise}.
+Here, since the white noise is uncorrelated with each other, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
 
 
 \section{Learning Invariance}
-Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which allowed us to derive the energy, $E$ and thereafter the invariance equation $L$ accordingly. 
+Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which has allowed us to derive the energy, $E$ and the invariance equation $L$ accordingly. 
 However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then the system is pretty much solved that we can just use an ODE integrator to obtain the trajectories. 
 Therefore, we should find a way for the system to learn the form of invariance from data directly.
 The way we chose to do so is to parameterise our invariance function and allow the system to learn the coefficients by maximising the log marginal likelihood.
 
-\subsection{1D system}
+\subsection{One-dimensional system}
 There are many different ways to paramerterise an unknown function, including but not limited to Fourier representation, neural networks, wavelets, splines.
 As the problem is relatively bounded, we chose to use polynomial basis to paramertise the unknown function $L(p,q)$.
-In 1D cases, for our examples, they are simple enough so that $L(p,q)$ is seperable so that we have a function of $p$ only, $f(p)$ and a different function of $q$ only, $g(q)$ so that they can be learnt seperately.
-In the 1D SHM case, $f(p)=mp$ and $g(q)=kq$.
+In one-dimensional cases, for our examples, they are simple enough so that $L(p,q)$ is seperable so that we have a function of $p$ only, $f(p)$ and a different function of $q$ only, $g(q)$ so that they can be learnt seperately.
+In the one-dimensional SHM case, $f(p)=mp$ and $g(q)=kq$.
 For simple pendulum, we have $f(p)=\ell p$ and $g(q)=\sin q$.
 We will therefore set $$f(p)=\sum_{i=0}^{n_f}c_{f,i}p^i,\ g(q)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
 where $c_{f,i}, c_{g,i}$ are the parameters we will optimise based on marginal likelihood and we will evaluate different degree of polynomial $n_f, n_g$ and see which combinations produce the best results. 
 
-\subsection{2D system}
-In 2D, things are a bit more complicated. 
+\subsection{Two-dimensional system}
+In two-dimension, things are a bit more complicated. 
 For example, it is very clear that in double pendulum, the invariance constraints is not seperable.
 Instead, we need to consider all combinations of polynomials; i.e. multivariate polynomial.
-Therefore, for 2D we have $L(p_1, p_2, q_1, q_2)$ being the combination of $f_1(p_1), f_2(p_2), g_1(q_1), g_2(q_2)$.
+Therefore, for two-dimension we have $L(p_1, p_2, q_1, q_2)$ being the combination of $f_1(p_1), f_2(p_2), g_1(q_1), g_2(q_2)$.
 We will paramertise each of $f_1, f_2, g_1, g_2$ with $$\sum_{i,j,k,l=0}^{n}c_{ijkl}p_1^ip_2^jq_1^kq_2^l$$
 Therefore, there will be many more coefficients to be optimised.
 
 \section{Partially Observed System}
 Partially observed data can be very common in dynamical system.
 With examples of physical system, we can imagine not observing $p$ and only observe $q$ (of course we do not possess the knowledge that $\dot{q}=p$).
-If we have a 2D system, we might only observe 1 set of dimension due to data recording mechanism, or perhaps some situation where we project 3D objects on to the wall and we can only observe the 2D shadows.
+If we have a two-dimensional system, we might only observe one set of dimension due to data recording mechanism, or perhaps some situation where we project three-dimensional objects on to the wall and we can only observe the two-dimensional shadows.
 In a more general sense, we can imagine if we have a system with unquantifiable friction.
 We may not be able to write down the form of friction analytically due to complex interaction of the system with the enviroment (i.e. not simply a damped system as disccused above).
 Nevertheless, the law of physics and conservation of energy will still hold in the broad sense; 
@@ -517,7 +524,7 @@ It is particularly important in our dynamical systems since, for example, in SHM
 as a result, if the GP learns "correctly", the lengthscales of some directions will be very large or $\infty$, and that will be problematic and it would not affect the performance a lot if we limit the lengthscales for a much smaller value.
 Therefore, here I would set the range of both lengthscales and variable to be around the twice to three times the maximum range possible.
 For example, if we have maximum range of $\pm 3$, my upper bound for search is set to $10$ and lower bound is $10^{-3}$.
-Another change we made in 2D SHM is to scale the data using MinMax scaler to squash them to be between $\pm 1$. 
+Another change we made in two-dimensional SHM is to scale the data using MinMax scaler to squash them to be between $\pm 1$. 
 This is done since the polynomial behaves better around this region.
 
 \subsection*{Invariance points $X_L$}
@@ -532,9 +539,9 @@ Note that we only sampled once, so that the same local grid will be centred on e
 This works on the assumption that only the region around testing points will be the most important to predict in terms of conditioning; and to use the same kernel, we also have to condition on the region around training points, which is also important to help maximising the marginal likelihood objective when we are learning the invariance function.
 Another evidence that supports the use of local invariance, which have much fewer points than using a grid, is demonstrated below where we show that there is a diminishing return in increasing the number of invariance points so that actually not that many invariance points is needed to achieve a good performance. 
 
-\section{1D System}
+\section{One-dimensional System}
 \subsection{Linear SHM}
-We will first examine one of the most simple dynamical system, an 1D simple harmonic motion (SHM). 
+We will first examine one of the most simple dynamical system, an one-dimensional simple harmonic motion (SHM). 
 An example would be a mass spring system as shown in figure with mass $m$ and spring constant $k$, and an example trajectory is shown in figure \ref{fig:shm_trajectory}. 
 The $q$ is the displacement of the block from its origin, and $p$ would be the instanteous velocity.
 
@@ -910,7 +917,7 @@ We see that with invariance kernel, it is at least ten times more data efficient
 
 \section{Invariance Density}
 Here we will to explore how different invariance density affect the performance of the kernel as well as the degree of freedom.
-Since 1D SHM is trival to learn, we test it on the nonlinear pendulum case, which will illustrate the point better. 
+Since one-dimensional SHM is trival to learn, we test it on the nonlinear pendulum case, which will illustrate the point better. 
 We will use different invariance density using the same training data and three different trajectories of testing data.
 We again calculate the MSE of trajectory prediction as well as the percentage of energy deviation from the starting point of three different trajectories and average over.
 The results is shown in figure \ref{fig:vary_invariance_density}.
@@ -1057,12 +1064,12 @@ We see similar performance as in damped SHM, with invariance kernels performs sl
 The energy conservation still holds mostly for invariance kernels.
 However, this time, the learnt polynomial is not as good as the undamped case with much more deviation; this is expected due to the damping.
 
-\section{2D System}
-A 2D system is not that different from an 1D system. The major difference being there will be two more variables. 
-We will again look at two simple examples, a linear 2D SHM, and a nonlinear double pendulum.
+\section{Two-dimensional System}
+A two-dimensional system is not that different from an one-dimensional system. The major difference being there will be two more variables. 
+We will again look at two simple examples, a linear two-dimensional SHM, and a nonlinear double pendulum.
 
 \subsection{Linear SHM}
-A simple extension to 1D SHM to 2D is just allowing the spring to be at an angle so that the system is now in a 2D space as shown in figure \ref{fig:shm_2d_diagram}, and the system is still constrained in the plane.
+A simple extension to one-dimensional SHM to two-dimensional is just allowing the spring to be at an angle so that the system is now in a two-dimensional space as shown in figure \ref{fig:shm_2d_diagram}, and the system is still constrained in the plane.
 
 \begin{figure}[H]
         \centering
@@ -1138,7 +1145,7 @@ D=K_{RBF,a_1}m^2\odot(p_{1L}\otimes p_{1L}) + K_{RBF,a_2}m^2\odot(p_{2L}\otimes 
 where the terms are defined the exact same way as before, but now with respect to different coordinates, and the derivation are also the same.
 We will then again take the Schur Complement.
 
-For implementation, we again use the same set of input space as the 1D space, but double the dimensions. 
+For implementation, we again use the same set of input space as the one-dimensional space, but double the dimensions. 
 Here we actaully have the input space of $q_1, q_2$ being between $\pm 5$ and $p_1, p_2$ between $\pm 0.5$. 
 This is done so that when we scale the data with MinMax scaler, the points will be less clustered.
 We use 30 points in this setting.
@@ -1169,21 +1176,21 @@ Log Marginal Likelihood & 387.08 & 441.60 & 438.42  \\
 MSE & 1.1252 & 0.7374 & 0.7359 \\
                     \hline
   \end{tabular}
-  \caption{2D SHM Invariance performance}
+  \caption{Two-dimensional SHM Invariance performance}
   \label{tab:SHM_2d_performance}
 \end{table}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_predicted.pdf}
   \centering
-  \caption{2D SHM prediction}
+  \caption{Two-dimensional SHM prediction}
   \label{fig:shm_2d_prediction}
 \end{figure}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_energy.pdf}
   \centering
-  \caption{2D SHM energy}
+  \caption{Two-dimensional SHM energy}
   \label{fig:shm_2d_energy}
 \end{figure}
 
