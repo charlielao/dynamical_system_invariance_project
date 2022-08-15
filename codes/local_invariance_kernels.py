@@ -309,7 +309,7 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         self.Kv1 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.Kv2 = gpflow.kernels.RBF(variance=1, lengthscales=[1,1,1,1])
         self.poly_d = poly_d
-        self.prior_variance = gpflow.Parameter(0.5, transform=tfp.bijectors.Sigmoid(to_default_float(1e-2), to_default_float(1)), name="prior_variance")
+        self.prior_variance = 0.01#gpflow.Parameter(0.5, transform=tfp.bijectors.Sigmoid(to_default_float(1e-2), to_default_float(1)), name="prior_variance")
 #        self.poly = gpflow.Parameter(tf.Variable(0.1*np.random.normal(size=(4, self.number_of_coefficients(self.poly_d))), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), trainable=True, prior=tfp.distributions.Laplace(to_default_float(0),(self.prior_variance)), name="poly")
         init_poly = np.zeros((4, self.number_of_coefficients(self.poly_d)))
         '''
