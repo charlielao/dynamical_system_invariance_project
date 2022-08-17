@@ -12,6 +12,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import joblib
 import os
 import matplotlib.pyplot as plt
+os.environ["CUDA_VISIBLE_DEVICES"] = '3'
 
 mean = ZeroMean(4) 
 
@@ -55,28 +56,29 @@ print("moi")
 moi = get_GPR_model_2D(get_MOI_2D(), mean, data, 100)
 print(moi.log_marginal_likelihood().numpy())
 #try:
-n_neighbours =  200
+n_neighbours =  30
 print("known")
-kernel_known = get_double_pendulum_local_invariance(0, 2, n_neighbours, jitter) #switch
+kernel_known = get_double_pendulum_local_invariance(1.5, 6, 0, 1, n_neighbours, jitter) #switch
 known = get_GPR_model_2D(kernel_known, mean, data, iterations=1000)
 print(known.log_marginal_likelihood().numpy())
 
 polynomial_degree = 3
 print("learnt")
 
-kernel = get_polynomial_local_invariance_2D(0, 2, n_neighbours, jitter, polynomial_degree) 
+kernel = get_polynomial_local_invariance_2D(1.5, 6, 0, 1, n_neighbours, jitter, polynomial_degree) 
 model = get_GPR_model_2D(kernel, mean, data, iterations=10000, old_model=known)
 print(model.log_marginal_likelihood().numpy())
 
 moi.predict_f_compiled = tf.function(moi.predict_f)
 known.predict_f_compiled = tf.function(known.predict_f)
-m.predict_f_compiled = tf.function(m.predict_f)
+model.predict_f_compiled = tf.function(model.predict_f)
 
-samples_input = tf.convert_to_tensor(data[0])
+samples_input = tf.convert_to_tensor(data[0][None,0,:])
 moi.predict_f_compiled(samples_input)
 known.predict_f_compiled(samples_input)
-m.predict_f_compiled(samples_input)
+model.predict_f_compiled(samples_input)
+print_summary(model)
 
 tf.saved_model.save(moi, "double_pendulum/moi")
 tf.saved_model.save(known, "double_pendulum/known")
-tf.saved_model.save(m, "double_pendulum/m")
+tf.saved_model.save(model, "double_pendulum/model")

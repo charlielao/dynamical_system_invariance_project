@@ -147,21 +147,23 @@ def get_GPR_model(kernel, mean_function, data, iterations):
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
     return m#, stored_f, stored_g, stored_coeff
 
-def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None):
+def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None, fixed=None):
     X, Y = data
     m = gpflow.models.GPR(data=(X, tf.reshape(tf.transpose(tf.concat([Y[:,2,None],Y[:,3,None],Y[:,0,None],Y[:,1,None]],1)),(Y.shape[0]*4,1))), kernel=kernel, mean_function=mean_function)
     opt = gpflow.optimizers.Scipy()
     if old_model:
-        kernel.Ka1.lengthscales = gpflow.Parameter(old_model.kernel.Ka1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-        kernel.Ka2.lengthscales = gpflow.Parameter(old_model.kernel.Ka2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-        kernel.Kv1.lengthscales = gpflow.Parameter(old_model.kernel.Kv1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-        kernel.Kv2.lengthscales = gpflow.Parameter(old_model.kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-        kernel.Ka1.variance = gpflow.Parameter(old_model.kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-        kernel.Ka2.variance = gpflow.Parameter(old_model.kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-        kernel.Kv1.variance = gpflow.Parameter(old_model.kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
-        kernel.Kv2.variance = gpflow.Parameter(old_model.kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(5.))) 
+        kernel.Ka1.lengthscales = gpflow.Parameter(old_model.kernel.Ka1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
+        kernel.Ka2.lengthscales = gpflow.Parameter(old_model.kernel.Ka2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
+        kernel.Kv1.lengthscales = gpflow.Parameter(old_model.kernel.Kv1.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
+        kernel.Kv2.lengthscales = gpflow.Parameter(old_model.kernel.Kv2.lengthscales.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
+        kernel.Ka1.variance = gpflow.Parameter(old_model.kernel.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
+        kernel.Ka2.variance = gpflow.Parameter(old_model.kernel.Ka2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
+        kernel.Kv1.variance = gpflow.Parameter(old_model.kernel.Kv1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
+        kernel.Kv2.variance = gpflow.Parameter(old_model.kernel.Kv2.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 
         kernel.local_invar_grid = old_model.kernel.local_invar_grid
         m.likelihood.variance = gpflow.Parameter(old_model.likelihood.variance, transform=positive(lower=1e-6-1e-12))
+    if fixed:
+        return m
 
 #   log_dir_scipy = f"{log_dir}/scipy"
 #    model_task = ModelToTensorBoard(log_dir_scipy, model)
@@ -310,6 +312,57 @@ def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, 
     true_energy = energy(X)
     predicted_energy = energy(predicted_future)
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, true_energy, predicted_energy)
+
+def evaluate_loaded_model_future_2D(m, test_starting, dynamics, time_setting, scalers, energy):
+    test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2 = test_starting
+    dynamics1, dynamics2 = dynamics
+    total_time, time_step = time_setting
+    scalerX, scalerY = scalers
+
+    X = np.zeros((int(total_time/time_step),4))
+    X[0,0] = test_starting_position1
+    X[0,1] = test_starting_position2
+    X[0,2] = test_starting_velocity1
+    X[0,3] = test_starting_velocity2
+
+    predicted_future = np.zeros(X.shape)
+    predicted_future_variance_top = np.zeros(X.shape)
+    predicted_future_variance_bottom = np.zeros(X.shape)
+    predicted_future[0,:] = X[0,:]
+
+    X[1,0] = X[0,0] + X[0,2]*time_step
+    X[1,1] = X[0,1] + X[0,3]*time_step
+    X[1,2] = X[0,2] + dynamics1(X[None,0,:])*time_step
+    X[1,3] = X[0,3] + dynamics2(X[None,0,:])*time_step
+
+    pred, var = m.predict_f_compiled(scalerX.transform(to_default_float(predicted_future[0,:].reshape(1,4))))
+    pred = tf.roll(tf.transpose(pred), shift=-2, axis=1)
+    pred = scalerY.inverse_transform(pred)
+
+    predicted_future[1, :] = predicted_future[0, :] + pred*time_step 
+
+    for i in range(2, X.shape[0]):
+        if i==2:
+            start = time.time()
+        if i==8:
+            average_time_per_step = (time.time()-start)/6
+        if i>8:
+            print("%s seconds remaining"%round(average_time_per_step*(X.shape[0]-i)), end="\r")
+        pred, var = m.predict_f_compiled(scalerX.transform(to_default_float(predicted_future[i-1,:].reshape(1,4))))
+        pred = tf.roll(tf.transpose(pred), shift=-2, axis=1)
+        pred = scalerY.inverse_transform(pred)
+
+        predicted_future[i, :] = predicted_future[i-2, :] + pred*2*time_step 
+        X[i,0] = X[i-2,0] + X[i-1,2]*2*time_step
+        X[i,1] = X[i-2,1] + X[i-1,3]*2*time_step
+        X[i,2] = X[i-2,2] + dynamics1(X[None,i-1,:])*2*time_step
+        X[i,3] = X[i-2,3] + dynamics2(X[None,i-1,:])*2*time_step
+
+    MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
+    true_energy = energy(X)
+    predicted_energy = energy(predicted_future)
+    return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, true_energy, predicted_energy)
+
 
 def evaluate_model_grid_2D(m, grids, dynamics, scalers):
     grid_range, grid_density = grids
