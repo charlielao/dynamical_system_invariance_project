@@ -3,72 +3,44 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
 The style file: plainnat.bst
 Database file #1: refs.bib
-Warning--empty journal in HNN
-Warning--empty year in HNN
-Warning--empty year in HNN
-Warning--empty journal in NeuralODE
-Warning--empty year in NeuralODE
-Warning--empty year in NeuralODE
-Warning--empty journal in Cranmer2020
-Warning--empty journal in GraphSymbolicPhysics
-Warning--empty year in GraphSymbolicPhysics
-Warning--empty year in GraphSymbolicPhysics
-Warning--empty journal in Cuomo2022
-Warning--empty journal in Heinonen2018
-Warning--empty year in PIML
-Warning--empty year in PIML
-Warning--empty journal in Kondor2008
-Warning--empty journal in Liu2021
-Warning--empty journal in flexiblePhysics
-Warning--empty year in flexiblePhysics
-Warning--empty year in flexiblePhysics
-Warning--empty journal in Rath2020
-Warning--empty journal in DissipativeHNN
-Warning--empty year in DissipativeHNN
-Warning--empty year in DissipativeHNN
-Warning--empty journal in Tycho2021
-Warning--empty journal in Mark2017
-Warning--empty year in Mark2017
-Warning--empty year in Mark2017
 You've used 29 entries,
             2773 wiz_defined-function locations,
-            773 strings with 10563 characters,
-and the built_in function-call counts, 13289 in all, are:
-= -- 1089
-> -- 977
-< -- 11
-+ -- 329
-- -- 300
-* -- 1141
-:= -- 2154
-add.period$ -- 101
+            811 strings with 11796 characters,
+and the built_in function-call counts, 14239 in all, are:
+= -- 1206
+> -- 1027
+< -- 16
++ -- 343
+- -- 314
+* -- 1233
+:= -- 2299
+add.period$ -- 119
 call.type$ -- 29
-change.case$ -- 182
+change.case$ -- 179
 chr.to.int$ -- 29
-cite$ -- 85
-duplicate$ -- 581
-empty$ -- 952
-format.name$ -- 341
-if$ -- 2682
+cite$ -- 58
+duplicate$ -- 596
+empty$ -- 1041
+format.name$ -- 355
+if$ -- 2935
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 34
-newline$ -- 167
-num.names$ -- 116
-pop$ -- 414
+missing$ -- 29
+newline$ -- 181
+num.names$ -- 124
+pop$ -- 356
 preamble$ -- 1
-purify$ -- 158
+purify$ -- 156
 quote$ -- 0
-skip$ -- 425
+skip$ -- 468
 stack$ -- 0
-substring$ -- 172
-swap$ -- 23
-text.length$ -- 0
+substring$ -- 248
+swap$ -- 59
+text.length$ -- 5
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 294
-warning$ -- 27
-while$ -- 94
+warning$ -- 0
+while$ -- 103
 width$ -- 0
-write$ -- 379
-(There were 27 warnings)
+write$ -- 434
