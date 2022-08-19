@@ -518,11 +518,12 @@ However, it is not possible to visualise in 2D cases so we will simply assess th
 
 \section{Implementation Technicalities}
 We will need to add jitter, a diagnoal matrix of small value, to the $LKL^T$ matrix in equation \ref{equ:invariance_condition}.
-This is due to the fact that we need the invert it and it will be more stable numerically if we add a little bit of jitter in the range of $10^{-6}$ to $10^{-4}$, and its effect on the model will be explained in the sections below.
-Similarly, for stability, when backpropagating to optimise the hyperparameters with respect to marginal likelihood, we need to narrow range of search such that the value is more reasonable.
+This is due to the fact that we need the invert it and it will be more stable numerically if we add a little bit of jitter in the range of $10^{-6}$ to $10^{-4}$.
+As this is a common practice, its effect on the model will be in the Appendix for intereseted readers.
+Similarly, for stability, when backpropagating to optimise the hyperparameters with respect to marginal likelihood, we need to narrow the range of search such that the value is more reasonable.
 It is particularly important in our dynamical systems since, for example, in SHM the equation of motion is $a=-q$ and $v=p$, so that is will be a 2D plane extends to infinity;
-as a result, if the GP learns "correctly", the lengthscales of some directions will be very large or $\infty$, and that will be problematic and it would not affect the performance a lot if we limit the lengthscales for a much smaller value.
-Therefore, here I would set the range of both lengthscales and variable to be around the twice to three times the maximum range possible.
+as a result, if the GP learns "correctly", the lengthscales of certain dimensions will be very large or $\infty$ (a property of ARD kernel, essentially able to set a dimension to constant), and it would not affect the performance a lot if we limit the lengthscales for a much smaller value to avoid instability.
+Therefore, here I would set the range of both lengthscales and variable to be around the two to three times the maximum range possible.
 For example, if we have maximum range of $\pm 3$, my upper bound for search is set to $10$ and lower bound is $10^{-3}$.
 Another change we made in two-dimensional SHM is to scale the data using MinMax scaler to squash them to be between $\pm 1$. 
 This is done since the polynomial behaves better around this region.
@@ -563,7 +564,7 @@ $$
 $$
 
 \begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_trajectory_1D.pdf}
+  \includegraphics[width=0.7\linewidth]{../codes/figures/shm_trajectory_1D.pdf}
   \centering
   \caption{Example trajectory of SHM}
   \label{fig:shm_trajectory}
@@ -679,10 +680,10 @@ For the data we only have one trajectory starting randomly in $-3\le q\le3$ and 
 We chose $p$ to be smaller so that the future trajectory does not overshoot the upper bound of $q$ too much. 
 We allow the integrator to run for $0.1$ seconds so there will be in total 10 training points (10 time steps). 
 We will then draw three test points from the same range as training, to assess the performance of the predictive power for 3 seconds (300 points) and average the MSE over the three trajectories. 
-In figure \ref{fig:shm_prediction}, \ref{fig:damped_shm_energy}, we have chosen one trajectory at random to illustate the predictions as well as the energy along the trajectory.
+In figure \ref{fig:shm_prediction}, \ref{fig:shm_energy}, we have chosen one trajectory at random to illustate the predictions as well as the energy along the trajectory.
 For this task, we have used a jitter amount of $10^{-5}$ and an invariance density of 20 between $\pm 3$ in both $p$ and $q$ direction.
 We have also plotted the posterior distribution of using invariance kernel and compare that to using naive RBF kernel in figure \ref{fig:posterior_shm}.
-We can see the invariance has much better predictive power and generalisability.
+We can see the invariance has much better generalisability.
 For learning the invariance, we test all combinations of polynomials of $f(p)$ and $g(q)$, each with degree 0, 1, 2, 3 (i.e. up to cubic term) so there will be 16 of them to optimise, and we choose the pair with the highest marginal likelihood. 
 We initialise the coefficients with normal distribution with variance of $10^{-3}$, we also restrict the search space to be between $\pm 1$.
 We have also added a Laplace prior on the coefficients with variance 0.1 since we expect most coefficients would be zero and Laplace prior encourage sparse solution.
@@ -757,7 +758,7 @@ A simple nonlinear system in every day life is a simple pendulum as shown in fig
 
 \begin{figure}[H]
         \centering
-        \includegraphics[width=0.4\linewidth]{../figures/pendulum.pdf}
+        \includegraphics[width=0.3\linewidth]{../figures/pendulum.pdf}
         \caption{Pendulum illustration}
         \label{fig:pendulum_diagram}
 \end{figure}
@@ -769,16 +770,16 @@ $$
 and we have example trajectory in \ref{fig:pendulum_trajectory}, where we can see the effect of nonlinearity on the shape. 
 The nonlinear dynamics arises from the sine term above, which will complicate the derivation for invariance kernel slightly. 
 However, since $\sin x \approx x$ at small angle, this system is approximately linear under small displacement. 
-There is no analytical solution to this nonlinear problem in general, besides the small displacement case, which will be 1D SHM.
+There is no analytical solution to this nonlinear problem in general, besides the small displacement case, which will be one-dimensional SHM.
 
 \begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_trajectory_1D.pdf}
+  \includegraphics[width=0.7\linewidth]{../codes/figures/pendulum_trajectory_1D.pdf}
   \centering
   \caption{Example trajectory of pendulum}
   \label{fig:pendulum_trajectory}
 \end{figure}
 
-This time we have energy, $E=\frac{m\ell^2p^2}{2}+mg\ell(1-\cos q)$, and by setting the time derivative to 0, we have 
+This time we have energy, $E=\frac{m\ell^2p^2}{2}+mg\ell(1-\cos q)$, and by setting its time derivative to 0, we have 
 $$L(a, v)=\frac{dE}{dt}=m\ell^2pa+mg\ell(\sin q)v=0.$$
 If we cancel out the common term $m\ell$ since their product cannot be zero, we have $$L(a,v)=\ell pa+g(\sin q)v=0$$
 Most of the terms are unchanged from the linear case. 
@@ -906,7 +907,7 @@ As we can see from figure \ref{fig:pendulum_learnt}, the learning is increasingl
 From the posteriors in \ref{fig:posterior_pendulum}, we see RBF generalise much better due to extra data points, but it is still very far from giving a reasonable prediction. 
 
 We can also compare the data efficiency in this case as shown in figure \ref{fig:data_efficiency}. 
-We see that with invariance kernel, it is at least ten times more data efficient than the baseline.
+We see that with invariance kernel, it is at least ten times more data efficient than the baseline RBF.
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/data_efficiency.pdf}
@@ -1143,7 +1144,7 @@ D=K_{RBF,a_1}m^2\odot(p_{1L}\otimes p_{1L}) + K_{RBF,a_2}m^2\odot(p_{2L}\otimes 
 \end{gather*}
 
 where the terms are defined the exact same way as before, but now with respect to different coordinates, and the derivation are also the same.
-We will then again take the Schur Complement.
+We will then again take the Schur Complement as in equation \ref{equ:normal_condtion} as before.
 
 For implementation, we again use the same set of input space as the one-dimensional space, but double the dimensions. 
 Here we actaully have the input space of $q_1, q_2$ being between $\pm 5$ and $p_1, p_2$ between $\pm 0.5$. 
@@ -1172,8 +1173,8 @@ Since it is difficult to visualise 4 dimensional space, we will plot them indivi
     \hline
 Method           & RBF & Known Invariance&  Learnt Invariance\\
   \hline
-Log Marginal Likelihood & 387.08 & 441.60 & 438.42  \\
-MSE & 1.1252 & 0.7374 & 0.7359 \\
+Log Marginal Likelihood & 429.50 & 474.23 & 471.04  \\
+MSE & 0.0207 & 0.0036 & 0.0035 \\
                     \hline
   \end{tabular}
   \caption{Two-dimensional SHM Invariance performance}
@@ -1197,6 +1198,17 @@ MSE & 1.1252 & 0.7374 & 0.7359 \\
 Firstly, we can see that the invariance kernel still performs very well compared to RBF, although not as good as the 1D case as expected since higher dimensional problem is deemed to be more difficult.
 We can see the learnt invariance again is almost exactly the same as the known form, which is reassuring.
 Also, the conservation of energy is again pretty well obeyed.
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_polynomial.pdf}
+  \centering
+  \caption{Two-dimensional SHM learnt invariance}
+  \label{fig:shm_2d_poly}
+\end{figure}
+
+Lastly, we confirm the above check to make sure we are indeed learning the correct invariance.
+We can see the freely optimised polynoimal is exactly the same as the fixed theoretically correct value, and are much better than the randomly initialised invariance. 
+We also found a Pearson correlation between log marginal likelihood and MSE of $-0.6502$ with a p value of $3.218\times 10^{-7}$, therefore, it is clear we are learning the correct invariance. 
 
 \subsection{Non Linear Double Pendulum}
 Now we will to introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
@@ -1240,8 +1252,8 @@ Again we used 30 points to train, but this time we do not use scaling since perh
     \hline
 Method           & RBF & Known Invariance&  Learnt Invariance\\
   \hline
-Log Marginal Likelihood & 455.89 & 471.01 & 494.37  \\
-MSE & 0.3879 & 0.0286 & 0.0362 \\
+Log Marginal Likelihood & 794.27 & 846.72 & 848.54  \\
+MSE & 0.0064 & 0.0019 & 0.0029 \\
     \hline
   \end{tabular}
   \caption{Double pendulum invariance performance}

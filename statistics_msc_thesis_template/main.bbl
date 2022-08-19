@@ -11,10 +11,6 @@ Jonathan Baxter.
 \newblock \emph{Journal of Artificial Intelligence Research}, 12:\penalty0
   149--198, 2000.
 
-\bibitem[Brain et~al.()Brain, PetCube, and Yosinski]{HNN}
-Sam Greydanus~Google Brain, Misko~Dzamba PetCube, and Jason Yosinski.
-\newblock Hamiltonian neural networks.
-
 \bibitem[Bronstein et~al.(2017)Bronstein, Bruna, Lecun, Szlam, and
   Vandergheynst]{Bronstein2017}
 Michael~M. Bronstein, Joan Bruna, Yann Lecun, Arthur Szlam, and Pierre
@@ -24,28 +20,36 @@ Michael~M. Bronstein, Joan Bruna, Yann Lecun, Arthur Szlam, and Pierre
 \newblock ISSN 10535888.
 \newblock \doi{10.1109/MSP.2017.2693418}.
 
-\bibitem[Chen et~al.()Chen, Rubanova, Bettencourt, and Duvenaud]{NeuralODE}
-Ricky T~Q Chen, Yulia Rubanova, Jesse Bettencourt, and David Duvenaud.
+\bibitem[Chen et~al.(2018)Chen, Rubanova, Bettencourt, and Duvenaud]{NeuralODE}
+Ricky T.~Q. Chen, Yulia Rubanova, Jesse Bettencourt, and David~K Duvenaud.
 \newblock Neural ordinary differential equations.
+\newblock In S.~Bengio, H.~Wallach, H.~Larochelle, K.~Grauman, N.~Cesa-Bianchi,
+  and R.~Garnett, editors, \emph{Advances in Neural Information Processing
+  Systems}, volume~31. Curran Associates, Inc., 2018.
+\newblock URL
+  \url{https://proceedings.neurips.cc/paper/2018/file/69386f6bb1dfed68692a24c8686939b9-Paper.pdf}.
 
-\bibitem[Cranmer et~al.(2020)Cranmer, Greydanus, Hoyer, Research, Battaglia,
-  Spergel, and Ho]{Cranmer2020}
-Miles Cranmer, Sam Greydanus, Stephan Hoyer, Google Research, Peter Battaglia,
-  David Spergel, and Shirley Ho.
-\newblock Lagrangian neural networks.
-\newblock 2020.
+\bibitem[Cranmer et~al.(2020)Cranmer, Greydanus, Hoyer, Battaglia, Spergel, and
+  Ho]{Cranmer2020}
+Miles Cranmer, Sam Greydanus, Stephan Hoyer, Peter Battaglia, David Spergel,
+  and Shirley Ho.
+\newblock Lagrangian neural networks, 2020.
+\newblock URL \url{https://arxiv.org/abs/2003.04630}.
 
-\bibitem[Cranmer et~al.()Cranmer, Xu, Battaglia, and Ho]{GraphSymbolicPhysics}
-Miles~D Cranmer, Rui Xu, Peter Battaglia, and Shirley Ho.
-\newblock Learning symbolic physics with graph networks.
+\bibitem[Cranmer et~al.(2019)Cranmer, Xu, Battaglia, and
+  Ho]{GraphSymbolicPhysics}
+Miles~D. Cranmer, Rui Xu, Peter Battaglia, and Shirley Ho.
+\newblock Learning symbolic physics with graph networks, 2019.
+\newblock URL \url{https://arxiv.org/abs/1909.05862}.
 
-\bibitem[Cuomo et~al.(2022)Cuomo, Schiano, Cola, Giampaolo, Rozza, Raissi, and
+\bibitem[Cuomo et~al.(2022)Cuomo, Di~Cola, Giampaolo, Rozza, Raissi, and
   Piccialli]{Cuomo2022}
-Salvatore Cuomo, Vincenzo Schiano, Di~Cola, Fabio Giampaolo, Gianluigi Rozza,
+Salvatore Cuomo, Vincenzo~Schiano Di~Cola, Fabio Giampaolo, Gianluigi Rozza,
   Maziar Raissi, and Francesco Piccialli.
-\newblock Scientific machine learning through physics-informed neural networks:
-  Where we are and what's next.
-\newblock 2022.
+\newblock Scientific machine learning through physics–informed neural
+  networks: Where we are and what’s next.
+\newblock \emph{Journal of Scientific Computing}, 92\penalty0 (3), 2022.
+\newblock \doi{10.1007/s10915-022-01939-z}.
 
 \bibitem[Glendinning(1994)]{glendinning_1994}
 Paul Glendinning.
@@ -53,13 +57,25 @@ Paul Glendinning.
   of nonlinear differential equations}.
 \newblock Cambridge University Press, 1994.
 
-\bibitem[Heinonen et~al.(2018)Heinonen, Yıldız, Mannerström, Intosalmi, and
-  Lähdesmäki]{Heinonen2018}
-Markus Heinonen, C~¸~Agatay Yıldız, Henrik Mannerström, Jukka Intosalmi,
-  and Harri Lähdesmäki.
-\newblock Learning unknown ode models with gaussian processes.
-\newblock 2018.
-\newblock URL \url{http://www.}
+\bibitem[Greydanus et~al.(2019)Greydanus, Dzamba, and Yosinski]{HNN}
+Samuel Greydanus, Misko Dzamba, and Jason Yosinski.
+\newblock Hamiltonian neural networks.
+\newblock In H.~Wallach, H.~Larochelle, A.~Beygelzimer, F.~d\textquotesingle
+  Alch\'{e}-Buc, E.~Fox, and R.~Garnett, editors, \emph{Advances in Neural
+  Information Processing Systems}, volume~32. Curran Associates, Inc., 2019.
+\newblock URL
+  \url{https://proceedings.neurips.cc/paper/2019/file/26cd8ecadce0d4efd6cc8a8725cbd1f8-Paper.pdf}.
+
+\bibitem[Heinonen et~al.(2018)Heinonen, Yildiz, Mannerstr{\"o}m, Intosalmi, and
+  L{\"a}hdesm{\"a}ki]{Heinonen2018}
+Markus Heinonen, Cagatay Yildiz, Henrik Mannerstr{\"o}m, Jukka Intosalmi, and
+  Harri L{\"a}hdesm{\"a}ki.
+\newblock Learning unknown {ODE} models with {G}aussian processes.
+\newblock In Jennifer Dy and Andreas Krause, editors, \emph{Proceedings of the
+  35th International Conference on Machine Learning}, volume~80 of
+  \emph{Proceedings of Machine Learning Research}, pages 1959--1968. PMLR,
+  10--15 Jul 2018.
+\newblock URL \url{https://proceedings.mlr.press/v80/heinonen18a.html}.
 
 \bibitem[Jagtap et~al.(2020)Jagtap, Kharazmi, and Karniadakis]{Jagtap2020}
 Ameya~D. Jagtap, Ehsan Kharazmi, and George~Em Karniadakis.
@@ -70,19 +86,19 @@ Ameya~D. Jagtap, Ehsan Kharazmi, and George~Em Karniadakis.
 \newblock ISSN 00457825.
 \newblock \doi{10.1016/J.CMA.2020.113028}.
 
-\bibitem[Karniadakis et~al.()Karniadakis, Kevrekidis, Lu, Perdikaris, Wang, and
-  Yang]{PIML}
+\bibitem[Karniadakis et~al.(2021)Karniadakis, Kevrekidis, Lu, Perdikaris, Wang,
+  and Yang]{PIML}
 George~Em Karniadakis, Ioannis~G Kevrekidis, Lu~Lu, Paris Perdikaris, Sifan
   Wang, and Liu Yang.
 \newblock Physics-informed machine learning.
-\newblock \emph{Nature Reviews Physics}.
+\newblock \emph{Nature Reviews Physics}, 2021.
 \newblock \doi{10.1038/s42254-021-00314-5}.
 \newblock URL \url{www.nature.com/natrevphys}.
 
 \bibitem[Kondor(2008)]{Kondor2008}
-Risi Kondor.
-\newblock Group theoretical methods in machine learning.
-\newblock 2008.
+Imre Kondor.
+\newblock \emph{Group theoretical methods in machine learning}.
+\newblock PhD thesis, Columbia University, 2008.
 
 \bibitem[Lemos(2018)]{lemos_2018}
 Nivaldo~A. Lemos.
@@ -92,8 +108,9 @@ Nivaldo~A. Lemos.
 \bibitem[Liu and Tegmark(2021)]{Liu2021}
 Ziming Liu and Max Tegmark.
 \newblock Machine learning conservation laws from trajectories.
-\newblock 2021.
+\newblock \emph{Phys. Rev. Lett.}, 126:\penalty0 180604, May 2021.
 \newblock \doi{10.1103/PhysRevLett.126.180604}.
+\newblock URL \url{https://link.aps.org/doi/10.1103/PhysRevLett.126.180604}.
 
 \bibitem[Marsden et~al.(2008)Marsden, Sirovich, and
   Antman]{marsden_sirovich_antman_2008}
@@ -111,11 +128,12 @@ Alexander G. de~G. Matthews, Mark {van der Wilk}, Tom Nickson, Keisuke. Fujii,
   (40):\penalty0 1--6, apr 2017.
 \newblock URL \url{http://jmlr.org/papers/v18/16-537.html}.
 
-\bibitem[Mrowca et~al.()Mrowca, Zhuang, Wang, Haber, Fei-Fei, Tenenbaum, and
-  Yamins]{flexiblePhysics}
-Damian Mrowca, Chengxu Zhuang, Elias Wang, Nick Haber, Li~Fei-Fei, Joshua~B
-  Tenenbaum, and Daniel L~K Yamins.
-\newblock Flexible neural representation for physics prediction.
+\bibitem[Mrowca et~al.(2018)Mrowca, Zhuang, Wang, Haber, Fei-Fei, Tenenbaum,
+  and Yamins]{flexiblePhysics}
+Damian Mrowca, Chengxu Zhuang, Elias Wang, Nick Haber, Li~Fei-Fei, Joshua~B.
+  Tenenbaum, and Daniel L.~K. Yamins.
+\newblock Flexible neural representation for physics prediction, 2018.
+\newblock URL \url{https://arxiv.org/abs/1806.08047}.
 
 \bibitem[Papastamatiou et~al.(2022)Papastamatiou, Sofos, and
   Karakasidis]{Papastamatiou2022}
@@ -159,17 +177,20 @@ Carl~Edward Rasmussen and Christopher K~I Williams.
 \newblock \emph{Gaussian process for machine learning}.
 \newblock The MIT Press, 2006.
 
-\bibitem[Rath et~al.(2020)Rath, Albert, Bischl, and Toussaint]{Rath2020}
-Katharina Rath, Christopher~G Albert, Bernd Bischl, and Udo~Von Toussaint.
-\newblock Symplectic gaussian process regression of hamiltonian flow maps
-  symplectic gaussian process regression of hamiltonian flow maps symplectic
-  gaussian process regression of hamiltonian flow maps.
-\newblock 2020.
+\bibitem[Rath et~al.(2021)Rath, Albert, Bischl, and von Toussaint]{Rath2020}
+Katharina Rath, Christopher~G. Albert, Bernd Bischl, and Udo von Toussaint.
+\newblock Symplectic gaussian process regression of maps in hamiltonian
+  systems.
+\newblock \emph{Chaos: An Interdisciplinary Journal of Nonlinear Science},
+  31\penalty0 (5):\penalty0 053121, 2021.
+\newblock \doi{10.1063/5.0048129}.
+\newblock URL \url{https://doi.org/10.1063/5.0048129}.
 
-\bibitem[Sosanya and Greydanus()]{DissipativeHNN}
+\bibitem[Sosanya and Greydanus(2022)]{DissipativeHNN}
 Andrew Sosanya and Sam Greydanus.
 \newblock Dissipative hamiltonian neural networks: Learning dissipative and
-  conservative dynamics separately.
+  conservative dynamics separately, 2022.
+\newblock URL \url{https://arxiv.org/abs/2201.10085}.
 
 \bibitem[Strogatz(2019)]{strogatz_2019}
 Steven Strogatz.
@@ -186,14 +207,22 @@ Silviu~Marian Udrescu and Max Tegmark.
   \doi{10.1126/SCIADV.AAY2631/ASSET/DEA58C72-32B7-4207-BD40-91D257F0D857/ASSETS/GRAPHIC/AAY2631-F2.JPEG}.
 \newblock URL \url{https://www.science.org/doi/10.1126/sciadv.aay2631}.
 
-\bibitem[van~der Ouderaa and van~der Wilk(2021)]{Tycho2021}
-Tycho~FA van~der Ouderaa and Mark van~der Wilk.
+\bibitem[van~der Ouderaa and van~der Wilk(2022)]{Tycho2021}
+Tycho~F.A. van~der Ouderaa and Mark van~der Wilk.
 \newblock Learning invariant weights in neural networks.
-\newblock 2021.
+\newblock In \emph{The 38th Conference on Uncertainty in Artificial
+  Intelligence}, 2022.
+\newblock URL \url{https://openreview.net/forum?id=BVxfSPUoqeq}.
 
-\bibitem[Wilk et~al.()Wilk, Bauer, John, and Hensman]{Mark2017}
-Mark Van~Der Wilk, Matthias Bauer, S~T John, and James Hensman.
+\bibitem[van~der Wilk et~al.(2018)van~der Wilk, Bauer, John, and
+  Hensman]{Mark2017}
+Mark van~der Wilk, Matthias Bauer, ST~John, and James Hensman.
 \newblock Learning invariances using the marginal likelihood.
+\newblock In S.~Bengio, H.~Wallach, H.~Larochelle, K.~Grauman, N.~Cesa-Bianchi,
+  and R.~Garnett, editors, \emph{Advances in Neural Information Processing
+  Systems}, volume~31. Curran Associates, Inc., 2018.
+\newblock URL
+  \url{https://proceedings.neurips.cc/paper/2018/file/d465f14a648b3d0a1faa6f447e526c60-Paper.pdf}.
 
 \bibitem[Zhong et~al.(2021)Zhong, Dey, and Chakraborty]{Zhong2021}
 Yaofeng~Desmond Zhong, Biswadip Dey, and Amit Chakraborty.
