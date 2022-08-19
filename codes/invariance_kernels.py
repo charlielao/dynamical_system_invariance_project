@@ -179,7 +179,7 @@ class DampedSHMInvariance(gpflow.kernels.Kernel):
         self.Ka = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.Kv = gpflow.kernels.RBF(variance=1, lengthscales=[1,1]) 
         self.jitter = jitter_size
-        self.epsilon = gpflow.Parameter(0.01, transform =tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(5.)))
+        self.epsilon = gpflow.Parameter(0.01, transform =positive())#tfp.bijectors.Sigmoid(to_default_float(self.jitter), to_default_float(5.)))
         invariance_xs = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_vs = tf.linspace(-invariance_range,invariance_range,invar_density)
         invariance_xx, invariance_vv = tf.meshgrid(invariance_xs, invariance_vs)

@@ -229,6 +229,12 @@ def evaluate_model_future(m, test_starting, dynamics, time_setting, energy):
     predicted_future_variance_bottom[1, 1] = predicted_future[0, 1] - (pred[0]+1.96*np.sqrt(var[0]+likelihood))*time_step
 
     for i in range(2, X.shape[0]):
+        if i==2:
+            start = time.time()
+        if i==8:
+            average_time_per_step = (time.time()-start)/6
+        if i>8:
+            print("%s seconds remaining"%round(average_time_per_step*(X.shape[0]-i)), end="\r")
         pred, var = m.predict_f(to_default_float(predicted_future[i-1,:].reshape(1,2)))
 
         predicted_future[i, 0] = predicted_future[i-2, 0] + pred[1]*2*time_step 

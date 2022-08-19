@@ -48,7 +48,7 @@ def energy(X):
 #lml_moi = moi.log_marginal_likelihood().numpy()
 #lml_inv = known.log_marginal_likelihood().numpy()
 #lml_inv_p = model.log_marginal_likelihood().numpy()
-for i in range(1):
+for i in range(5):
     print(i)
     test_starting_position1 = np.radians(np.random.uniform(-max_x, max_x))
     test_starting_position2 = np.radians(np.random.uniform(-max_x, max_x))
@@ -123,3 +123,52 @@ plt.legend()
 plt.xlabel("t")
 plt.ylabel("E")
 plt.savefig("figures/double_pendulum_energy.pdf")
+
+n_neighbours = 30
+polynomial_degree = 3
+
+
+print("learnt")
+test_starting_position1 = np.radians(np.random.uniform(-max_x, max_x))
+test_starting_position2 = np.radians(np.random.uniform(-max_x, max_x))
+test_starting_velocity1 = np.radians(np.random.uniform(-max_v, max_v))
+test_starting_velocity2 = np.radians(np.random.uniform(-max_v, max_v))
+test_starting = (test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2)
+
+evaluate_moi = evaluate_model_future_2D(moi, test_starting, dynamics, time_setting, scalers, energy)
+print(evaluate_moi[0])
+evaluate_known = evaluate_model_future_2D(known, test_starting, dynamics, time_setting, scalers, energy)
+print(evaluate_known[0])
+evaluate_learnt = evaluate_model_future_2D(model, test_starting, dynamics, time_setting, scalers, energy)
+print(evaluate_learnt[0])
+
+
+grids_lml = []
+grids_eva = []
+for i in range(5):
+    print(i)
+    kernel_grid = get_polynomial_local_invariance_2D(1.5, 6, 0, 0.5, n_neighbours, jitter, polynomial_degree) 
+    kernel_grid.poly = gpflow.Parameter(0.1*np.random.normal(size=kernel_grid.poly.shape), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), trainable=False, prior=tfp.distributions.Laplace(to_default_float(0),(0.1)), name="poly")
+    model_grid = get_GPR_model_2D(kernel_grid, mean, data, iterations=1000, old_model=known, fixed=True)
+    print(model_grid.log_marginal_likelihood().numpy())
+
+    evaluate_learnt_grid = evaluate_model_future_2D(model_grid, test_starting, dynamics, time_setting, scalers, energy)
+    print(evaluate_learnt_grid[0])
+    grids_eva.append(evaluate_learnt_grid[0])
+    grids_lml.append(model_grid.log_marginal_likelihood().numpy())
+
+kernel_free = get_polynomial_local_invariance_2D(1.5, 6, 0, 0.5, n_neighbours, jitter, polynomial_degree) 
+model_free = get_GPR_model_2D(kernel_free, mean, data, iterations=1000, old_model=known)
+evaluate_learnt_free = evaluate_model_future_2D(model_free, test_starting, dynamics, time_setting, scalers, energy)
+
+plt.scatter(grids_lml, grids_eva, s=10, label="randomly initialised polynomial")
+plt.scatter(model.log_marginal_likelihood().numpy(), evaluate_learnt[0],marker="X",s=10, color="red", label="theoretically initialised polynomial", alpha=0.5)
+plt.scatter(model_free.log_marginal_likelihood().numpy(), evaluate_learnt_free[0], s=10, color="green", label="optimised", alpha=0.5)
+plt.xlabel("marginal likelihood")
+plt.ylabel("MSE")
+plt.legend()
+plt.savefig("figures/double_pendulum_polynomial.pdf")
+
+from scipy.stats import pearsonr
+pearsonr(grids_lml, grids_eva)
+

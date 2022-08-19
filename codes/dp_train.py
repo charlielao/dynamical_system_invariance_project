@@ -58,14 +58,14 @@ print(moi.log_marginal_likelihood().numpy())
 #try:
 n_neighbours =  30
 print("known")
-kernel_known = get_double_pendulum_local_invariance(1.5, 6, 0, 1, n_neighbours, jitter) #switch
+kernel_known = get_double_pendulum_local_invariance(1.5, 6, 0, 0.5, n_neighbours, jitter) #switch
 known = get_GPR_model_2D(kernel_known, mean, data, iterations=1000)
 print(known.log_marginal_likelihood().numpy())
 
 polynomial_degree = 3
 print("learnt")
 
-kernel = get_polynomial_local_invariance_2D(1.5, 6, 0, 1, n_neighbours, jitter, polynomial_degree) 
+kernel = get_polynomial_local_invariance_2D(1.5, 6, 0, 0.5, n_neighbours, jitter, polynomial_degree) 
 model = get_GPR_model_2D(kernel, mean, data, iterations=10000, old_model=known)
 print(model.log_marginal_likelihood().numpy())
 
