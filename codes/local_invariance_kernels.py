@@ -329,7 +329,7 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         invariance_xx1, invariance_xx2, invariance_vv1, invariance_vv2 = tf.meshgrid(invariance_x1s, invariance_x2s, invariance_v1s, invariance_v2s)
         self.global_invar_grids = to_default_float(tf.stack([tf.reshape(invariance_xx1,[-1]), tf.reshape(invariance_xx2,[-1]), tf.reshape(invariance_vv1,[-1]), tf.reshape(invariance_vv2,[-1])], axis=1))
         self.poly_d = poly_d
-        self.prior_variance = gpflow.Parameter(0.05, transform=positive())#tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(1)), name="prior_variance")
+        self.prior_variance = 1#gpflow.Parameter(1, transform=positive())#tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(1)), name="prior_variance")
 #        self.poly = gpflow.Parameter(tf.Variable(0.1*np.random.normal(size=(4, self.number_of_coefficients(self.poly_d))), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), trainable=True, prior=tfp.distributions.Laplace(to_default_float(0),(self.prior_variance)), name="poly")
         init_poly = np.zeros((4, self.number_of_coefficients(self.poly_d)))
         '''
@@ -343,7 +343,7 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         init_poly[2,1]=2;init_poly[2,23]=-1;init_poly[0,29]=1
         init_poly[3,2]=1;init_poly[3,23]=1;init_poly[0,29]=-1
         init_poly = tf.Variable(init_poly/3, dtype=tf.float64)
-        self.poly = gpflow.Parameter(init_poly, transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), trainable=True, prior=tfp.distributions.Laplace(to_default_float(0),(self.prior_variance)), name="poly")
+        self.poly = gpflow.Parameter(init_poly, transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), trainable=True)#, prior=tfp.distributions.Laplace(to_default_float(0),(self.prior_variance)), name="poly")
         self.jitter = jitter_size
         self.local_invar_grid = tf.multiply(tf.random.uniform((n_neighbours,4), invar_neighbourhood_min,invar_neighbourhood_max, dtype=tf.float64),2*tf.cast(tf.reshape(tf.random.categorical(tf.math.log([[0.5, 0.5]]), 4*n_neighbours), (n_neighbours,4)), tf.float64)-1*tf.ones((n_neighbours,4),dtype=tf.float64))
 #        local_invar_grid_1 = tf.linspace(-invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours)
