@@ -45,7 +45,7 @@ def get_SHM_data_2D(time_step, total_time, noise, initial_positions_1,initial_po
     Y = Y.transpose(2,0,1).reshape(-1,4)
     return (X, Y)
 
-def get_damped_SHM_data(gamma, time_step, total_time, noise, initial_positions, initial_velocities):
+def get_damped_SHM_data(time_step, total_time, noise, initial_positions, initial_velocities, gamma=0.1):
     m = k = 1
     w02 = k/m
     t = tf.linspace(0., total_time, int(total_time/time_step))
@@ -96,7 +96,7 @@ def get_double_pendulum_data(time_step, total_time, noise, initial_angles_1, ini
     Y = Y.transpose(2,0,1).reshape(-1,4)
     return (X, Y)
 
-def get_damped_pendulum_data(gamma, time_step, total_time, noise, initial_angles, initial_angular_velocities):
+def get_damped_pendulum_data(time_step, total_time, noise, initial_angles, initial_angular_velocities, gamma=0.1):
     g = l = 1
     w02 = g/l
     t = tf.linspace(0., total_time, int(total_time/time_step))
