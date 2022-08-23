@@ -173,35 +173,6 @@ def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None, fi
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables,  options=dict(maxiter=iterations), step_callback=callback)
     return m
 
-'''
-class GPR_with_sparse(gpflow.models.GPR):
-    def __init__(self, reg, **kwargs):
-        super().__init__(**kwargs)
-        self.reg = reg
-    def maximum_log_likelihood_objective(self):
-        return self.log_marginal_likelihood()-self.reg*(tf.reduce_sum(tf.abs(self.kernel.poly)))
-'''
-
-def get_GPR_model_GD_2D(model, iterations, lr, manager):
-    opt = tf.optimizers.Adam(learning_rate=lr)
-
-    @tf.function
-    def optimization_step(m):
-        opt.minimize(m.training_loss, m.trainable_variables)
-
-    for j in range(iterations):
-        optimization_step(model)
-        lml = model.log_marginal_likelihood().numpy()
-        print(round(lml)," ", j, end="\r")#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
-        if j%1000==0:
-            manager.save()
-#    m.kernel.poly.assign(tf.map_fn(lambda x: tf.where(abs(x)<1e-5, 0 , x), m.kernel.poly.numpy()))
-#    for j in range(int(iterations/1000)):
-#        optimization_step(model)
-#        lml = model.log_marginal_likelihood().numpy()
-#        print(round(lml)," ", j, end="\r")#, end="\r")#,np.array2string(tf.concat([m.kernel.f1_poly,m.kernel.f2_poly,m.kernel.g1_poly,m.kernel.g2_poly],1).numpy()))
-    return model
-
 def evaluate_model_future(m, test_starting, dynamics, time_setting, energy):
     test_starting_position, test_starting_velocity = test_starting
     total_time, time_step = time_setting
@@ -250,15 +221,6 @@ def evaluate_model_future(m, test_starting, dynamics, time_setting, energy):
     true_energy = energy(X)
     predicted_energy = energy(predicted_future)
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, true_energy, predicted_energy)
-
-def evaluate_model_grid(m, grids, dynamics):
-    grid_range, grid_density = grids
-    X = get_grid_of_points_1D(grid_range, grid_density)
-    predicted = m.predict_f(X)[0]
-    predicted = tf.transpose(tf.reshape(predicted, (2, int(predicted.shape[0]/2))))
-    Y = dynamics(X) #acceleration
-    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.concat([Y[:,None],X[:,1,None]],1)))
-    return MSE.numpy()
 
 def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, energy):
     test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2 = test_starting
@@ -318,71 +280,6 @@ def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, 
     true_energy = energy(X)
     predicted_energy = energy(predicted_future)
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, true_energy, predicted_energy)
-
-def evaluate_loaded_model_future_2D(m, test_starting, dynamics, time_setting, scalers, energy):
-    test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2 = test_starting
-    dynamics1, dynamics2 = dynamics
-    total_time, time_step = time_setting
-    scalerX, scalerY = scalers
-
-    X = np.zeros((int(total_time/time_step),4))
-    X[0,0] = test_starting_position1
-    X[0,1] = test_starting_position2
-    X[0,2] = test_starting_velocity1
-    X[0,3] = test_starting_velocity2
-
-    predicted_future = np.zeros(X.shape)
-    predicted_future_variance_top = np.zeros(X.shape)
-    predicted_future_variance_bottom = np.zeros(X.shape)
-    predicted_future[0,:] = X[0,:]
-
-    X[1,0] = X[0,0] + X[0,2]*time_step
-    X[1,1] = X[0,1] + X[0,3]*time_step
-    X[1,2] = X[0,2] + dynamics1(X[None,0,:])*time_step
-    X[1,3] = X[0,3] + dynamics2(X[None,0,:])*time_step
-
-    pred, var = m.predict_f_compiled(scalerX.transform(to_default_float(predicted_future[0,:].reshape(1,4))))
-    pred = tf.roll(tf.transpose(pred), shift=-2, axis=1)
-    pred = scalerY.inverse_transform(pred)
-
-    predicted_future[1, :] = predicted_future[0, :] + pred*time_step 
-
-    for i in range(2, X.shape[0]):
-        if i==2:
-            start = time.time()
-        if i==8:
-            average_time_per_step = (time.time()-start)/6
-        if i>8:
-            print("%s seconds remaining"%round(average_time_per_step*(X.shape[0]-i)), end="\r")
-        pred, var = m.predict_f_compiled(scalerX.transform(to_default_float(predicted_future[i-1,:].reshape(1,4))))
-        pred = tf.roll(tf.transpose(pred), shift=-2, axis=1)
-        pred = scalerY.inverse_transform(pred)
-
-        predicted_future[i, :] = predicted_future[i-2, :] + pred*2*time_step 
-        X[i,0] = X[i-2,0] + X[i-1,2]*2*time_step
-        X[i,1] = X[i-2,1] + X[i-1,3]*2*time_step
-        X[i,2] = X[i-2,2] + dynamics1(X[None,i-1,:])*2*time_step
-        X[i,3] = X[i-2,3] + dynamics2(X[None,i-1,:])*2*time_step
-
-    MSE_future = tf.reduce_mean(tf.math.square(predicted_future-X))
-    true_energy = energy(X)
-    predicted_energy = energy(predicted_future)
-    return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, true_energy, predicted_energy)
-
-
-def evaluate_model_grid_2D(m, grids, dynamics, scalers):
-    grid_range, grid_density = grids
-    dynamics1, dynamics2 = dynamics
-    scalerX, scalerY = scalers
-    X = get_grid_of_points_2D(grid_range, grid_density)
-    Y1 = dynamics1(X) #acceleration1
-    Y2 = dynamics2(X) #acceleration2
-    predicted = m.predict_f(scalerX.transform(X))[0]
-    predicted = tf.transpose(tf.reshape(predicted, (4, int(predicted.shape[0]/4))))
-    predicted = tf.roll(predicted, shift=-2, axis=1)
-    predicted = scalerY.inverse_transform(predicted)
-    MSE =  tf.reduce_mean(tf.math.square(predicted-tf.concat([X[:,2,None], X[:,3,None],Y1[:,None], Y2[:,None]],1)))
-    return MSE.numpy()
 
 def SHM_dynamics(X):
     return -X[:,0]
