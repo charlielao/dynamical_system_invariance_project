@@ -233,7 +233,7 @@ We also sampled 10 posteriors.
 We can see the function fit well around the data points and fall back to the GP prior (RBF in this case) away from the data.
 
 \subsection{GPflow}
-While we can in principle build our own GP objects using linear algebra and statistical libraries, such as Numpy, Scipy, from scratch, it is better to avoid errors and improve development speed by using a well-tested, robust and efficient library called GPflow, which will be used throughout the project (\cite{GPflow2017}).
+While we can in principle build our own GP objects using linear algebra and statistical libraries, such as Numpy, Scipy, from scratch, it is better to avoid errors and improve development speed by using a well-tested, robust and efficient library called GPflow, which will be used throughout the project (\cite{GPflow2017})\footnote[1]{The codes can be found in \url{https://github.com/charlielao/dynamical\_system\_invariance\_project}}.
 It is a Python library built on TensorFlow to allow efficient and fast computation on GPUs to do GP inferences.
 A particular powerful feature is that it allows atuomatic tuning of hyperparameter such as lengthscales and variance of a kernel by computing the gradient (using automatic differentiation feature of Tensorflow) and perform optimisation.
 In later sections, when we will need to optimise more parameters than aforementioned ones with respect to maginal likelihood objective, the library will be proved to be very useful.
@@ -1125,7 +1125,7 @@ MSE & 0.00142 & 0.00130 & 0.00134 & 0.00091 & 0.00101 \\
 
 
 \begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_learnt.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_learnt_over_time.pdf}
   \centering
   \caption{Learnt invariance for damped SHM}
   \label{fig:damped_shm_learnt}
@@ -1137,6 +1137,15 @@ This is expected since we still enforce some degree of invariance, even though i
 However, it is clear that it is making use of the knowledge of the invariance since the performance is fairly good.
 For energy consevation, it is reassuring that the invariance kernel is still remains invariant, while the learnt invariance might deviate a little since the extra parameters in the polynomial might fit to the damped data; but overall it conserves energy relatively well compare to the ground truth.
 Also, when we are learning the invariance, it again successfully recover the physics even under the effect of damping.
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/latent_damped_shm.pdf}
+  \centering
+  \caption{Latent variable distribution}
+  \label{fig:latent_damped_shm}
+\end{figure}
+
+
 
 \subsection{Damped Pendulum}
 Again, the setting of damped pendulum is the same as the undamped pendulum.
@@ -1174,7 +1183,7 @@ MSE & 0.0012 & 0.0008 & 0.0008 & 0.0008 & 0.0008 \\
 
 
 \begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_learnt.pdf}
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_learnt_over_time.pdf}
   \centering
   \caption{Learnt invariance for damped pendulum}
   \label{fig:damped_pendulum_learnt}
@@ -1183,6 +1192,13 @@ MSE & 0.0012 & 0.0008 & 0.0008 & 0.0008 & 0.0008 \\
 We see similar performance as in damped SHM, with invariance kernels performs slightly worse than undamped version but still much better than the RBF.
 The energy conservation still holds mostly for invariance kernels.
 However, this time, the learnt polynomial is not as good as the undamped case with much more deviation; this is expected due to the damping.
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/latent_damped_pendulum.pdf}
+  \centering
+  \caption{Latent variable distribution}
+  \label{fig:latent_damped_pendulum}
+\end{figure}
 
 \section{Two-dimensional System}
 A two-dimensional system is not that different from an one-dimensional system. The major difference being there will be two more variables. 
@@ -1327,7 +1343,7 @@ Also, the conservation of energy is again pretty well obeyed.
 
 Lastly, we confirm the above check to make sure we are indeed learning the correct invariance.
 We can see the freely optimised polynoimal is exactly the same as the fixed theoretically correct value, and are much better than the randomly initialised invariance. 
-We also found a Pearson correlation between log marginal likelihood and MSE of $-0.6502$ with a p value of $3.218\times 10^{-7}$, therefore, it is clear we are learning the correct invariance. 
+We also found a Pearson correlation between log marginal likelihood and MSE of $-0.4274$ with a p value of $0.0020$, therefore, it is clear we are learning the correct invariance. 
 
 \subsection{Non Linear Double Pendulum}
 Now we will to introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
@@ -1409,12 +1425,31 @@ This time we found a Pearson corrletaiton of $-0.3644$ with a p-value of $0.0093
 Combining with the fact that our optimised learnt kernel is better than the theortically approximately initialised kernel in both marginal likelihood and MSE, so we conclude that we have identified the correct invariance.  
 
 \chapter{Conclusion and Future Work}
-In this work, we have presented a new Gaussian Process model through an invariance kernel that is able to capture the invariance in a dynamical system and as a result, use it as an inductive bias to improve data efficiency and predictive performance in a wide range of one and two-dimensional physical systems. 
-We construct this special invariance kernel using simple Schur Complement calculation that conditions our GP prior on the points where the invariance should holds.
+In this work, we have presented a new Gaussian Process model through an invariance kernel that is able to capture the invariance in a dynamical system and as a result, use it as an inductive bias to improve data efficiency and predictive performance in several one and two-dimensional physical systems. 
+We construct this special invariance kernel by using the fact that invariances are linear transformation of the dynamics and the property of joint Gaussian distribution, and finally does the conditioning using simple Schur Complement calculation.
 To learn this invariance condition, we paramertise it with polynomials and optimise the coefficients by marginal likelihood objective. 
-We have also demonstrated it is also robust against dissiaptive effects. 
+The model is able to capture the correct invariance and recover the law of physics.
+We have also demonstrated it is also robust against dissiaptive effects using a noise variable to allow "soft invariance" as well as using a latent variable to model the dissipative forces. 
 
-
+In the future, there are several directions this project could evolve into.
+To start off, we have demonstrated our results on relatively simple systems that could easily be sovled by first year physics undergraduate student. 
+It would be interesting to see how our current model fits into the bigger picture of physical dynamical systems.
+For instance, a charged particle in magnetic field still conserves energy with forces acting on it. 
+Would our model able to accomdate that?
+Or if the forces are time dependent, such as forced oscillation of pendulum, perhaps we need to include time as an input variable.
+More generally, we are simply using the energy conservation to derive our kernel, and the form is more or less equivalent to Newton's law of motion.
+There may be more complicated systems where this formulation is not sufficient.
+For instance, the Lagrangian and Hamiltonian formula are much more general and could be even be extended to quantum mechanics.
+For classical dynamical systems, if we want to model deformation of elastic materials or extended objects that are not point particles, this formulation may not be sufficient.
+As a result, it is important to consult classical theoretical physics literature to help us understand the limitations of our models and then extend to form a more complete picture.  
+In fact, Hamiltonian mechanics is the most natural way to incorporate invariance and symmetry as explained in section 2.3.
+If we are able to formulate our model using Hamiltonian description, then we can easily include other symmetries such as momentum.
+Another direction is to extend the partially observed system model.
+We have successfully apply that in a special case of dissipative system.
+However, as systems grow more complex, including a single latent dynamics may not be enough; instead, we may need to invent an latent input due to dissipative forces and derive its dyanmics by taking the time derivative.
+As mentioned in section 3.4, an important and very common case is the missing input dimension problem.
+If we are able to successfully recover the higher dimensional space by observing the lower dimensional space combine with the knowledge of invariance, it will be very useful in applications like 3D reconstruction.
+More sophisticated inference technique will be needed such as Markov Chain Monte Carlo.
 
 
 % References: modify the file refs.bib

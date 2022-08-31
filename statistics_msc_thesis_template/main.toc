@@ -30,11 +30,11 @@
 \contentsline {section}{\numberline {4.5}Invariance Density}{33}{section.4.5}%
 \contentsline {section}{\numberline {4.6}Damped System}{34}{section.4.6}%
 \contentsline {subsection}{\numberline {4.6.1}Damped SHM}{35}{subsection.4.6.1}%
-\contentsline {subsection}{\numberline {4.6.2}Damped Pendulum}{37}{subsection.4.6.2}%
-\contentsline {section}{\numberline {4.7}Two-dimensional System}{39}{section.4.7}%
-\contentsline {subsection}{\numberline {4.7.1}Linear SHM}{39}{subsection.4.7.1}%
-\contentsline {subsection}{\numberline {4.7.2}Non Linear Double Pendulum}{44}{subsection.4.7.2}%
-\contentsline {chapter}{\numberline {5}Conclusion and Future Work}{48}{chapter.5}%
+\contentsline {subsection}{\numberline {4.6.2}Damped Pendulum}{38}{subsection.4.6.2}%
+\contentsline {section}{\numberline {4.7}Two-dimensional System}{41}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Linear SHM}{41}{subsection.4.7.1}%
+\contentsline {subsection}{\numberline {4.7.2}Non Linear Double Pendulum}{45}{subsection.4.7.2}%
+\contentsline {chapter}{\numberline {5}Conclusion and Future Work}{49}{chapter.5}%
 \contentsline {chapter}{\numberline {A}Appendix}{A1}{appendix.A}%
 \contentsline {section}{\numberline {A.1}Effect of Jitter}{A1}{section.A.1}%
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
