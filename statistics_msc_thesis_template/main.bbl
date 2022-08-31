@@ -1,4 +1,4 @@
-\begin{thebibliography}{30}
+\begin{thebibliography}{29}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -50,13 +50,6 @@ Salvatore Cuomo, Vincenzo~Schiano Di~Cola, Fabio Giampaolo, Gianluigi Rozza,
   networks: Where we are and what’s next.
 \newblock \emph{Journal of Scientific Computing}, 92\penalty0 (3), 2022.
 \newblock \doi{10.1007/s10915-022-01939-z}.
-
-\bibitem[der Ouderaa and van~der Wilk(2022)]{Tycho2021}
-Tycho F.A.~Van der Ouderaa and Mark van~der Wilk.
-\newblock Learning invariant weights in neural networks.
-\newblock In \emph{The 38th Conference on Uncertainty in Artificial
-  Intelligence}, 2022.
-\newblock URL \url{https://openreview.net/forum?id=BVxfSPUoqeq}.
 
 \bibitem[Glendinning(1994)]{glendinning_1994}
 Paul Glendinning.

@@ -6,7 +6,7 @@
 \contentsline {section}{\numberline {2.3}Symmetry and Invariances}{9}{section.2.3}%
 \contentsline {section}{\numberline {2.4}Related Work}{10}{section.2.4}%
 \contentsline {subsection}{\numberline {2.4.1}Physics Informed Machine Learning}{10}{subsection.2.4.1}%
-\contentsline {subsubsection}{\nonumberline Energy Conserving Neural Networks}{10}{subsubsection*.7}%
+\contentsline {subsubsection}{\nonumberline Energy Conserving Neural Networks}{11}{subsubsection*.7}%
 \contentsline {subsubsection}{\nonumberline Symbolic approach}{11}{subsubsection*.9}%
 \contentsline {subsubsection}{\nonumberline ODE approach}{11}{subsubsection*.11}%
 \contentsline {subsection}{\numberline {2.4.2}Symmetry and Invariance in Machine Learning}{11}{subsection.2.4.2}%
