@@ -103,7 +103,7 @@ Lastly, I would like the thank my family for their support.
 % VERY IMPORTANT
 % This command switches from Roman to Arabic numbering for main part of thesis
 \mainmatter
-
+\tableofcontents
 
 \chapter{Introduction}
 Dynamical systems are one of the richest theory that models the real world with wide application across all science and engineering and therefore it is very valuable to be able to reliably predict the evolution of a system for practical purposes.
@@ -153,7 +153,7 @@ $$
 $$
 where we have $X, f$ being the training data and target, with $X^*, f^*$ the testing points and targets.
 If we assume the signal is not noise free such that we assume a Gaussian noise $y=f+\epsilon$, where $\epsilon\sim\mathcal{N}(0, \sigma_n^2)$.
-We will instead have
+Since the noise is a white noise and are uncorrelated with each other, we will only need to modify the variance part of the signal and not its covariance with other latent variables $f^*$,
 \begin{equation}
 \begin{bmatrix}
   y\\f^*
@@ -194,7 +194,11 @@ f^*|X, y, X* \sim \mathcal{N} \left(\overline{f^*}, \mathrm{cov}(f^*)\right)\\
 \mathrm{cov}(f^*) = K(X^*, X^*) - K(X^*, X)[K(X, X)+\sigma^2_n\mathbb{I}]^{-1}K(X, X^*)
 \end{gathered}
 \end{equation*}
- 
+
+We also have the log marginal likelihood given by 
+$$
+\log p(\mathbf{y} \mid X)=-\frac{1}{2} \mathbf{y}^{\top}\left(K+\sigma_{n}^{2} I\right)^{-1} \mathbf{y}-\frac{1}{2} \log \left|K+\sigma_{n}^{2} I\right|-\frac{n}{2} \log 2 \pi.
+$$
 
 Below we demonstrated an example adapted from \cite{GPflow2017} to showcase the fitting procedure of a GP.
 Different kernels defined by their various functional form as below imposes different prior knowledge on the GP prior.
@@ -239,9 +243,10 @@ Dynamical system describes the evolution of a system in time, and can be broadly
 Here, we will illustrate the theory and notation using continous time (differential equation) description.
 There are many real world systems that can be modelled by a dynamical system; for example a huge class of problems in engineering and physics or biological processes. 
 A simple example, which will also be explored later, is a damped harmonic oscillator, with equation of motion
-$$
+\begin{equation}
 m\frac{d^2x}{dt^2}+b\frac{dx}{dt}+kx=0,
-$$
+\label{equ:damped}
+\end{equation}
 where $m, k, b$ are constants that depend on the material and $x$ is the displacement of the mass.
 In general an $n^{th}$ degree differential equations can be written as 
 $$
@@ -431,14 +436,16 @@ We can see the invariance constraints will always be a linear function on the dy
 
 We have $\text{energy}=E(\mathbf{\theta}, \mathbf{p}, \mathbf{q})$, where $\mathbf{\theta}$ are constants that parameterised the energy function, like mass or gravity.
 Then we have 
-$$
+\begin{equation}
 \mathcal{L}[E] = \frac{dE}{dt}=\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} =\sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i
-$$
+\label{equ:invariance_equation}
+\end{equation}
 We can therefore see it is always a linear combination of dynamics with coefficients independent of dynamics.
 As a result, $\mathcal{L}[E]$ can be seen to be a linear transformation of $\mathbf{f}$, and now we call this transformation operator $L$, which will be a function of $\mathbf{p}, \mathbf{q}$ and $\mathbf{\theta}$.
 If we apply this linear transformation $L$ on $\mathbf{f}(X_L)$, $L(\mathbf{f}(X_L))$ will again be a GP with a transformed kernel.
 Therefore, we have 
-$$\begin{pmatrix}
+\begin{equation}
+\begin{pmatrix}
 \mathbf{f}(X)\\L[\mathbf{f}(X_L)]
 \end{pmatrix}
 \sim\mathcal{N}
@@ -446,7 +453,8 @@ $$\begin{pmatrix}
     K & LK \\
     KL^T & LKL^T\\
 \end{pmatrix}\right)
-$$
+\label{equ:invariance_joint}  
+\end{equation}
 To impose the invariance constraints, we then condition the first row on the second row using equation \ref{equ:normal_condtion} to obtain
 \begin{equation}
   \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} \left(\mathbf{0}_{2nd}, \begin{pmatrix}
@@ -458,9 +466,32 @@ To impose the invariance constraints, we then condition the first row on the sec
 \section{Damped System}
 Up to now, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L=0$ exactly.
 However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
+For example, in equation \ref{equ:damped}, the frictional force enters through the $b\frac{dx}{dt}$ term that makes the system loss energy to the surrounding as heat.  
 Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L$ is noisy and not always equal to zero, i.e. soft invariance.
 To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation, where we have $K+\sigma_n^2 \mathbb{I}$ in equation \ref{equ:joint_gp_noise}.
-Here, since the white noise is uncorrelated with each other, the only place the noise will enter is $D$, so we simply have to add a noise term to $D$ and replace all $D$ with $\tilde{D}=D+\epsilon \mathbb{I}$, where $\epsilon$ is a parameter to be learnt. 
+We will therefore add a noise to the invariance evaluation so that we have $L[\mathbf{f}(X_L)]=\epsilon$, where $\epsilon\sim\mathcal{N}(m_L, \sigma_L^2)$.
+Therefore, for equation \ref{equ:invariance_joint}, we will instead have 
+$$
+\begin{pmatrix}
+\mathbf{f}(X)\\L[\mathbf{f}(X_L)]
+\end{pmatrix}
+\sim\mathcal{N}
+\left(\begin{pmatrix}\mathbf{0}_{2nd}\\\mathbf{m}_{\ell}\end{pmatrix}, \begin{pmatrix}
+    K & LK \\
+    KL^T & LKL^T+\sigma_L^2\mathbb{I}\\
+\end{pmatrix}\right),
+$$
+Again, the white noise will only affect the variance part of $L[\mathbf{f}(X_L)]$ and not its covariance with $\mathbf{f}(X)$.
+We will then able to do the conditioning according to equation \ref{equ:normal_condtion} again and obtain
+$$
+  \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} \left(-\mathbf{m}_\ell LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}, \begin{pmatrix}
+    K-LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}KL^T
+  \end{pmatrix}\right)
+$$
+Here, the parameters $\mathbf{m}_L$ and $\sigma^2_L$ will be optimised again with marginal likelihood. 
+The reason we allow the noise to have a non-zero mean is that we know that the energy can only decrease so that $\frac{dE}{dt}\equiv L[\mathbf{f}(X_L)] \le 0 $, so the positive deviation of invariance from zero is not the symmetrical to its negative counterparts; we therefore introduce a learnable negative mean to accounts for that.  
+The idea of introducing this soft invariance noise is that hopefully this relaxation of the contrains of invariance will allow the model to use some information of invariance to do prediction and at the same time not strictly enforcing it, which would have lead to poor performance. 
+We will also use a different method to model the dissipative dynamics of the system using latent variables as shown in the section 3.4. 
 
 
 \section{Learning Invariance}
@@ -489,13 +520,100 @@ Therefore, there will be many more coefficients to be optimised.
 \section{Partially Observed System}
 Partially observed data can be very common in dynamical system.
 With examples of physical system, we can imagine not observing $p$ and only observe $q$ (of course we do not possess the knowledge that $\dot{q}=p$).
+This will correpond to just observing the trajectory of a particle but has no information about the time and hence we cannot deduce velocity.
 If we have a two-dimensional system, we might only observe one set of dimension due to data recording mechanism, or perhaps some situation where we project three-dimensional objects on to the wall and we can only observe the two-dimensional shadows.
-In a more general sense, we can imagine if we have a system with unquantifiable friction.
-We may not be able to write down the form of friction analytically due to complex interaction of the system with the enviroment (i.e. not simply a damped system as disccused above).
+In a more general sense, we can imagine if we have a system with unquantifiable friction (without prior knowledge).
+We may not be able to write down the form of friction analytically due to complex interaction of the system with the enviroment (i.e. not simply a damped system as shown in equation \ref{equ:damped}, where it is analytical).
 Nevertheless, the law of physics and conservation of energy will still hold in the broad sense; 
 in other words, if we take into account of every single force of the interactions (including the enviroment), the total energy will be conserved so the invariance holds. 
-In practice, we can only observe the system so that the rest of the physics not taking into account is not observed, so it is again a partially observed problem.
-We can then set the unobserved part being a latent variable, $z$,  and then use the invariance constraints to inference it.
+For example, in the case of frictional forces, they arise because of the electric-magnetic forces between particles and the surface of the enviroment.
+If we take into account of the particles on the surface and their interactions with the particles in our system, the energy will again be conserved. 
+In practice, we can only observe the system so that the rest of the physics (interaction with the enviroment) is not observed, so it is again a partially observed problem.
+To address this issue, we can use a latent variable model. 
+The idea is to model the unobserved variable as a latent variable $z$ and its associated time derivative as dynamics $\dot{z}$.
+For example, if we only observe $q$ in an one-dimensional system, then we can set $z=p$, a latent variable. 
+Then the dynamics $f$ will include the $\dot{z}$ term, which is equivalent to $a$ if it is observed. 
+In the case of two-dimensional system, where we do not observe the $p$ nor $q$ of one dimension, we will then have two latent variables $z_1, z_2$ and their associated dynamics.
+We can then use the invariance condition as before to constrain the distribution of $z$ and $\dot{z}$ and therefore does inference on it using inference scheme such as Markov Chain Monte Carlo or Variational Inference.
+
+In this report, we will focus on one particular problem: the damping case.
+Here, we do not have missing inputs; instead, we have missing dynamics that accounts for the dissipative forces. 
+Therefore, we invent the latent variable $z$ to represent the dissipative effect.
+Now, instead of the invariance in equation \ref{equ:invariance_equation} being equal to zero, $\frac{dE}{dt}\equiv\mathcal{L}[E]=0$, we have $\frac{dE}{dt}+z=0,$ so that now we have 
+\begin{equation}
+\mathcal{L}[E] + z = \frac{dE}{dt} + z =\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} + z = \sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i + z,
+\end{equation}
+which is therefore the a linear transformation on an augmented dynamics $\mathbf{f_b}=\begin{pmatrix}
+  \mathbf{f}\\z,
+\end{pmatrix}$
+and we will define this new linear transformation as $L_b$, which operates on $\mathbf{f_b}.$
+Effectively, we treat $z$ as dynamics with equal footing with $\mathbf{a}$ and $\mathbf{v}$.
+Following this argument, in a similar fashion as section 3.1, we will again put an GP prior on $z$ with RBF kernel, that is independent from $\mathbf{f}$.
+Now instead of equation \ref{equ:invariance_joint}, we have 
+$$
+\begin{pmatrix}
+\begin{pmatrix}\mathbf{f}(X)\\ z(X)\end{pmatrix}\\L_b[\mathbf{f}(X_L), z(X_L)]
+\end{pmatrix}
+\sim\mathcal{N}
+\left(\begin{pmatrix}\mathbf{0}_{3nd}\\\mathbf{0}_{\ell}\end{pmatrix}, \begin{pmatrix}
+    K & L_bK \\
+    KL_b^T & L_bKL_b^T\\
+\end{pmatrix}\right),
+$$
+where now 
+$$
+K = \begin{pmatrix}
+  K_f & 0 \\
+  0 & K_z\\
+\end{pmatrix},
+$$
+Finally, using the normal conditional formula \ref{equ:normal_condtion}, we have 
+\begin{equation}
+  \begin{pmatrix}\mathbf{f}(X) \\ z(X) \end{pmatrix}|L_b[\mathbf{f}(X_L), z(X_L)]=0 \sim \mathcal{N} \left(\mathbf{0}_{3nd}, \begin{pmatrix}
+    K-L_bK(L_bKL_b^T)^{-1}KL_b^T
+  \end{pmatrix}\right)
+\end{equation}
+
+As we only have the data for $\mathbf{f}(X)$, we will need to marginalise the joint distribution between $\mathbf{f}$ and $z$ by integrating over all possible $z$, $\int p(\mathbf{f},z) dz$.
+Fortunately, for multivariate normal distribution, if we have
+$$
+\begin{pmatrix}
+  x \\ y
+\end{pmatrix}
+\sim\mathcal{N}
+\left(
+  \begin{pmatrix}
+    m_x \\ m_y 
+  \end{pmatrix},
+\begin{pmatrix}
+  V_{xx} & V_{xy} \\ V_{yx} & V_{yy} \\
+\end{pmatrix}
+\right),
+$$
+then 
+$$
+x\sim\mathcal{N}(m_x, V_{xx}).
+$$
+We therefore have 
+$$
+\mathbf{f}(X)|L_b[\mathbf{f}(X_L), z(X_L)]=0 \sim \mathcal{N}(\mathbf{0}_{2nd}, [K-L_bK(L_bKL_b^T)^{-1}KL_b^T]_{[0:2nd, 0:2nd]}),
+$$
+where for a matrix $M$, $M_{[0:r,0:c]}$ is a submatrix of $M$ equal to the first $r$ rows and first $c$ columns of the $M$ (zero indexed).
+At the same time, we are able to get the posterior of $z$ in the same inference procedure. 
+If we denote 
+$$
+K-L_bK(L_bKL_b^T)^{-1}KL_b^T \equiv \begin{pmatrix}
+  V_{ff} & V_{fz} \\ V_{zf} & V_{zz} \\
+\end{pmatrix},
+$$
+where $V_ff$ is the submatrix of the full covariance matrix corresponds to variance of $\mathbf{f}(X)$ (i.e. the first $2nd$ rows and $2nd$ columns as before), the rest are defined accordingly.  
+Then using the normal condition formula \ref{equ:normal_condtion} once again, 
+$$
+z(X)|\mathbf{f}(X)=Y, L_b[\mathbf{f}(X_L), z(X_L)]=0
+\sim\mathcal{N}
+(V_{zf}V_{ff}^{-1}Y,\ V_zz-V_{zf}V_{ff}^{-1}V_{fz}),
+$$
+where $Y$ is the data for the dynamics.
 
 \chapter{Implementation}
 \section{Data Generation}
@@ -696,8 +814,8 @@ The performance is summarised in table \ref{tab:shm_performance}.
 \hline
 Method           & RBF & Known Invariance&  Learnt Invariance\\
   \hline
-Log Marginal Likelihood & 74.66 & 86.28 & 83.32  \\
-MSE & 3.5563 & 0.1057 & 0.0927 \\
+Log Marginal Likelihood & 67.67 & 82.00 & 79.24 \\
+MSE & 0.0950 & 0.0017 & 0.0027 \\
                     \hline
   \end{tabular}
   \caption{SHM performance}
@@ -851,8 +969,8 @@ The learnt polynomial is in \ref{fig:pendulum_learnt}.
     \hline
 Method           & RBF & Known Invariance&  Learnt Invariance\\
                     \hline
-Log Marginal Likelihood & 233.89 & 262.59 & 255.76  \\
-MSE & 0.0500 & 0.0025 & 0.0020 \\
+Log Marginal Likelihood & 299.12 & 331.66 & 325.76 \\
+MSE & 0.0021 & 0.0009 & 0.0006 \\
     \hline
   \end{tabular}
   \caption{Pendulum performance}
@@ -979,12 +1097,12 @@ The learnt $f(p)$ and $g(q)$ is shown in figure \ref{fig:damped_shm_learnt}.
 
 \begin{table}[H]
   \centering
-  \begin{tabular}{l l l l}
+  \begin{tabular}{l l l l l l}
     \hline
-Method           & RBF & Known Invariance&  Learnt Invariance\\
+Method           & RBF & Known Invariance&  Learnt Invariance & Known Invariance (latent) & Learnt Invariance (latent)\\
   \hline
-    Log Marginal Likelihood & 67.69 & 74.84 & 77.43  \\
-MSE & 0.9226 & 0.4772 & 0.2405 \\
+Log Marginal Likelihood & 636 & 647 & 646 & 649 & 653 \\
+MSE & 0.00142 & 0.00130 & 0.00134 & 0.00091 & 0.00101 \\
     \hline
   \end{tabular}
   \caption{Damped SHM performance}
@@ -1027,12 +1145,13 @@ With the learnt polynomial in \ref{fig:damped_pendulum_learnt}.
 
 \begin{table}[H]
   \centering
-  \begin{tabular}{l l l l}
+  \begin{tabular}{l l l l l l}
     \hline
-Method           & RBF & Known Invariance&  Learnt Invariance\\
+Method           & RBF & Known Invariance&  Learnt Invariance & Known Invariance (latent) & Learnt Invariance (latent)\\
   \hline
-Log Marginal Likelihood & 229.96 & 243.41 & 243.48  \\
-MSE & 0.5983 & 0.0323 & 0.0877 \\
+Log Marginal Likelihood & 516 & 525 & 525 & 548 & 522 \\
+MSE & 0.0012 & 0.0008 & 0.0008 & 0.0008 & 0.0008 \\
+
     \hline
   \end{tabular}
   \caption{Damped Pendulum Performance}
@@ -1173,8 +1292,8 @@ Since it is difficult to visualise 4 dimensional space, we will plot them indivi
     \hline
 Method           & RBF & Known Invariance&  Learnt Invariance\\
   \hline
-Log Marginal Likelihood & 429.50 & 474.23 & 471.04  \\
-MSE & 0.0207 & 0.0036 & 0.0035 \\
+Log Marginal Likelihood & 430.62 & 478.70 & 475.42  \\
+MSE & 0.0271 & 0.0035 & 0.0035 \\
                     \hline
   \end{tabular}
   \caption{Two-dimensional SHM Invariance performance}
@@ -1252,8 +1371,8 @@ Again we used 30 points to train, but this time we do not use scaling since perh
     \hline
 Method           & RBF & Known Invariance&  Learnt Invariance\\
   \hline
-Log Marginal Likelihood & 794.27 & 846.72 & 848.54  \\
-MSE & 0.0064 & 0.0019 & 0.0029 \\
+Log Marginal Likelihood & 783.46 & 838.41 & 869.09  \\
+MSE & 0.0040 & 0.0004 & 0.0018 \\
     \hline
   \end{tabular}
   \caption{Double pendulum invariance performance}
@@ -1275,9 +1394,19 @@ MSE & 0.0064 & 0.0019 & 0.0029 \\
 \end{figure}
 Now it is interesting to obsesrve that the marginal likelihood of the learnt form is even better than known form.
 This is likely due to "overfitting" of the large number of parameters from the polynomials (140 in total).
+But the degree of which is not too large so we would not add regularisation which can shrink the polynomials too much so that the invariance may seem to be obeyed but it is just close to zero since the coefficients are small.
 Also, we are only expanding up to the cubic term, therefore we do not expect very good learning for the invariance.
 However, in our case, the approximation is fairly good, possibly due to relatively small value of $q, p$ so the polynomial approximation is good.
 Nevertheless, it is clear that there is still some errors with learning invariance from figure \ref{fig:double_pendulum_energy} since it only flattens toward the end of the trajectory.
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_polynomial.pdf}
+  \centering
+  \caption{Double Pendulum learnt invariance}
+  \label{fig:double_pendulum_poly}
+\end{figure}
+This time we found a Pearson corrletaiton of $-0.3644$ with a p-value of $0.0093$ between MSE and log marginal likelihood.
+Combining with the fact that our optimised learnt kernel is better than the theortically approximately initialised kernel in both marginal likelihood and MSE, so we conclude that we have identified the correct invariance.  
 
 \chapter{Conclusion and Future Work}
 In this work, we have presented a new Gaussian Process model through an invariance kernel that is able to capture the invariance in a dynamical system and as a result, use it as an inductive bias to improve data efficiency and predictive performance in a wide range of one and two-dimensional physical systems. 

@@ -1444,6 +1444,10 @@ INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmss10.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmssbx10.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
+INPUT ./main.toc
+INPUT main.toc
+INPUT main.toc
+OUTPUT main.toc
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmr17.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
 INPUT c:/texlive/2021/texmf-dist/fonts/tfm/public/cm/cmbx8.tfm
@@ -1634,6 +1638,11 @@ INPUT ../codes/figures/double_pendulum_energy.pdf
 INPUT ../codes/figures/double_pendulum_energy.pdf
 INPUT ../codes/figures/double_pendulum_energy.pdf
 INPUT ../codes/figures/double_pendulum_energy.pdf
+INPUT ../codes/figures/double_pendulum_polynomial.pdf
+INPUT ../codes/figures/double_pendulum_polynomial.pdf
+INPUT ../codes/figures/double_pendulum_polynomial.pdf
+INPUT ../codes/figures/double_pendulum_polynomial.pdf
+INPUT ../codes/figures/double_pendulum_polynomial.pdf
 INPUT ./main.bbl
 INPUT main.bbl
 INPUT ./main.bbl
@@ -1662,6 +1671,7 @@ INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb
 INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb
 INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb
 INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb
+INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb
 INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
 INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb
 INPUT c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb

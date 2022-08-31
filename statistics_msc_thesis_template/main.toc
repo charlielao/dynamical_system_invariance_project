@@ -1,0 +1,40 @@
+\contentsline {chapter}{\numberline {1}Introduction}{3}{chapter.1}%
+\contentsline {chapter}{\numberline {2}Background}{4}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Gaussian Process}{4}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}GPflow}{7}{subsection.2.1.1}%
+\contentsline {section}{\numberline {2.2}Dynamical Systems}{7}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Symmetry and Invariances}{8}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Related Work}{9}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Physics Informed Machine Learning}{9}{subsection.2.4.1}%
+\contentsline {subsubsection}{\nonumberline Energy Conserving Neural Networks}{9}{subsubsection*.7}%
+\contentsline {subsubsection}{\nonumberline Symbolic approach}{10}{subsubsection*.9}%
+\contentsline {subsubsection}{\nonumberline ODE approach}{10}{subsubsection*.11}%
+\contentsline {subsection}{\numberline {2.4.2}Symmetry and Invariance in Machine Learning}{10}{subsection.2.4.2}%
+\contentsline {subsubsection}{\nonumberline Learning Invariance using Marginal Likelihood}{10}{subsubsection*.13}%
+\contentsline {subsubsection}{\nonumberline Geometric Deep Learning}{11}{subsubsection*.15}%
+\contentsline {subsection}{\numberline {2.4.3}GP in dynamical systems}{11}{subsection.2.4.3}%
+\contentsline {chapter}{\numberline {3}Invariance Kernel}{12}{chapter.3}%
+\contentsline {section}{\numberline {3.1}General Construction}{12}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Damped System}{14}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Learning Invariance}{15}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}One-dimensional system}{15}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Two-dimensional system}{15}{subsection.3.3.2}%
+\contentsline {section}{\numberline {3.4}Partially Observed System}{16}{section.3.4}%
+\contentsline {chapter}{\numberline {4}Implementation}{19}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Data Generation}{19}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Evaluation Method}{19}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Implementation Technicalities}{19}{section.4.3}%
+\contentsline {section}{\numberline {4.4}One-dimensional System}{20}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Linear SHM}{20}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Nonlinear Pendulum}{27}{subsection.4.4.2}%
+\contentsline {section}{\numberline {4.5}Invariance Density}{33}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Damped System}{34}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Damped SHM}{35}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Damped Pendulum}{37}{subsection.4.6.2}%
+\contentsline {section}{\numberline {4.7}Two-dimensional System}{39}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Linear SHM}{39}{subsection.4.7.1}%
+\contentsline {subsection}{\numberline {4.7.2}Non Linear Double Pendulum}{44}{subsection.4.7.2}%
+\contentsline {chapter}{\numberline {5}Conclusion and Future Work}{48}{chapter.5}%
+\contentsline {chapter}{\numberline {A}Appendix}{A1}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Effect of Jitter}{A1}{section.A.1}%
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
