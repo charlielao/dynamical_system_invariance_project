@@ -85,8 +85,8 @@
 Predicting the evolution of dynamical systems reliably has important practical values as they are used to model lots of natural and engineered processes across biology, physics and engineering.
 Particuarly in physics, the idea of symmetry and invariance are very powerful inductive bias we can embed into our statistical models that will help use improve the performance of model in terms of predictive performance and data efficiency.
 Examples of such invariance including conservation of energy or conservation of momentum.
-\cite{Mark2017} has shown marginal likelihood is a good objective function to uncover the underlying invariance and symmetry of the data, which was affine symmetry in this case. 
-In this report, we extend his work and propose a Gaussian Process model that is able to capture the invariance and hence recover the law of physics automatically.
+\cite{Mark2017} has shown marginal likelihood is a good objective function to uncover the underlying invariance and symmetry of the data, which was affine transformation of images in this case. 
+In this report, we extend their work and propose a Gaussian Process model that is able to capture the invariance and hence recover the law of physics automatically.
 We also show the discovered invariance as inductive bias greatly improved the data efficiency and predictive performance, which is tested on a variety of systems, including one and two-dimensional simple harmonic motion, nonlinear pendulum as well as double pendulum.
 We have also demonstrated that the model is robust even when the system is not ideal and has dissipative effect where the invariance no longer holds exactly. 
 \end{abstract}
@@ -112,16 +112,22 @@ However, the amount of data required to achieve reasonable performance are often
 Sometimes, the data could be very difficult to come by in biological and medical settings.
 Therefore, data efficiency is the key if we wish to study more complicated systems.
 Inductive bias, an intitial choice of hypothesis space (\cite{Baxter2000}), is one way to achieve this goal.
-Researchers have embeded the inductive bias into the model in some way so that the model "understands" this knowledge before seeing the data.
+Researchers have embeded the inductive bias into the model in different ways so that the model will possess some prior knowledge about either the task or data before seeing the data.
 Assuming the inductive bias is correct, we would expect the model to perform better, either in a data efficiency or prediction performance way.
 One very powerful inductive bias is the use of symmetry and invariances, that puts strong constraints on the model. 
-It is the basis of many modern powerful machine learning models, such as Convolution Neural Network, utilising the translational symmetry in natural images.
+It is the basis of many modern powerful machine learning models, such as Convolution Neural Network (CNN), utilising the translational symmetry in natural images.
+To illustrate, imagine in a binary classification task of dogs and cats, we need to distinguish a photo of a dog versus a cat. 
+The structure of CNN is designed such that the \textbf{same} filter, which can be thought of some sorts of detector, is scanned through different parts of the image.  
+As a result of that, it does not matter where the dog is located in the photo; let it be top right corner or bottom left corner, the same filter will be able to identify the dog either way.
+This greatly simplies the learning of the model.
+This is in contrast to feeding the data into a simple full connected neural network, where the information of where the dog is located will also be learnt and making the learning much less efficient and effective, and also redundant.
+We can therefore see how a correct inductive bias can massively simplify a problem.
 Nevertheless, in many of these models, the inductive bias is often built in to the structure by construction, which would require prior human knowledge.
 In order to learn inductive bias automatically, we need an objective function that encourages the model to discover the underlying symmetry and invariance underlying the data. 
-\cite{Mark2017} and \cite{Tycho2021} has demonstrated that using marginal likelihood as the objective is useful in learning the invariance, which is Affine transformation in their case.
+\cite{Mark2017} and \cite{Tycho2021} has demonstrated that using marginal likelihood as the objective is useful in learning the invariance, which is affine transformation of images in their case.
 Marginal likelihood $p(Y)=\int p(Y|X)p(X)dX$ ($Y$ is the target and $X$ is the input) measures how well the data is explained by the model.
 This metric is common in Bayesian model selection and in our case: identifying the correct invariance. 
-Gaussian Process (GP) was particuarly useful for this purpose thanks to its ability to estimate marginal likelihood accurately, and the inductive bias was embedded in the kernel function of the GP.
+Gaussian Process (GP) was particularly useful for this purpose thanks to its ability to estimate marginal likelihood accurately, and the inductive bias was embedded in the kernel function of the GP.
 In this project, we aim to extend this work to learn invariance in dynamical systems to improve the data efficiency of system evolution prediction.
 
 In the rest of the report, we will cover the essential theortical background to understand GP, dynamical systems, as well as symmmetry and invariances in section 2. We will also describe related work in this section.
@@ -202,7 +208,7 @@ $$
 
 Below we demonstrated an example adapted from \cite{GPflow2017} to showcase the fitting procedure of a GP.
 Different kernels defined by their various functional form as below imposes different prior knowledge on the GP prior.
-For instance, one of the most commonly used kernel, RBF, requires smoothness; Matern requires once differentiability; Periodic kernel requires the prior to have periodic structure obviously.
+For instance, one of the most commonly used kernel, RBF, requires smoothness; Matérn requires once differentiability; Periodic kernel requires the prior to have periodic structure obviously.
 Below in figure \ref{fig:prior} we showed 5 samples drawn from GP prior from each of the kernel, with mean zero.
 \begin{equation*}
   \begin{gathered}
@@ -239,7 +245,7 @@ A particular powerful feature is that it allows atuomatic tuning of hyperparamet
 In later sections, when we will need to optimise more parameters than aforementioned ones with respect to maginal likelihood objective, the library will be proved to be very useful.
 
 \section{Dynamical Systems}
-Dynamical system describes the evolution of a system in time, and can be broadly classified to two catergories: differential equations and difference equations, with the former being continous time and the latter being discrete time. (\cite{strogatz_2019}). 
+Dynamical system describes the evolution of a system in time, and can be broadly classified to two catergories: differential equations and difference equations, with the former being continous time and the latter being discrete time (\cite{strogatz_2019}). 
 Here, we will illustrate the theory and notation using continous time (differential equation) description.
 There are many real world systems that can be modelled by a dynamical system; for example a huge class of problems in engineering and physics or biological processes. 
 A simple example, which will also be explored later, is a damped harmonic oscillator, with equation of motion
@@ -293,11 +299,11 @@ For instance, if it is a rotational symmetric group then we will have $T$ corres
 In dynamical system, it has a slightly different interpretation.
 From \cite{marsden_sirovich_antman_2008}, in this description of dynamical system, we consider a generator $\mathcal{L}$, which is an operator that generates the evolution of some function quantitiy that depends on the phase space over time.
 If we have the ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[E]=\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),$$ followed by simple chain rule, where $E$ is some function of the phase.
-If we would like $E$ to be the invariance, we would then require $\mathcal{L}[E]=0$. 
+If we would like $E$ to be the conserved invariant quantity, we would then require $\mathcal{L}[E]=0$. 
 This will then define what we mean by invariance in the context of dynamical system: some quantity depending on the input that does not change along the evolution of the system.
 
 At first sight, there seems no apparent symmetry involved that is obvious like the rotational symmetry case. 
-Neverthless, in physics, there is a deeper connection between symmetry and invariance, namely the Neother's Theorem, which is rather involved in theoretical classical physics and interested readers can refer to \cite{lemos_2018}.
+Neverthless, in physics, there is a deeper connection between symmetry and invariance, namely the Noether's Theorem, which is rather involved in theoretical classical physics and interested readers can refer to \cite{lemos_2018}.
 In plain words, every conservation law (invariance) is associated with an underlying symmetry.
 For instance, conservation of momentum is obeyed when there is a spatial translation symmetry of the system. 
 Similarly, rotational symmetry is associated with the conservation of angular momentum.
@@ -345,7 +351,7 @@ however, again it does not use any knowledge of the invariances and symmetries.
 \subsubsection{Learning Invariance using Marginal Likelihood}
 This paper forms the basis of this project.
 In \cite{Mark2017}, the author proposes learning the form of invariances of the problem by parameterising the symmetry and optimise them with respect to the marginal liklihood.
-The main problem studied in the paper is the MNIST dataset, and that the symmetry under consideration is all form of Affine transformation, such as rotation, shear, translation; and the invariance in this case is the label of the digit. 
+The main problem studied in the paper is the MNIST dataset, and that the symmetry under consideration is all form of affine transformation of the images, such as rotation, shear, translation; and the invariance in this case is the label of the digit. 
 It suggests embedding the invariance in the model (GP in this case) as an alternative to data augementation.
 The authors created a special kind of kernel for GP that respects the symmetry of the problem.
 The results are very good compare to the baseline RBF kernel, and it also is able to recover the true paramertised invariance. 
@@ -503,7 +509,10 @@ The way we chose to do so is to parameterise our invariance function and allow t
 \subsection{One-dimensional system}
 There are many different ways to paramerterise an unknown function, including but not limited to Fourier representation, neural networks, wavelets, splines.
 As the problem is relatively bounded, we chose to use polynomial basis to paramertise the unknown function $L(p,q)$.
-In one-dimensional cases, for our examples, they are simple enough so that $L(p,q)$ is seperable so that we have a function of $p$ only, $f(p)$ and a different function of $q$ only, $g(q)$ so that they can be learnt seperately.
+This is very efficient in our cases since there will only be a few coefficents to learn.
+On the other hand, if we use much more expressive splines or neural networks, we will have many more parameters to optimise, and can even easily lead to overfitting.
+Not using Fourier series is because we know there can be many linear functions, and we may need a large number of Fourier series expansion to accomdate that; so the most natural choice for our task is to use polynomials.
+In one-dimensional cases, for our examples, they are simple enough so that $L(p,q)$ is separable so that we have a function of $p$ only, $f(p)$ and a different function of $q$ only, $g(q)$ so that they can be learnt seperately.
 In the one-dimensional SHM case, $f(p)=mp$ and $g(q)=kq$.
 For simple pendulum, we have $f(p)=\ell p$ and $g(q)=\sin q$.
 We will therefore set $$f(p)=\sum_{i=0}^{n_f}c_{f,i}p^i,\ g(q)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
@@ -635,12 +644,12 @@ For learning the invariance in 1D case, we can also further compare the true inv
 However, it is not possible to visualise in 2D cases so we will simply assess the conservation of energy (invariance) performance.
 
 \section{Implementation Technicalities}
-We will need to add jitter, a diagnoal matrix of small value, to the $LKL^T$ matrix in equation \ref{equ:invariance_condition}.
+We will need to add jitter, a diagonal matrix of small value, to the $LKL^T$ matrix in equation \ref{equ:invariance_condition}.
 This is due to the fact that we need the invert it and it will be more stable numerically if we add a little bit of jitter in the range of $10^{-6}$ to $10^{-4}$.
 As this is a common practice, its effect on the model will be in the Appendix for intereseted readers.
 Similarly, for stability, when backpropagating to optimise the hyperparameters with respect to marginal likelihood, we need to narrow the range of search such that the value is more reasonable.
 It is particularly important in our dynamical systems since, for example, in SHM the equation of motion is $a=-q$ and $v=p$, so that is will be a 2D plane extends to infinity;
-as a result, if the GP learns "correctly", the lengthscales of certain dimensions will be very large or $\infty$ (a property of ARD kernel, essentially able to set a dimension to constant), and it would not affect the performance a lot if we limit the lengthscales for a much smaller value to avoid instability.
+as a result, if the GP successfully recover the true invariance, the lengthscales of certain dimensions will be very large or $\infty$ (a property of ARD kernel, essentially able to set a dimension to constant), and it would not affect the performance a lot if we limit the lengthscales for a much smaller value to avoid instability.
 Therefore, here I would set the range of both lengthscales and variable to be around the two to three times the maximum range possible.
 For example, if we have maximum range of $\pm 3$, my upper bound for search is set to $10$ and lower bound is $10^{-3}$.
 Another change we made in two-dimensional SHM is to scale the data using MinMax scaler to squash them to be between $\pm 1$. 
@@ -1018,9 +1027,9 @@ MSE & 0.0021 & 0.0009 & 0.0006 \\
 \end{figure}
 
 From table \ref{tab:pendulum_performance}, figure \ref{fig:pendulum_prediction}, \ref{fig:pendulum_energy}.
-This time, again the RBF kernel performs poorly.
-The known kernel performs very well again, almost exactly the same as the ground truth.
-However, this time, the learnt invariance is slightly worse; this is expected since we are approximating a sine function with a cubic polynomial, and so some level of deviation is expected.
+This time, again the RBF kernel performs poorly in terms of perdictive performance.
+The known kernel predicts very well again, almost exactly the same as the ground truth.
+However, this time, the learnt invariance is slightly worse in predicting; this is expected since we are approximating a sine function with a cubic polynomial, and so some level of deviation is expected.
 As we can see from figure \ref{fig:pendulum_learnt}, the learning is increasingly accurate as it trains over time.
 From the posteriors in \ref{fig:posterior_pendulum}, we see RBF generalise much better due to extra data points, but it is still very far from giving a reasonable prediction. 
 
@@ -1053,7 +1062,7 @@ However, MSE first decreases then increases.
 The first decrease makes sense since with more invariance points, we should in principle predict better.
 However, the increase is counter-intuitive.
 We conclude that there is actually not that big a difference and it is possibly due to the numerical instability as we increase the size of the matrix with increasing invariance density.  
-We also see the deviation of energy decreases as we increase the number of invariance points, which makes sense because we are imposing "more" invariance in the input space by increasing the invariance density.
+We also see the deviation of energy decreases as we increase the number of invariance points, which makes sense because we are imposing stronger invariance contraints in the input space by increasing the invariance density.
 Lastly, we see the degree of freedom does not vary much either, while in theory it should decrease with increasing invariance density due to more constraints on the function.
 
 Overall, we see there is not that big an advantage to increase our invariance density beyond a certain point due to diminishing return in performance and $N^6$ computational cost.
@@ -1345,8 +1354,8 @@ Lastly, we confirm the above check to make sure we are indeed learning the corre
 We can see the freely optimised polynoimal is exactly the same as the fixed theoretically correct value, and are much better than the randomly initialised invariance. 
 We also found a Pearson correlation between log marginal likelihood and MSE of $-0.4274$ with a p value of $0.0020$, therefore, it is clear we are learning the correct invariance. 
 
-\subsection{Non Linear Double Pendulum}
-Now we will to introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
+\subsection{Nonlinear Double Pendulum}
+Now we will introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
 It has two mass blobs $m_1$ and $m_2$ as well as two lengths for the pendlum stem $\ell_1$ and $\ell_2$ as shown in figure \ref{fig:double_pendulum_diagram}.
 
 \begin{figure}[H]
@@ -1427,7 +1436,7 @@ Combining with the fact that our optimised learnt kernel is better than the theo
 \chapter{Conclusion and Future Work}
 In this work, we have presented a new Gaussian Process model through an invariance kernel that is able to capture the invariance in a dynamical system and as a result, use it as an inductive bias to improve data efficiency and predictive performance in several one and two-dimensional physical systems. 
 We construct this special invariance kernel by using the fact that invariances are linear transformation of the dynamics and the property of joint Gaussian distribution, and finally does the conditioning using simple Schur Complement calculation.
-To learn this invariance condition, we paramertise it with polynomials and optimise the coefficients by marginal likelihood objective. 
+To learn this invariance condition, we parameterise it with polynomials and optimise the coefficients by marginal likelihood objective. 
 The model is able to capture the correct invariance and recover the law of physics.
 We have also demonstrated it is also robust against dissiaptive effects using a noise variable to allow "soft invariance" as well as using a latent variable to model the dissipative forces. 
 
