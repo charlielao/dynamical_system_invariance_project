@@ -285,6 +285,9 @@ $$
 and this time it is one-dimensional with the phase variable being the population number.
 Another important concept is linearity and nonlinearity, which is referring to the $f_1, \dots ,f_n$ above.
 If they depend on $x_1, \dots, x_n$ linearly, then the system is linear, else it would be nonlinear.
+Other dynamical systems include predator-prey dynamics, planetry evolution, and many biological processes, such as drug treatments.
+The systems discussed in the report include simple harmonic oscillators and single/double pendulums.
+
 
 
 \section{Symmetry and Invariances}
@@ -298,7 +301,7 @@ Then we should have $f(T_g(x))=f(x)$ for any function $f$, in other words, invar
 For instance, if it is a rotational symmetric group then we will have $T$ corresponds to the rotation transformation of angle $g$, and we expect $f$ to be invariant under rotation.
 In dynamical system, it has a slightly different interpretation.
 From \cite{marsden_sirovich_antman_2008}, in this description of dynamical system, we consider a generator $\mathcal{L}$, which is an operator that generates the evolution of some function quantitiy that depends on the phase space over time.
-If we have the ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[E]=\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),$$ followed by simple chain rule, where $E$ is some function of the phase.
+If we have the ODE $\frac{dx}{dt}=f$; then \begin{equation}\mathcal{L}[E]=\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),\label{equ:LE}\end{equation} followed by simple chain rule, where $E$ is some function of the phase.
 If we would like $E$ to be the conserved invariant quantity, we would then require $\mathcal{L}[E]=0$. 
 This will then define what we mean by invariance in the context of dynamical system: some quantity depending on the input that does not change along the evolution of the system.
 
@@ -343,8 +346,10 @@ However, again these are very physics focused examples, and the symbolic represe
 
 \subsubsection{ODE approach}
 We can also directly works on the ODE that describes the physics of the system not dissimliar to PINN. 
-Neural ODE \cite{NeuralODE} is a great example of this; 
+Neural ODE (\cite{NeuralODE}) is a great example of this; 
 however, again it does not use any knowledge of the invariances and symmetries.
+In \cite{Lim2022}, they claimed that while Neural ODE is flexible, without built-in inductive biases of energy conservation, the model tends to grow or shrink in energy over a long period of time.
+Furthermore, due to the extremely flexible expressibility of nerual network, the ODE it learnt may not be the true physical model; which demonstrates the importance of building in such inductive bias.  
 
 \subsection{Symmetry and Invariance in Machine Learning}
 
@@ -431,19 +436,19 @@ $$
 with all the off diagonal terms being zero block matrix because of the independence prior assumption.
 This naive kernel will be our baseline to be compared to throughout the whole project.
 Now we can start considering the invariance. 
-If we assume the invariance is true throughout the input space $\mathbb{R}^{2d}$, then we can condition the GP on the a grid of points, which we referred to invariance points, $X_L$, and assume there are $\ell$ of them, and we will call the invariance constraints $\mathcal{L}[E]$ as shown in section 2.3.
+If we assume the invariance constraints has to hold throughout the input space $\mathbb{R}^{2d}$, then we can condition the GP on the a grid of points, which we referred to invariance points, $X_L$, and assume there are $\ell$ of them, and we will call the invariance constraints $\mathcal{L}[E]$ as shown in section 2.3.
 
 The form of $\mathcal{L}[E]$ will depend on the system as well as $X_\mathcal{L}$, and examples will be given in the following sections to make it clear.
 Since the conservation of energy, $E$, is one of the most common invariance in physical systems, we will focus on making use of this constraint.
 Therefore, we have $E=\text{energy}.$
 We can see the invariance constraints will always be a linear function on the dynamics $\mathbf{f}=\begin{pmatrix}
   \mathbf{a} \\ \mathbf{v}
-\end{pmatrix}$ almost by definition because of chain rule as follows: 
+\end{pmatrix}$ almost by definition because of chain rule as shown in the next paragraph.
 
 We have $\text{energy}=E(\mathbf{\theta}, \mathbf{p}, \mathbf{q})$, where $\mathbf{\theta}$ are constants that parameterised the energy function, like mass or gravity.
-Then we have 
+Then refering back to equation \ref{equ:LE}, we have 
 \begin{equation}
-\mathcal{L}[E] = \frac{dE}{dt}=\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} =\sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i
+\mathcal{L}[E] = \frac{dE}{dt}=\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} =\sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i(\mathbf{p,q}) + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i(\mathbf{p,q})
 \label{equ:invariance_equation}
 \end{equation}
 We can therefore see it is always a linear combination of dynamics with coefficients independent of dynamics.
@@ -502,17 +507,19 @@ We will also use a different method to model the dissipative dynamics of the sys
 
 \section{Learning Invariance}
 Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which has allowed us to derive the energy, $E$ and the invariance equation $L$ accordingly. 
-However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then the system is pretty much solved that we can just use an ODE integrator to obtain the trajectories. 
+However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then we can just use a numerical ODE integrator to obtain the trajectories. 
+On the other hand, even if we specify the form of invariance, we would not completely solve the system since there will still be some degree of freedom left as shown in the next chapter. 
 Therefore, we should find a way for the system to learn the form of invariance from data directly.
 The way we chose to do so is to parameterise our invariance function and allow the system to learn the coefficients by maximising the log marginal likelihood.
 
 \subsection{One-dimensional system}
 There are many different ways to paramerterise an unknown function, including but not limited to Fourier representation, neural networks, wavelets, splines.
-As the problem is relatively bounded, we chose to use polynomial basis to paramertise the unknown function $L(p,q)$.
-This is very efficient in our cases since there will only be a few coefficents to learn.
+As the problem is relatively bounded, we chose to use polynomial basis to paramertise the unknown function $\mathcal{L}[E]\equiv L[\mathbf{f}]$.
+In other words, we will be paramerterising the $\frac{\partial E}{\partial p_i}$ and $\frac{\partial E}{\partial q_i}$ term in equation \ref{equ:LE}.
+Using polynomial basis is very efficient in our cases since there will only be a few coefficents to learn.
 On the other hand, if we use much more expressive splines or neural networks, we will have many more parameters to optimise, and can even easily lead to overfitting.
 Not using Fourier series is because we know there can be many linear functions, and we may need a large number of Fourier series expansion to accomdate that; so the most natural choice for our task is to use polynomials.
-In one-dimensional cases, for our examples, they are simple enough so that $L(p,q)$ is separable so that we have a function of $p$ only, $f(p)$ and a different function of $q$ only, $g(q)$ so that they can be learnt seperately.
+In one-dimensional cases, for our examples, they are simple enough so that $L[\mathbf{f}]$ is separable so that we have a function of $p$ only, $f(p)$ and a different function of $q$ only, $g(q)$, such that $L[\mathbf{f}]=f(p)a+g(q)v$ so that $f, g$ can be learnt seperately.
 In the one-dimensional SHM case, $f(p)=mp$ and $g(q)=kq$.
 For simple pendulum, we have $f(p)=\ell p$ and $g(q)=\sin q$.
 We will therefore set $$f(p)=\sum_{i=0}^{n_f}c_{f,i}p^i,\ g(q)=\sum_{i=0}^{n_g}c_{g,i}q^i,$$
@@ -522,9 +529,15 @@ where $c_{f,i}, c_{g,i}$ are the parameters we will optimise based on marginal l
 In two-dimension, things are a bit more complicated. 
 For example, it is very clear that in double pendulum, the invariance constraints is not seperable.
 Instead, we need to consider all combinations of polynomials; i.e. multivariate polynomial.
-Therefore, for two-dimension we have $L(p_1, p_2, q_1, q_2)$ being the combination of $f_1(p_1), f_2(p_2), g_1(q_1), g_2(q_2)$.
+Therefore, for two-dimension we have $L(p_1, p_2, q_1, q_2)$ being the combination of $f_1(p_1, p_2, q_1, q_2), f_2(p_1, p_2, q_1, q_2), g_1(p_1, p_2, q_1, q_2), g_2(p_1, p_2, q_1, q_2)$, $L(\mathbf{f})=f_1(p_1, p_2, q_1, q_2)a_1+f_2(p_1, p_2, q_1, q_2)a_2+g_1(p_1, p_2, q_1, q_2)v_1+g_2(p_1, p_2, q_1, q_2)v_2$.
 We will paramertise each of $f_1, f_2, g_1, g_2$ with $$\sum_{i,j,k,l=0}^{n}c_{ijkl}p_1^ip_2^jq_1^kq_2^l$$
 Therefore, there will be many more coefficients to be optimised.
+We can calculate the number by using the combination with replacement formula
+$$
+C^R(n, r) = \frac{(n+r-1)!}{r!(n-1)!},
+$$
+where $n$ is the number of choices (4 in this case) and $r$ is the number we are choosing.
+For example, if we wish to have a cubic polynomial, then we would require $\frac{(4+3-1)!}{3!(4-1)!}+\frac{(4+2-1)!}{2!(4-1)!}+\frac{(4+1-1)!}{1!(4-1)!}+\frac{(4+0-1)!}{0!(4-1)!}=35$ parameters for each polynomial so we would require $35\times 4=140$ parameters in total.
 
 \section{Partially Observed System}
 Partially observed data can be very common in dynamical system.
@@ -627,15 +640,13 @@ where $Y$ is the data for the dynamics.
 \chapter{Implementation}
 \section{Data Generation}
 To generate the data, we use a Runge-Kutta integrator to generate data using the equation of motions for each problem. 
-We also added some small Gaussian noise $10^{-8}$ to the dynamics to reflect the real world better as well as stablising the integrator.
+We also added some small Gaussian noise $10^{-8}$ to the dynamics (the time derivative of variables) when integrating to reflect the real world better as well as stablising the integrator.
 Since we aim to predict the value of dynamics at any point in the input space, we use the dynamics as targets , Y. 
 This is done by combining forward and backward finite difference (midpoint method) to compute the gradient. 
+To illustate, $f'(x_1)=\frac{f(x_2)-f(x_0)}{2h}$, where $h$ is the spacing between $x_0, x_1$ and $x_1, x_2$ and $f'(x_1)$ is the derivative evaluate at $x_1$.
 We also choose the time step to be $0.01$ to ensure sufficient accuracy for the integrator.
 For training data, X, we choose a few random starting point within a range (datails depends on the task as described later) in the input space and generate data from there for a number of timesteps (which is fixed at 10 points per trajectory in this report). 
 To assess the performance, we generate the test set using the same input range, we will pick three different starting points and then average the result.
-Without loss of generality, we choose $m=k=1$ and $g=\ell=1$ for 1D and 2D SHM and simple pendulum for simplicity of presentation. 
-For the damping, we will choose $\gamma= 0.1$, which is fairly strongly damped as shown in figure \ref{fig:damped_pendulum_trajectory}, \ref{fig:damped_shm_trajectory}. 
-For double pendulum, we also set $m_1=m_2=\ell_1=\ell_2=g=1.$
 
 \section{Evaluation Method}
 We will mainly use the mean squared error (MSE) between the trajectory prediction and ground truth as our evaluation metrics. 
@@ -662,8 +673,9 @@ However, conditioning on a grid of invariance points is simply not scalable in h
 If we have an invariance density of 10 in a $\pm 5$ range for 2D SHM (spacing of 1), then we will have 10000 points. 
 We can easily run out of memory and also taking the matrix inverse are very difficult and time consuming.
 As a result, to make the approach scalable to high dimensional space, we will use the idea of local invariance. 
-The idea is straightforward, we simply sample uniformly (30-80 points) in the local region around the training and testing points and set them as $X_L$ (we choose a torus shape around the data points so that we will not have invariance points too close to the data points, which will be unstable).
+The idea is straightforward, we simply sample uniformly (20-80 points) in the local region around the training and testing points and set them as $X_L$ (we choose a torus shape around the data points so that we will not have invariance points too close to the data points, making it unstable).
 Note that we only sampled once, so that the same local grid will be centred on every training and testing points; this is done to remove the randomness for stability and dependence on the data.
+We will still have the global grid invariance points as before (but fewer) so that we can still impose some degree of invariance if the test points are very far from the training points.
 This works on the assumption that only the region around testing points will be the most important to predict in terms of conditioning; and to use the same kernel, we also have to condition on the region around training points, which is also important to help maximising the marginal likelihood objective when we are learning the invariance function.
 Another evidence that supports the use of local invariance, which have much fewer points than using a grid, is demonstrated below where we show that there is a diminishing return in increasing the number of invariance points so that actually not that many invariance points is needed to achieve a good performance. 
 
@@ -803,6 +815,7 @@ $$
 we will then call the resulting covariance our Invariance Kernel for 1D SHM, $K_L$.
 
 Now we look at how it works in practice.
+Without loss of generality, we choose $m=k=1$ and $g=\ell=1$ for 1D and 2D SHM and simple pendulum for simplicity of presentation. 
 For the data we only have one trajectory starting randomly in $-3\le q\le3$ and $p$ to be between $\pm 0.3$.
 We chose $p$ to be smaller so that the future trajectory does not overshoot the upper bound of $q$ too much. 
 We allow the integrator to run for $0.1$ seconds so there will be in total 10 training points (10 time steps). 
@@ -1079,6 +1092,7 @@ $$
 and the $\gamma$ is the damping factor that controls how much frictional force there is. 
 Note that we will only focus on underdamping case ($\gamma < \omega_0^2$)so that the system still oscillate but with gradually reduced amplitude instead of critical damped ($\gamma=\omega_0^2$) or overdamped ($\gamma>\omega_0^2$) case where the system simply slowly decays to still.
 An example trajectory for damped SHM and damped pendulum is shown below in figure \ref{fig:damped_trajectory}.
+For the damping, we will choose $\gamma= 0.1$, which is fairly strongly damped as shown in figure \ref{fig:damped_pendulum_trajectory}, \ref{fig:damped_shm_trajectory}. 
 
 \begin{figure}[H]
      \centering
@@ -1385,6 +1399,7 @@ L(a_1, a_2, v_1, v_2)=\frac{dE}{dt} = (m_1+m_2)gl_1\sin\theta_1v_1+m_2gl_2\sin\t
 The form of the invariance matrix is too cubersome to write down, but the derivation is as straightforward as before. 
 
 For our experiment, with double pendulum, we have angles being between $\pm 60^\circ$ and angular velocity between $\pm 10^\circ$.
+We also set $m_1=m_2=\ell_1=\ell_2=g=1.$
 We again initialised the polynomial coefficients at the correct theoretical value.
 However, this time, because we are approximating, we do not expect that intial value to perform great so we can only used the third evaluation procedure to verify it is learning the invariance along with its energy conserving performance.
 The results are summarised in table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}, \ref{fig:double_pendulum_energy}.
