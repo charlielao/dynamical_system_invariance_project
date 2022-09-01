@@ -1267,7 +1267,7 @@ $$
 \end{pmatrix}
 \sim\mathcal{N}
 \left(\begin{pmatrix}
-  \mathbf{0}_{3nd}\\\mathbf{0}_\ell
+  \mathbf{0}_{3n}\\\mathbf{0}_\ell
 \end{pmatrix},\begin{pmatrix}
   A & B\\ C&D\\
 \end{pmatrix}\right),
@@ -1290,7 +1290,7 @@ $$
 
 Finally, we use equation \ref{equ:normal_condtion} and marginalisation to arrive at
 $$
-\mathbf{f}(X)|L_\gamma[\mathbf{f}(X_L),z(X_L)]=0 \sim \mathcal{N}(\mathbf{0}_{2nd}, [A-BD^{-1}C]_{[0:2nd, 0:2nd]})
+\mathbf{f}(X)|L_\gamma[\mathbf{f}(X_L),z(X_L)]=0 \sim \mathcal{N}(\mathbf{0}_{2n}, [A-BD^{-1}C]_{[0:2nd, 0:2nd]})
 $$
 as explained in section 3.4 to get our modified invariance kernel.
 For the derivation of posterior of $z$, please see section 3.4 to obtain appropriate sub matrixes from $A-BD^{-1}C$.
@@ -1410,7 +1410,7 @@ However, this time, the learnt polynomial is not as good as the undamped case wi
 
 
 \section{Two-dimensional System}
-A two-dimensional system is not that different from an one-dimensional system. The major difference being there will be two more variables. 
+A two-dimensional system is not that different from an one-dimensional system. The major difference being there will be two more input variables and hence two more dynamics term as well. 
 We will again look at two simple examples, a linear two-dimensional SHM, and a nonlinear double pendulum.
 
 \subsection{Linear SHM}
@@ -1419,26 +1419,27 @@ A simple extension to one-dimensional SHM to two-dimensional is just allowing th
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.4\linewidth]{../figures/2dshm.pdf}
-        \caption{2D SHM illustration}
+        \caption{Two-dimensional mass-spring system exhibiting two-dimensional simple harmonic motion.}
         \label{fig:shm_2d_diagram}
 \end{figure}
 
-Again, the equations are simple that we have two equations for the two coordinates.
+Again, the equations of motions are simple and similiar to the one-dimensional case, but now we have two equations for the two coordinates, $q_1, q_2$, which are displacement in the horizontal and vertical direction.
+We also have $p_1, p_2$ being the velocity in the corresponding directions.
 $$
 \begin{cases}
     \frac{d^2{q_1}}{dt^2} = -\frac{k}{m}q_1\\
     \frac{d^2{q_2}}{dt^2} = -\frac{k}{m}q_2\\
 \end{cases}
 $$
-The analytical solution is exactly the same, but now there are two of them with differing amplitudes and phases depending on the initial condition. 
-And now we have $$\mathbf{f}(X)=\begin{pmatrix}
+The analytical solution is exactly the same as the one-dimensional case, but now there are two of them with differing amplitudes and phases depending on the initial condition. 
+For the dynamics, we now have $$\mathbf{f}(X)=\begin{pmatrix}
     \mathbf{a_1}(X)\\
     \mathbf{a_2}(X)\\
     \mathbf{v_1}(X)\\
     \mathbf{v_2}(X)\\
 \end{pmatrix},$$
 where $\mathbf{a_1}$ and $\mathbf{a_2}$ are the dynamics or time derivative for $\mathbf{p_1}$ and $\mathbf{p_2}$ respectively; similarly $\mathbf{v_1}$ and $\mathbf{v_2}$ are the time derivative of $\mathbf{q_1}$ and $\mathbf{q_2}$.
-In this system, the energy is the sum of energy in the two directions so $E=\frac{m(p_1^2+p_2^2)}{2}+\frac{k(q_1^2+q_2^2)}{2}$ and so the invariance $L(a_1, a_2, v_1, v_2)=\frac{dE}{dt}=mp_1a_1+mp_2a_2+kq_1v_1+kq_2v_2=0.$
+In this system, the energy is the sum of energy in the two directions so $E=\frac{m(p_1^2+p_2^2)}{2}+\frac{k(q_1^2+q_2^2)}{2}$ and so the invariance $$L[\mathbf{f}]=\frac{dE}{dt}=mp_1a_1+mp_2a_2+kq_1v_1+kq_2v_2=0.$$
 Now our naive baseline GP has the kernel
 $$
 K(X,X')=\begin{pmatrix}
@@ -1475,41 +1476,42 @@ B=\begin{pmatrix}
     K_{RBF, v_2}\\
 \end{pmatrix}\odot
 \begin{pmatrix}
-mP_{1L}  \\
-mP_{2L}  \\
-kQ_{1L}  \\
-kQ_{2L}  \\
+mP_{1,L}  \\
+mP_{2,L}  \\
+kQ_{1,L}  \\
+kQ_{2,L}  \\
 \end{pmatrix},
 C=B^T 
 $$
 
 \begin{gather*}
-D=K_{RBF,a_1}m^2\odot(p_{1L}\otimes p_{1L}) + K_{RBF,a_2}m^2\odot(p_{2L}\otimes p_{2L})\\+K_{RBF,v_1}k^2\odot(q_{1L}\otimes q_{1L})+K_{RBF,v_2}k^2\odot(q_{2L}\otimes p_{2L})
+D=K_{RBF,a_1}m^2\odot(p_{1,L}\otimes p_{1,L}) + K_{RBF,a_2}m^2\odot(p_{2,L}\otimes p_{2L})\\+K_{RBF,v_1}k^2\odot(q_{1,L}\otimes q_{1,L})+K_{RBF,v_2}k^2\odot(q_{2,L}\otimes p_{2,L})
 \end{gather*}
 
 where the terms are defined the exact same way as before, but now with respect to different coordinates, and the derivation are also the same.
-We will then again take the Schur Complement as in equation \ref{equ:normal_condtion} as before.
+Finally, we will take the Schur Complement as in equation \ref{equ:normal_condtion} as before.
+The cases for the paramerterised invariance is simliar, which is omitted due to space.
+From section 3.3.2, we know that $L[\mathbf{f}]=f_1(p_1, p_2, q_1, q_2)a_1+f_2(p_1, p_2, q_1, q_2)a_2+g_1(p_1, p_2, q_1, q_2)v_1+g_2(p_1, p_2, q_1, q_2)v_2$, so that we will swap out $mP_{1,L}$ with $f_1$ and so on.
 
-For implementation, we again use the same set of input space as the one-dimensional space, but double the dimensions. 
-Here we actaully have the input space of $q_1, q_2$ being between $\pm 5$ and $p_1, p_2$ between $\pm 0.5$. 
-This is done so that when we scale the data with MinMax scaler, the points will be less clustered.
-We use 30 points in this setting.
-\textbf{One very important note} is that when we are learning invariance, we initialise the hyperparameters of the base RBF kernel (lengthscales and variance local grids as well as likelihood variance) at the values trained by the known invariance.
-We also intialise the polynomial coefficients at the true theoretical values.
-These are done due to the fact the optimiser is often stuck at local minima.
-We intialise the values there so that if it is indeed the true invariance, the optimiser should regonise it and not optimise too much since that is roughly the true minimum.
+For experiment, we again use the same set of input space as the one-dimensional space, but double the dimensions, so that we have $p_1, p_2, q_1, q_2$ all be between $\pm 2$. 
+For simplicity, we again set $m=k=1$.
+We use 30 points in this setting with three trajectories and 10 time steps each.
+\textbf{One very important note} is that when we are learning invariance in this case, we initialise the hyperparameters of the base RBF kernel (lengthscales and variance local grids as well as likelihood variance) at the values trained by the known invariance.
+We also intialise the polynomial coefficients at the true theoretical values, which in this case will be degree one polynomial with coefficients being 0 or 1.
+These are done due to the fact the optimiser often stucks at local minima.
+We intialise the values there so that if it is indeed the true invariance, the optimiser should regonise it and not optimise too much far there since that is roughly the true minimum.
 Therefore, we would expect to get similar performance and marginal likelihood.
 We use three different ways to verify indeed it is learning the correct invariance.
 \begin{enumerate}
   \item Fix the polynomials coefficients, which are randomly initialised, of 50 points and optimise the other hyperparameters (lengthscale, variance etc.); then we will evaluate their performance and marginal likelihood compare to the correct one; which is expected to be the best in both measure. 
-  \item We will then find the correlation between the marginal likelihood and predictive performance, which is expect to be positive.
-  \item Lastly, we will allow the polynomial coefficients to be optimised, and we should see better marginal likelihood with better perdicitve performance or similar as fixing the polynomial coefficients.
+  \item We will then find the correlation between the marginal likelihood and predictive performance, which is expect to be positive (negative between marginal likelihood and MSE).
+  \item Lastly, we will allow the polynomial coefficients to be optimised from the theoretical value, and we should see better marginal likelihood with better perdicitve performance or similar as fixing the polynomial coefficients.
 \end{enumerate}
 
-We can also assess its energy conserving performance since the true invariance will allows the energy to be conserved. 
+We can also assess its energy conserving performance since the true invariance will force the energy to be conserved. 
 
-The results are summarised in table \ref{tab:SHM_2d_performance} and figure \ref{fig:shm_2d_prediction}, \ref{fig:shm_2d_energy}.
-Since it is difficult to visualise 4 dimensional space, we will plot them individually.
+The prediction results are summarised in table \ref{tab:SHM_2d_performance} with example trajectory in figure \ref{fig:shm_2d_prediction} and energy prediction in figure \ref{fig:shm_2d_energy}.
+Since it is difficult to visualise the trajectory 4 dimensional space, we will plot each coordinates individually with respect to time.
 
 \begin{table}[H]
   \centering
@@ -1521,51 +1523,52 @@ Log Marginal Likelihood & 430.62 & 478.70 & 475.42  \\
 MSE & 0.0271 & 0.0035 & 0.0035 \\
                     \hline
   \end{tabular}
-  \caption{Two-dimensional SHM Invariance performance}
+  \caption{Two-dimensional SHM Invariance performance. We can see the invariance kernels do much better than the RBF, with the same performance between known and learnt invariance.}
   \label{tab:SHM_2d_performance}
 \end{table}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_predicted.pdf}
   \centering
-  \caption{Two-dimensional SHM prediction}
+  \caption{Two-dimensional SHM prediction. We see the invariance kernel is very close to predict the ground truth, while RBF is again not generalising well.}
   \label{fig:shm_2d_prediction}
 \end{figure}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_energy.pdf}
   \centering
-  \caption{Two-dimensional SHM energy}
+  \caption{Two-dimensional SHM energy. The invariance kernel does very well in preserving the energy while the RBF does not respect the invariance at all.}
   \label{fig:shm_2d_energy}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_polynomial.pdf}
+  \centering
+  \caption{Two-dimensional SHM learnt invariance. We can see that theoretically initialised value and the freely optimised polynomial invarinace coincide and have much better MSE and marginal likelihood than the randomly initialised invariance kernel. Proving that the model is able to recognise the true invariance.}
+  \label{fig:shm_2d_poly}
 \end{figure}
 
 Firstly, we can see that the invariance kernel still performs very well compared to RBF, although not as good as the 1D case as expected since higher dimensional problem is deemed to be more difficult.
 We can see the learnt invariance again is almost exactly the same as the known form, which is reassuring.
 Also, the conservation of energy is again pretty well obeyed.
 
-\begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_polynomial.pdf}
-  \centering
-  \caption{Two-dimensional SHM learnt invariance}
-  \label{fig:shm_2d_poly}
-\end{figure}
 
 Lastly, we confirm the above check to make sure we are indeed learning the correct invariance.
 We can see the freely optimised polynoimal is exactly the same as the fixed theoretically correct value, and are much better than the randomly initialised invariance. 
 We also found a Pearson correlation between log marginal likelihood and MSE of $-0.4274$ with a p value of $0.0020$, therefore, it is clear we are learning the correct invariance. 
 
 \subsection{Nonlinear Double Pendulum}
-Now we will introduce double pendulum, which is a fairly nonlinear system and quite complicated. 
-It has two mass blobs $m_1$ and $m_2$ as well as two lengths for the pendlum stem $\ell_1$ and $\ell_2$ as shown in figure \ref{fig:double_pendulum_diagram}.
+Here we will introduce double pendulum, which is a very nonlinear system and much more complicated than all the cases we have seen before. 
+It has two mass blobs $m_1$ and $m_2$ as well as two lengths for the pendulum string $\ell_1$ and $\ell_2$ as illustrated in figure \ref{fig:double_pendulum_diagram}.
 
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.4\linewidth]{../figures/doublependulum.pdf}
-        \caption{Double Pendulum illustration}
+        \caption{Double Pendulum with much more degree of freedom, and is often an example of chaotic system.}
         \label{fig:double_pendulum_diagram}
 \end{figure}
 
-The defining equations are as follows:
+The defining equation of motion is as follows:
 $$
 \begin{cases}
 \frac{d^2q_1}{dt^2}=\frac{-g\left(2 m_{1}+m_{2}\right) \sin q_1-m_{2} g \sin \left(q_1-2 q_2\right)-2 \sin \left(q_1-q_2\right) m_{2}\left(p_2^{2} l_{2}+p_1^{2} l_{1} \cos \left(q_1-q_2\right)\right)}{l_{1}\left(2 m_{1}+m_{2}-m_{2} \cos \left(2 q_1-2 q_2\right)\right)} \\
@@ -1577,19 +1580,19 @@ We also have form of energy
 $$
 E = -(m_1+m_2)gl_1\cos q_1-m_2gl_2\cos q_2+ \frac{m_1l^2_1p_1^2}{2}+\frac{m_2}{2}(l^2_1p_1^2+l^2_2p_2^2+2l_1l_2p_1p_2\cos(q_1-q_2))
 $$
-While the form is more complicated, the underlying principle to construct the invariance kernel. 
-We again differentiate with respect to time and set it to zero to obtain the invariance equation to obtain 
+While the form is more complicated, the underlying principle to construct the invariance kernel is exactly the same as before. 
+We again differentiate the energy with respect to time and set it to zero to obtain the invariance equation to obtain 
 \begin{gather*}
-L(a_1, a_2, v_1, v_2)=\frac{dE}{dt} = (m_1+m_2)gl_1\sin\theta_1v_1+m_2gl_2\sin\theta_2v_2+m_1l_1^2\dot{\theta}_1a_1+\\m_2(l_1^2\dot{\theta}_1a_1+l_2^2\dot{\theta}_2a_2+l_1l_2(\dot{\theta}_2\cos(\theta_1-\theta_2)a_1+\dot{\theta}_1\cos(\theta_1-\theta_2)a_2-\dot{\theta_1}\dot{\theta_2}\sin(\theta_1-\theta_2)(v_1-v_2)))=0
+L[\mathbf{f}]=\frac{dE}{dt} = (m_1+m_2)gl_1\sin\theta_1v_1+m_2gl_2\sin\theta_2v_2+m_1l_1^2\dot{\theta}_1a_1+\\m_2(l_1^2\dot{\theta}_1a_1+l_2^2\dot{\theta}_2a_2+l_1l_2(\dot{\theta}_2\cos(\theta_1-\theta_2)a_1+\dot{\theta}_1\cos(\theta_1-\theta_2)a_2-\dot{\theta_1}\dot{\theta_2}\sin(\theta_1-\theta_2)(v_1-v_2)))=0
 \end{gather*}
-The form of the invariance matrix is too cubersome to write down, but the derivation is as straightforward as before. 
+The form of the invariance matrix is too cubersome to write down so it omitted here, but the derivation is as straightforward as before. 
 
-For our experiment, with double pendulum, we have angles being between $\pm 60^\circ$ and angular velocity between $\pm 10^\circ$.
+For our experiment, with double pendulum, we have angles being between $\pm 60^\circ$ and angular velocity between $\pm 10^\circ$, so as to not make the motion too chaotic.
 We also set $m_1=m_2=\ell_1=\ell_2=g=1.$
-We again initialised the polynomial coefficients at the correct theoretical value.
-However, this time, because we are approximating, we do not expect that intial value to perform great so we can only used the third evaluation procedure to verify it is learning the invariance along with its energy conserving performance.
-The results are summarised in table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}, \ref{fig:double_pendulum_energy}.
-Again we used 30 points to train, but this time we do not use scaling since perhaps due to its nonlinear nature, it made the performance much worse by possibly modifying its underlying distribution.
+As the practice before, we initialised the polynomial coefficients at the correct theoretical value.
+However, this time, because we are approximating to cubic terms only, we do not expect that initial values to perform great so we can only used the third evaluation procedure to verify it is learning the invariance along with its energy conserving performance.
+We used five trajectories of length 10 time steps each.
+The results are summarised in table \ref{tab:double_pendulum_performance} and predictions of trajectory in figure \ref{fig:double_pendulum_prediction} and of energy in figure \ref{fig:double_pendulum_energy}.
 
 \begin{table}[H]
   \centering
@@ -1601,23 +1604,31 @@ Log Marginal Likelihood & 783.46 & 838.41 & 869.09  \\
 MSE & 0.0040 & 0.0004 & 0.0018 \\
     \hline
   \end{tabular}
-  \caption{Double pendulum invariance performance}
+  \caption{Double pendulum invariance performance. We can see the known invariance is very accurate compare to RBF, but the learnt invariance is much poorer, but still a lot better than baseline. This is likely due to the approximations made with polynomials.}
   \label{tab:double_pendulum_performance}
 \end{table}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_predicted.pdf}
   \centering
-  \caption{Double pendulum prediction}
+  \caption{Double pendulum prediction. We can see RBF again does not generalise well, while the invariance kernels (even the learnt one) is predicting very well to the ground truth.}
   \label{fig:double_pendulum_prediction}
 \end{figure}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_energy.pdf}
   \centering
-  \caption{Double pendulum energy}
+  \caption{Double pendulum energy. Here the known invariance is preserving the energy as expected, while the learnt invariance is slightly off but we can still tell it is trying to obey the constraints. On the other hand, the RBF completely disregards energy conservation.}
   \label{fig:double_pendulum_energy}
 \end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_polynomial.pdf}
+  \centering
+  \caption{Double Pendulum learnt invariance. Here we see the freely optimsed learnt invariance being better in both marginal likelihood and preditive performance than the theoretically approximately initialised ones as expected. Therefore, we conclude that the model is able to correctly identify the invariance.}
+  \label{fig:double_pendulum_poly}
+\end{figure}
+
 Now it is interesting to obsesrve that the marginal likelihood of the learnt form is even better than known form.
 This is likely due to "overfitting" of the large number of parameters from the polynomials (140 in total).
 But the degree of which is not too large so we would not add regularisation which can shrink the polynomials too much so that the invariance may seem to be obeyed but it is just close to zero since the coefficients are small.
@@ -1625,12 +1636,6 @@ Also, we are only expanding up to the cubic term, therefore we do not expect ver
 However, in our case, the approximation is fairly good, possibly due to relatively small value of $q, p$ so the polynomial approximation is good.
 Nevertheless, it is clear that there is still some errors with learning invariance from figure \ref{fig:double_pendulum_energy} since it only flattens toward the end of the trajectory.
 
-\begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_polynomial.pdf}
-  \centering
-  \caption{Double Pendulum learnt invariance}
-  \label{fig:double_pendulum_poly}
-\end{figure}
 This time we found a Pearson corrletaiton of $-0.3644$ with a p-value of $0.0093$ between MSE and log marginal likelihood.
 Combining with the fact that our optimised learnt kernel is better than the theortically approximately initialised kernel in both marginal likelihood and MSE, so we conclude that we have identified the correct invariance.  
 
