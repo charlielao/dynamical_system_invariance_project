@@ -225,7 +225,7 @@ where $r=|x-x'|$, the distance between two input.
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../figures/prior.pdf}
   \centering
-  \caption{Samples from different GP priors of RBF, Matérn and periodic kernel}
+  \caption{Samples from different GP priors of RBF, Matérn and periodic kernel. We can see different kernels enforce different prior on the GP and hence the different behaviours (periodic, smoothness etc.) of the function sample.}
   \label{fig:prior}
 \end{figure}
 
@@ -236,7 +236,7 @@ We also sampled 10 posteriors.
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../figures/posterior.pdf}
   \centering
-  \caption{GP fit of the function $f=(x+x^2)\sin(x)$ with posterior samples, light shaded blue indicates 95\% credible interval}
+  \caption{GP fit of the function $f=(x+x^2)\sin(x)$ with posterior samples, light shaded blue indicates 95\% credible interval. We can see that away from data, the GP is more uncertain.}
   \label{fig:posterior}
 \end{figure}
 
@@ -867,7 +867,8 @@ Now we can simply use the Gaussian conditional formula to obtain the Schur Compl
 \label{equ:shm_invariance}
 \end{equation}
 we will then call the resulting covariance our Invariance Kernel for one-dimensional SHM.
-If instead we are paramerterising the invariance functions with polynomials, we will have 
+
+If instead we are paramerterising the invariance functions with polynomials, we have $L[\mathbf{f}]=f(p)a+g(q)v$, so we obtain
 \begin{equation}
 L[\mathbf{f}(X_L)] = \begin{pmatrix}
    f(p_{L,1})a(q_{L,1},p_{L,1}) + g(q_{L,1})v(q_{L,1},p_{L,1})\\ 
@@ -943,14 +944,14 @@ Log Marginal Likelihood & 67.67 & 82.00 & 79.24 \\
 MSE & 0.0950 & 0.0017 & 0.0027 \\
                     \hline
   \end{tabular}
-  \caption{SHM performance. We can see using the invariance greatly increases the marginal likelihood as well as improving the prediction performance, we can also see that the learnt invariance has slightly worse performance than the exact one}
+  \caption{SHM performance. We can see using the invariance greatly increases the marginal likelihood as well as improving the prediction performance, we can also see that the learnt invariance has slightly worse performance than the exact one.}
   \label{tab:shm_performance}
 \end{table}
 
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.8\linewidth]{../codes/figures/shm_predicted.pdf}
-        \caption{One SHM predicted trajectory. We can see the baseline RBF kernel is completely unable to predict since it relies on data to generalise and if the test points are far from the training points, it will have weak predictive power, similar to figure \ref{fig:posterior}. On the other hand, the invariance constraints greatly improve the generalisability of the model and give precise prediction.}
+        \caption{One SHM predicted trajectory. We can see the baseline RBF kernel is completely unable to predict. On the other hand, the invariance constraints greatly improve the generalisability of the model and give precise prediction.}
         \label{fig:shm_prediction}
 \end{figure}
 
@@ -983,16 +984,16 @@ MSE & 0.0950 & 0.0017 & 0.0027 \\
          \caption{SHM invariance posterior}
          \label{fig:posterior_shm_invariance}
      \end{subfigure}
-        \caption{SHM posteriors. We see here the two posteriors have different fit, which leads to different predictive power. Here the invariance kernel generalise much better due to the invariance constraints while the RBF clearly fall back to zero mean prior away from the data points.}
+        \caption{SHM posteriors. We see here the two posteriors have different fit, which leads to different predictive power. Here the invariance kernel generalise much better due to the invariance constraints while the RBF clearly fall back to zero mean prior away from the data points (plotted as black dots).}
         \label{fig:posterior_shm}
 \end{figure}
 
-From table \ref{tab:shm_performance} as well as the sample predicted trajecetory in figure \ref{fig:shm_prediction}, we can clearly see the naive RBF kernel failed to generalise beyond the training points. 
-As shown in figure \ref{fig:posterior_shm_rbf}, the GP mean falls back to zero away from the training points, so that it is only able to predict well in the region where the data locate. 
-In contrast, from \ref{fig:posterior_shm_invariance} and the prediction performance, we can see the invariance kernel has much better generalisation ability.
-From the energy plot in figure \ref{fig:shm_energy}, we again see both the known and learnt invariance maintain the invariance very well while the RBF kernel does not at all.
-In this case, the learnt invariance performs very close to the known form, as we can also see in figure \ref{fig:shm_learnt}, and has successfully recovered the physics as it trains. 
-The deviation is due to the fact that we cannot shrink the terms that are supposed to be zero, such as the intercept, to exactly zero, which makes the invariance slightly less accurate.
+From table \ref{tab:shm_performance} as well as the sample predicted trajecetory in figure \ref{fig:shm_prediction}, we can clearly see the naive RBF kernel failed to generalise beyond the training points, and hence the poor prediction performance. 
+As shown in figure \ref{fig:posterior_shm_rbf}, the GP mean falls back to zero away from the training points (the black dots), so that it is only able to predict well in the region where the data locate, which is reasonable and expected since the data is its only source of information. 
+In contrast, from \ref{fig:posterior_shm_invariance} and the prediction performance, we can see the invariance kernel has much better generalisation ability and therefore the predictive power.
+From the energy plot in figure \ref{fig:shm_energy}, we see both the known and learnt invariance maintain the invariance very well while the RBF kernel does not obey it at all.
+In this case, the learnt invariance performs very close to the known form, as we can also see in figure \ref{fig:shm_learnt}, and has successfully recovered the physics: $f(p)=p, g(q)=q$. 
+The very slight deviation is due to the fact that we cannot shrink the terms that are supposed to be zero, such as the intercept, to exactly zero, which makes the invariance slightly less accurate, and therefore the predictive performance of the learnt invariance will suffer compare to the known form.
 
 
 \subsection{Nonlinear Pendulum}
@@ -1020,7 +1021,7 @@ Generally, there is no analytical solution to this nonlinear problem besides the
 \begin{figure}[H] 
   \includegraphics[width=0.7\linewidth]{../codes/figures/pendulum_trajectory_1D.pdf}
   \centering
-  \caption{Example trajectory of pendulum}
+  \caption{Example trajectory of pendulum. We can tell its nonlinearity from the nonsmooth shape of the trajectory.}
   \label{fig:pendulum_trajectory}
 \end{figure}
 
@@ -1112,7 +1113,7 @@ MSE & 0.0021 & 0.0009 & 0.0006 \\
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_predicted.pdf}
-        \caption{Pendulum predicted trajectory. We see that the invariance kernel outperforms the RBF. The overshoot of the trajectory is likely due to the fact that our time step is not small enough so the numerical integration will drift and slightly overshoot.}
+        \caption{Pendulum predicted trajectory. We see that the invariance kernel outperforms the RBF, with the known and learnt invariance overlaps. The overshoot of the trajectory is likely due to the fact that our time step is not small enough so the numerical integration will drift and slightly overshoot.}
         \label{fig:pendulum_prediction}
 \end{figure}
 
@@ -1145,16 +1146,25 @@ MSE & 0.0021 & 0.0009 & 0.0006 \\
          \caption{Pendulum invariance posterior}
          \label{fig:posterior_pendulum_invariance}
      \end{subfigure}
-        \caption{Pendulum posteriors. This time, there is less difference visually between the two posteriors for $a$, which is likely due to the fact that we have feeded in much more data so the RBF generalise better than the SHM case. Nevertheless, the invariance still is much more accurate for $v$, which we expect it to be $v=p$, a plane.}
+        \caption{Pendulum posteriors. Compare to SHM, there is less difference visually between the two posteriors for $a$. Nevertheless, the invariance still is much more accurate for $v$, which we expect it to be $v=p$, a plane.}
         \label{fig:posterior_pendulum}
 \end{figure}
 
-From table \ref{tab:pendulum_performance}, figure \ref{fig:pendulum_prediction} and \ref{fig:pendulum_energy}, we again see the RBF kernel performs poorly in terms of generalisation and perdictive performance as well as conserving energy.
-On the other hand, the invariance kernels predict almost exactly the ground truth again, the slight deviation (the overshoot in figure \ref{fig:pendulum_prediction}) is likely to be due to not very small time step size in the numerical integration. 
-Surprisingly, we see the learnt invariance is slightly better in predicting, it might be due to the extra flexbility of polynomial coefficients that allow it to slightly overfit the dynamics, where the input space is quite small.
-For the energy, both known and learnt invariance obeys the invariance very well.
-When learning the invariance function, we use a cubic polynomial to approximate the $\sin(x)$ and as we can see from figure \ref{fig:pendulum_learnt}, the learning is actually pretty accurate when it is optimised, demonstrating that marginal likelihood is a good objective function to identify the correct invariance of a system.
-From the posteriors in \ref{fig:posterior_pendulum}, we see RBF generalise much better in $a$ thanks to extra data points, but its learning in $v$ is still relatively poor compare to the invariance kernel, where it correctly identify $v=p$ a plane that is independent of $q$.
+From table \ref{tab:pendulum_performance}, figure \ref{fig:pendulum_prediction}, we again see the RBF kernel performs poorly in generalisation and perdictive performance as well as conserving energy in figure \ref{fig:pendulum_energy}.
+On the other hand, the invariance kernels predict almost exactly the ground truth again, the slight deviation (the overshoot in figure \ref{fig:pendulum_prediction}) is likely to be due to the not very small time step size (0.01) in the numerical integration. 
+Surprisingly, we see the learnt invariance is slightly better in predicting, it might be due to the extra flexbility of polynomial coefficients that allow it to overfit the data a bit. 
+Because our input space is relatively quite small, it is possible this overfitting leads to better predictive performance due to chances.
+If we have larger input size, we would expect the learnt invariance kernel to be worse in predicting as in the SHM case.
+For the energy conservation, both known and learnt invariance obeys the invariance very well from figure \ref{fig:pendulum_energy}.
+Neverthless, if we zoom in to the figure, we see a very slight devivation of the learnt invariance from being completely flat, which is expected since we are approximating the $\sin(x)$ with a cubic polynomial, so this difference is expected and can be tolerated.
+We can then see the learning of the polynomial in figure \ref{fig:pendulum_learnt}, the learnt polynomial is actually pretty accurate when it is optimised (of course it cannot be 100\% accurate), demonstrating that marginal likelihood is a good objective function to identify the correct invariance of a system.
+From the posteriors in \ref{fig:posterior_pendulum}, we see RBF generalise much better in $a$ thanks to extra data points we feed in, but its learning in $v$ is still relatively poor compare to the invariance kernel, where it correctly identify $v=p$ a plane that is independent of $q$.
+
+Note that although it may seem in this case, there is not as significant a difference in prediction performance between baseline and invariance kernel as the SHM case, it is because the input space is relatively small, so that RBF is able to fit better.
+We need to provide more data because of the fitting of polynomial requires a wider range of data to fit the curvature of $\sin(x)$. 
+In fact, if we know the invariance a priori, then we only need ten data points to fit well as shown in figure \ref{fig:data_efficiency}.
+We can imagine if our input spaces is much larger, the RBF kernel will fail to generalise beyond where data locates and invariance kernel will still able to predict well once the invariance is successfully learnt since the invariance constraints are global.
+This is evident from the learning of $v$ dynamics, where RBF fails to learn the plane and the invariance kernel is able to extend the constraints to a much larger distance.
 
 We wish to compare quantitatively how good is invariance kernel compare to RBF in terms of data efficiency. 
 To investigate, we sample a test trajectory and feed the RBF kernel increasingly more data points until it converges to the ground truth while we simply provide the known invariance kernel with 10 data points.
@@ -1170,30 +1180,32 @@ We see that with invariance kernel, it is at least ten times more data efficient
 
 \section{Invariance Density}
 The number of invariance points may seem to be arbitrarily chosen. 
-How many of these do we actually need to achieve a good result and can there be too many invariance points such that the GP has too many constraints and too little degree of freedom?
-Would that causes the GP to remain zero, where the invariance is trivally satisfied (everything is zero)?
+How many of these invariance points do we actually need to achieve a good result and can there be too many invariance points such that the GP has too many constraints and too little degree of freedom?
+Would this causes the GP to remain zero, where the invariance is trivally satisfied (everything is zero) because it is too contraint?
 Here we will to explore how different invariance density affect the performance of the kernel as well as the degree of freedom.
-Since one-dimensional SHM is trival to learn, we test it on the nonlinear pendulum case, which will illustrate the point better. 
-We will use different invariance density using the same training data and three different trajectories of testing data.
-We again calculate the MSE of trajectory prediction as well as the percentage of energy deviation from the starting point of three different trajectories and average over.
+The effective degrees of freedom is calculated by the trace of $K(K+\sigma^2_n\mathbb{I}^{-1})$ (\cite{rasmussen_williams_2006}), where $K$ is the kernel.
+Since one-dimensional SHM is trival to learn, we test it on the nonlinear pendulum case.
+We will use different invariance density using the same training data and a random test trajectory.
+We again calculate the MSE of trajectory prediction as well as the percentage of energy deviation from the starting point from the start to end of a trajectory.
 The results is shown in figure \ref{fig:vary_invariance_density}.
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/vary_invariance.pdf}
   \centering
-  \caption{Effect of varying invariance density}
+  \caption{Effect of varying invariance density on performance of GP.}
   \label{fig:vary_invariance_density}
 \end{figure}
 
+We have the black dotted line serving as the baseline (RBF).
 We can see that for the marginal likelihood, it increases as the number of invariance points increases, which is expected since we have more information/evidence to support the data.
-However, MSE first decreases then increases.
-The first decrease makes sense since with more invariance points, we should in principle predict better.
-However, the increase is counter-intuitive.
-We conclude that there is actually not that big a difference and it is possibly due to the numerical instability as we increase the size of the matrix with increasing invariance density.  
-We also see the deviation of energy decreases as we increase the number of invariance points, which makes sense because we are imposing stronger invariance contraints in the input space by increasing the invariance density.
-Lastly, we see the degree of freedom does not vary much either, while in theory it should decrease with increasing invariance density due to more constraints on the function.
+However, there is not that large a difference and it seems to have diminishing return.
+Same thing happened with MSE, where it essentially remains the same.
+A similar observation is made with conservation of energy, where the invariance density almost has no effect. 
+Lastly, we see the degree of freedom decrease as we increase the invariance density, which is expected again since more constraints should lead to fewer degrees of freedom.
+Importantly, we see there is actually that much decrease in degree of freedom compare to the RBF, which assures us that our invariance model is not too restrictive and also answers the question in section 3.3, where we wonder to what extent is the problem solved by using the invariance kernel.
+The answer is essentially not that much as there is still plenty of degrees of freedom.
 
-Overall, we see there is not that big an advantage to increase our invariance density beyond a certain point due to diminishing return in performance and $N^6$ computational cost.
+Overall, we see there is not that big an advantage to increase our invariance density beyond a certain point due to diminishing return in performance and $N^6$ computational cost, where $N$ is the invariance density ($M^3$ in inverting matrix of size $M\times M$ and total $M=N^2$ points).
 Therefore, from this point we will choose the smallest invariance density that give reasonable performance.  
 
 
@@ -1346,12 +1358,25 @@ MSE & 0.00142 & 0.00130 & 0.00134 & 0.00091 & 0.00101 \\
   \label{fig:latent_damped_shm}
 \end{figure}
 
-We can see that the RBF performance is still poor as before.
-However, this time the invariance kernel does not perform as well as before. 
-This is expected since we still enforce some degree of invariance, even though it is noisy. 
-However, it is clear that it is making use of the knowledge of the invariance since the performance is fairly good.
-For energy consevation, it is reassuring that the invariance kernel is still remains invariant, while the learnt invariance might deviate a little since the extra parameters in the polynomial might fit to the damped data; but overall it conserves energy relatively well compare to the ground truth.
-Also, when we are learning the invariance, it again successfully recover the physics even under the effect of damping.
+From both the predicted trajectory in figure \ref{fig:damped_pendulum_prediction} and table \ref{tab:damped_shm_performance}, we can see the latent invariance kernel is much better than the approximate invariance model, which actually has similar performance (still better) than the RBF. 
+The possible reasons are two folds.
+Firstly, the latent model has arguably more knowledge built in than the approximate invariance. Reason being that we are explicitly using the variable to model the deviation and that varaible happens to have an exact solution in our case.
+Therefore, we can expect the model to do well if the latent model is inferenced correctly.
+On the other hand, the approximate invariance, being a random variable has an uncertainty that could be of wide range of values so it is difficult for it to apply the invariance knowledge for all cases.
+Secondly, in a similar argument as before, we need to feed in more data to learn the damping (and invariance function).
+However, at least in the case of latent disspative force, this damping is has longer range of effect since the invariance constraint is global so that once we learnt it, we can in principle apply it into a much larger input space.
+As a result, we can expect there will be much bigger difference in performance between the baseline and the two invariance model in a larger input space or a more complex problem.
+Bottomline, the invariance kernel still improves on the predictive performance so that the model still can take advantage of the knowledge of invariance even though it is not strictly enforced. 
+
+For energy consevation in figure \ref{fig:damped_pendulum_energy}, we can see the latent invariance is able to learn the decrease in energy, although not very accurately.
+This is possibly due to the fact that the latent disspative dynamics has to be inferred exactly to match the $\frac{dE}{dt}$ perfectly, and we have not supplied it enough data to do so.
+We can see the approximate invariance almost does as badly as the RBF in fitting the correct $\frac{dE}{dt}$, which is likely because of the difficulty of finding the perfect balance between enforcing invariance while being relaxed with the constraints.
+Overall, we conclude that the latent disspative dynamics model work better than the approximate invariance, which is still better than no invariance at all.
+
+In figure \ref{fig:damped_pendulum_learnt}, we looked at whether the model is able to infer the correct invariance even when it cannot make full use of the invariance constraints.
+As we can see, they still learn the correct polynomial almost perfectly, demonstrating that marginal likelihood is a robust objective to learn invariance even with disspative effect presence.
+Lastly, we look at figure \ref{fig:latent_damped_shm}, where we obtain the posterior of $z$ given observed dynamics $a, v$ as well as the invariance $L_\gamma$.
+It captures the true solution very well, with a well defined quadratic as a function of $p$ and no variation in the direction of $q$ (i.e. independent of $q$), which is what we expected as explained at the start of section 4.6, which is reassuring of our approach.
 
 
 \subsection{Damped Pendulum}
@@ -1404,9 +1429,15 @@ MSE & 0.0012 & 0.0008 & 0.0008 & 0.0008 & 0.0008 \\
   \label{fig:latent_damped_pendulum}
 \end{figure}
 
-We see similar performance as in damped SHM, with invariance kernels performs slightly worse than undamped version but still much better than the RBF.
-The energy conservation still holds mostly for invariance kernels.
-However, this time, the learnt polynomial is not as good as the undamped case with much more deviation; this is expected due to the damping.
+From table \ref{tab:damped_pendulum_performance} and trajectory prediction in figure \ref{fig:damped_pendulum_prediction}, we can see the invariance kernel perform similarly regardless of whether it is approximate or uses latent dynamics, and are all much better in predictive performance than RBF.
+The reason why this time the two approaches to invariance perform similarly is likely due to the fact that more starting points are trained than the damped SHM case (5 v.s. 3), and also that the input space is smaller so that the approximate invariance is able to capture the right amount of deviation the invariance from zero can be tolerated.
+This demonstrates that the latent disspative dynamics model is still more data efficient than the approximate invariance.
+Since it is a more complex nonlinear problem, the knowledge of invariance clearly is very help compare to the baseline RBF.
+Again, both invariance models are able to learn almost correctly the true $\frac{dE}{dt}$ as shown in figure \ref{fig:damped_pendulum_energy}, while the RBF even increases the energy.
+
+From figure \ref{fig:damped_pendulum_learnt}, we again see that even in the nonlinear damped system, the model is still able to learn the correct invariance, which is quite remarkable the power of using marginal likelihood to learn invarinace. 
+Finally, we see the posterior of $z$ in figure \ref{fig:latent_damped_pendulum}, which is roughly quadratic in $p$ once again. 
+However, it is a little bit jiggly, possibly due to the nonlinearity so it is a little bit more noisy.
 
 
 \section{Two-dimensional System}
