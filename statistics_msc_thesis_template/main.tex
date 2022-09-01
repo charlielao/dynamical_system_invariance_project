@@ -601,6 +601,8 @@ We can then use the invariance condition as before to constrain the distribution
 In this report, we will focus on one particular problem: the damping case.
 Here, we do not have missing inputs; instead, we have missing dynamics that accounts for the dissipative forces. 
 Therefore, we invent the latent variable $z$ to represent the dissipative effect.
+This can be related to \cite{LatentForce}, where they model the underlying dynamical system with latent forces.
+Here, instead of modelling everything as forces, we combine both observed dyanmics as well as latent dynamics and relate them using the invariance relation. 
 Now, instead of the invariance in equation \ref{equ:invariance_equation} being equal to zero, $\frac{dE}{dt}\equiv\mathcal{L}[E]=0$, we have $\frac{dE}{dt}+z=0,$ so that now we have 
 \begin{equation}
 \mathcal{L}[E] + z = \frac{dE}{dt} + z =\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} + z = \sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i + z,
@@ -1536,7 +1538,7 @@ We use three different ways to verify indeed it is learning the correct invarian
 \begin{enumerate}
   \item Fix the polynomials coefficients, which are randomly initialised, of 50 points and optimise the other hyperparameters (lengthscale, variance etc.); then we will evaluate their performance and marginal likelihood compare to the correct one; which is expected to be the best in both measure. 
   \item We will then find the correlation between the marginal likelihood and predictive performance, which is expect to be positive (negative between marginal likelihood and MSE).
-  \item Lastly, we will allow the polynomial coefficients to be optimised from the theoretical value, and we should see better marginal likelihood with better perdicitve performance or similar as fixing the polynomial coefficients.
+  \item Lastly, we will allow the polynomial coefficients to be optimised from the theoretical value, and we should see better marginal likelihood with better perdicitve performance or similar as fixing the theortically correct polynomial coefficients.
 \end{enumerate}
 
 We can also assess its energy conserving performance since the true invariance will force the energy to be conserved. 
@@ -1579,14 +1581,14 @@ MSE & 0.0271 & 0.0035 & 0.0035 \\
   \label{fig:shm_2d_poly}
 \end{figure}
 
-Firstly, we can see that the invariance kernel still performs very well compared to RBF, although not as good as the 1D case as expected since higher dimensional problem is deemed to be more difficult.
-We can see the learnt invariance again is almost exactly the same as the known form, which is reassuring.
-Also, the conservation of energy is again pretty well obeyed.
-
-
-Lastly, we confirm the above check to make sure we are indeed learning the correct invariance.
-We can see the freely optimised polynoimal is exactly the same as the fixed theoretically correct value, and are much better than the randomly initialised invariance. 
-We also found a Pearson correlation between log marginal likelihood and MSE of $-0.4274$ with a p value of $0.0020$, therefore, it is clear we are learning the correct invariance. 
+Firstly, we can see that the invariance kernel performs very well compared to RBF even in two-dimensions from table \ref{tab:SHM_2d_performance} and predictions in figure \ref{fig:shm_2d_prediction}.
+The prediction matches almost exactly to the ground truth.
+In figure \ref{fig:shm_2d_energy}, we can see both known and learnt invariance conserves energy well and RBF again disregards that completely.
+In terms of learning invariance in two dimensions, we can see the marignal likelihood and predictive performance of learnt invariance again is almost exactly the same as the known form, which is reassuring.
+However, we still need confirm the above check to make sure we are indeed learning the correct invariance.
+In figure \ref{fig:shm_2d_poly}, we can see the freely optimised polynoimal coincides with the fixed theoretically correct value, and are much better than the randomly initialised invariance.
+We also found a Pearson correlation between log marginal likelihood and MSE of $-0.4274$ with a p-value of $0.0020$, showing that it is evident that there is a positive correlation between predictive perforance and marginal likelihood.
+This satisfies the check we need to verify we have learnt the correct invariance. 
 
 \subsection{Nonlinear Double Pendulum}
 Here we will introduce double pendulum, which is a very nonlinear system and much more complicated than all the cases we have seen before. 
@@ -1660,25 +1662,28 @@ MSE & 0.0040 & 0.0004 & 0.0018 \\
   \label{fig:double_pendulum_poly}
 \end{figure}
 
-Now it is interesting to obsesrve that the marginal likelihood of the learnt form is even better than known form.
-This is likely due to "overfitting" of the large number of parameters from the polynomials (140 in total).
-But the degree of which is not too large so we would not add regularisation which can shrink the polynomials too much so that the invariance may seem to be obeyed but it is just close to zero since the coefficients are small.
-Also, we are only expanding up to the cubic term, therefore we do not expect very good learning for the invariance.
-However, in our case, the approximation is fairly good, possibly due to relatively small value of $q, p$ so the polynomial approximation is good.
-Nevertheless, it is clear that there is still some errors with learning invariance from figure \ref{fig:double_pendulum_energy} since it only flattens toward the end of the trajectory.
+From table \ref{tab:double_pendulum_performance} and figure \ref{fig:double_pendulum_prediction}, we can see that the known invariance performs very well even in this difficult two-dimensional, nonlinear task.
+Even the learnt invarinace performs reasonably well in predicting future trajectory, and both are much better than the RBF baseline.
+Furthermore, we are only expanding up to the cubic term, therefore we do not expect excellent performance for the learnt invariance.
+However, in our case, the result is fairly good, possibly due to relatively small value of $q, p$ so the polynomial approximation is good.
+Nevertheless, it is clear that there is still some errors with learning invariance from figure \ref{fig:double_pendulum_energy} since it does not remain completely flat, although fairly close while RBF completely shoots off tangent.
 
-This time we found a Pearson corrletaiton of $-0.3644$ with a p-value of $0.0093$ between MSE and log marginal likelihood.
-Combining with the fact that our optimised learnt kernel is better than the theortically approximately initialised kernel in both marginal likelihood and MSE, so we conclude that we have identified the correct invariance.  
+Lastly, we need to verify we are identifying the correct invariance.
+From figure \ref{fig:double_pendulum_poly}, we can see the theoretically initialised polynomial is not the best in MSE compare to randomly initalised one in terms of MSE.
+Nevertheless, it is expected since we are using an approximation when initialising the polynomial coefficients.
+More importantly, the optimised learnt kernel is better than the theoretically initialised one in both MSE and marginal likelihood, and it is also better than all the randomly initialised polynomimal. 
+Combine with a Pearson corrletaiton of $-0.3644$ with a p-value of $0.0093$ between MSE and log marginal likelihood, we conclude that we have identified the correct invariance.  
 
 \chapter{Conclusion and Future Work}
 In this work, we have presented a new Gaussian Process model through an invariance kernel that is able to capture the invariance in a dynamical system and as a result, use it as an inductive bias to improve data efficiency and predictive performance in several one and two-dimensional physical systems. 
 We construct this special invariance kernel by using the fact that invariances are linear transformation of the dynamics and the property of joint Gaussian distribution, and finally does the conditioning using simple Schur Complement calculation.
 To learn this invariance condition, we parameterise it with polynomials and optimise the coefficients by marginal likelihood objective. 
 The model is able to capture the correct invariance and recover the law of physics.
-We have also demonstrated it is also robust against dissiaptive effects using a noise variable to allow "soft invariance" as well as using a latent variable to model the dissipative forces. 
+We have also demonstrated it is also robust against dissiaptive effects using a noise variable to allow approximate invariance as well as using a latent variable to model the dissipative forces. 
 
-In the future, there are several directions this project could evolve into.
-To start off, we have demonstrated our results on relatively simple systems that could easily be sovled by first year physics undergraduate student. 
+In the future, more work need to be done to properly investigate some parts of the project that is a bit hand-wavy. For example, comparing the data efficiency between approximate invariance and latent dissiaptive dyanmics invariance.
+There are also several exciting directions this project could evolve into.
+To start off, we have demonstrated our results on relatively simple systems that could easily be solved by first year physics undergraduate student. 
 It would be interesting to see how our current model fits into the bigger picture of physical dynamical systems.
 For instance, a charged particle in magnetic field still conserves energy with forces acting on it. 
 Would our model able to accomdate that?
@@ -1686,16 +1691,17 @@ Or if the forces are time dependent, such as forced oscillation of pendulum, per
 More generally, we are simply using the energy conservation to derive our kernel, and the form is more or less equivalent to Newton's law of motion.
 There may be more complicated systems where this formulation is not sufficient.
 For instance, the Lagrangian and Hamiltonian formula are much more general and could be even be extended to quantum mechanics.
-For classical dynamical systems, if we want to model deformation of elastic materials or extended objects that are not point particles, this formulation may not be sufficient.
+For classical dynamical systems, if we want to model deformation of elastic materials or extended objects that are not point particles, the Newtonian formulation may not be sufficient.
 As a result, it is important to consult classical theoretical physics literature to help us understand the limitations of our models and then extend to form a more complete picture.  
 In fact, Hamiltonian mechanics is the most natural way to incorporate invariance and symmetry as explained in section 2.3.
-If we are able to formulate our model using Hamiltonian description, then we can easily include other symmetries such as momentum.
+If we are able to formulate our model using Hamiltonian description, then we can easily include other symmetries such as momentum, and eventually forming a statistical model that is essentially equivalent to classical physics, or equivalently, express physics in statistical langauge.
+
 Another direction is to extend the partially observed system model.
 We have successfully apply that in a special case of dissipative system.
-However, as systems grow more complex, including a single latent dynamics may not be enough; instead, we may need to invent an latent input due to dissipative forces and derive its dyanmics by taking the time derivative.
+However, as systems grow more complex, including a single latent dynamics may not be enough; instead, we may need to invent an latent input related to dissipative forces and not just dissiaptive dynamics.
 As mentioned in section 3.4, an important and very common case is the missing input dimension problem.
-If we are able to successfully recover the higher dimensional space by observing the lower dimensional space combine with the knowledge of invariance, it will be very useful in applications like 3D reconstruction.
-More sophisticated inference technique will be needed such as Markov Chain Monte Carlo.
+If we are able to successfully recover the higher dimensional space by observing the lower dimensional space combined with the knowledge of invariance, it will be very useful in applications like 3D reconstruction.
+More sophisticated inference technique will be needed such as Markov Chain Monte Carlo or Variational Inference.
 
 
 % References: modify the file refs.bib

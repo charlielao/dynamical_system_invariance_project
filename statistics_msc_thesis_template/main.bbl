@@ -1,4 +1,4 @@
-\begin{thebibliography}{29}
+\begin{thebibliography}{30}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -229,5 +229,15 @@ Yaofeng~Desmond Zhong, Biswadip Dey, and Amit Chakraborty.
   from data.
 \newblock \emph{Proceedings of Machine Learning Research}, 144:\penalty0 1--12,
   2021.
+
+\bibitem[Álvarez et~al.(2009)Álvarez, Luengo, and Lawrence]{LatentForce}
+Mauricio Álvarez, David Luengo, and Neil~D. Lawrence.
+\newblock Latent force models.
+\newblock In David van Dyk and Max Welling, editors, \emph{Proceedings of the
+  Twelth International Conference on Artificial Intelligence and Statistics},
+  volume~5 of \emph{Proceedings of Machine Learning Research}, pages 9--16,
+  Hilton Clearwater Beach Resort, Clearwater Beach, Florida USA, 16--18 Apr
+  2009. PMLR.
+\newblock URL \url{https://proceedings.mlr.press/v5/alvarez09a.html}.
 
 \end{thebibliography}
