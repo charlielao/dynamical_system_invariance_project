@@ -531,11 +531,12 @@ $$
 $$
 Again, the white noise will only affect the variance part of $L[\mathbf{f}(X_L)]$ and not its covariance with $\mathbf{f}(X)$.
 We will then able to do the conditioning according to equation \ref{equ:normal_condtion} again and obtain
-$$
-  \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} \left(-\mathbf{m}_\ell LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}, \begin{pmatrix}
+\begin{equation}
+  \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} \left(-LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}\mathbf{m}_\ell, \begin{pmatrix}
     K-LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}KL^T
   \end{pmatrix}\right)
-$$
+\label{equ:damped_invariance}
+\end{equation}
 Here, the parameters $\mathbf{m}_L$ and $\sigma^2_L$ will be learnt by optimising marginal likelihood. 
 The reason we allow the noise to have a non-zero mean is that we know that the energy can only decrease so that $\frac{dE}{dt}\equiv L[\mathbf{f}(X_L)] \le 0 $, so the deviation of invariance from zero is not symmetrical between positive and negative as a zero mean Gaussian noise would; we therefore introduce a learnable negative mean to accounts for that.  
 The idea of introducing this soft invariance noise is that hopefully this relaxation of the contrains of invariance will allow the model to use some information of invariance to do prediction and at the same time not strictly enforcing it, which would have lead to poor performance. 
@@ -603,24 +604,26 @@ Therefore, we invent the latent variable $z$ to represent the dissipative effect
 Now, instead of the invariance in equation \ref{equ:invariance_equation} being equal to zero, $\frac{dE}{dt}\equiv\mathcal{L}[E]=0$, we have $\frac{dE}{dt}+z=0,$ so that now we have 
 \begin{equation}
 \mathcal{L}[E] + z = \frac{dE}{dt} + z =\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} + z = \sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i + z,
+\label{equ:LEplusZ}
 \end{equation}
-which is therefore the a linear transformation on an augmented dynamics $\mathbf{f_b}=\begin{pmatrix}
+which is therefore the a linear transformation on an augmented dynamics $\mathbf{f_\gamma}=\begin{pmatrix}
   \mathbf{f}\\z
 \end{pmatrix},$
-and we will define this new linear transformation as $L_b$, which operates on $\mathbf{f_b}.$
+and we will define this new linear transformation as $L_\gamma$, which operates on $\mathbf{f_\gamma}.$
 Effectively, we treat $z$ as dynamics with equal footing with $\mathbf{a}$ and $\mathbf{v}$.
 Following this argument, in a similar fashion as section 3.1, we will again put an GP prior on $z$ with RBF kernel, that is independent from $\mathbf{f}$.
 Now instead of equation \ref{equ:invariance_joint}, we have 
-$$
+\begin{equation}
 \begin{pmatrix}
-\begin{pmatrix}\mathbf{f}(X)\\ z(X)\end{pmatrix}\\L_b[\mathbf{f}(X_L), z(X_L)]
+\begin{pmatrix}\mathbf{f}(X)\\ z(X)\end{pmatrix}\\L_\gamma[\mathbf{f}(X_L), z(X_L)]
 \end{pmatrix}
 \sim\mathcal{N}
 \left(\begin{pmatrix}\mathbf{0}_{3nd}\\\mathbf{0}_{\ell}\end{pmatrix}, \begin{pmatrix}
-    K & L_bK \\
-    KL_b^T & L_bKL_b^T\\
+    K & L_\gamma K \\
+    KL_\gamma^T & L_\gamma KL_\gamma^T\\
 \end{pmatrix}\right),
-$$
+\label{equ:joint_withZ}
+\end{equation}
 where now 
 $$
 K = \begin{pmatrix}
@@ -630,9 +633,10 @@ K = \begin{pmatrix}
 $$
 Finally, using the normal conditional formula \ref{equ:normal_condtion}, we have 
 \begin{equation}
-  \begin{pmatrix}\mathbf{f}(X) \\ z(X) \end{pmatrix}|L_b[\mathbf{f}(X_L), z(X_L)]=0 \sim \mathcal{N} \left(\mathbf{0}_{3nd}, \begin{pmatrix}
-    K-L_bK(L_bKL_b^T)^{-1}KL_b^T
+  \begin{pmatrix}\mathbf{f}(X) \\ z(X) \end{pmatrix}|L_\gamma[\mathbf{f}(X_L), z(X_L)]=0 \sim \mathcal{N} \left(\mathbf{0}_{3nd}, \begin{pmatrix}
+    K-L_\gamma K(L_\gamma KL_\gamma^T)^{-1}KL_\gamma^T
   \end{pmatrix}\right)
+  \label{equ:invariance_condition_withZ}
 \end{equation}
 
 As we only have the data for $\mathbf{f}(X)$, we will need to marginalise the joint distribution between $\mathbf{f}$ and $z$ by integrating over all possible $z$, $\int p(\mathbf{f},z) dz$.
@@ -657,20 +661,20 @@ x\sim\mathcal{N}(m_x, V_{xx}).
 $$
 We therefore have 
 $$
-\mathbf{f}(X)|L_b[\mathbf{f}(X_L), z(X_L)]=0 \sim \mathcal{N}(\mathbf{0}_{2nd}, [K-L_bK(L_bKL_b^T)^{-1}KL_b^T]_{[0:2nd, 0:2nd]}),
+\mathbf{f}(X)|L_\gamma[\mathbf{f}(X_L), z(X_L)]=0 \sim \mathcal{N}(\mathbf{0}_{2nd}, [K-L_\gamma K(L_\gamma KL_\gamma^T)^{-1}KL_\gamma^T]_{[0:2nd, 0:2nd]}),
 $$
 where for a matrix $M$, $M_{[0:r,0:c]}$ is a submatrix of $M$ equal to the first $r$ rows and first $c$ columns of the $M$ (zero indexed).
 At the same time, we are able to get the posterior of $z$ in the same inference procedure. 
 If we denote 
 $$
-K-L_bK(L_bKL_b^T)^{-1}KL_b^T \equiv \begin{pmatrix}
+K-L_\gamma K(L_\gamma KL_\gamma^T)^{-1}KL_\gamma^T \equiv \begin{pmatrix}
   V_{ff} & V_{fz} \\ V_{zf} & V_{zz} \\
 \end{pmatrix},
 $$
 where $V_ff$ is the submatrix of the full covariance matrix corresponds to variance of $\mathbf{f}(X)$ (i.e. the first $2nd$ rows and $2nd$ columns as before), the rest are defined accordingly.  
 Then using the normal condition formula \ref{equ:normal_condtion} once again, 
 $$
-z(X)|\mathbf{f}(X)=Y, L_b[\mathbf{f}(X_L), z(X_L)]=0
+z(X)|\mathbf{f}(X)=Y, L_\gamma[\mathbf{f}(X_L), z(X_L)]=0
 \sim\mathcal{N}
 (V_{zf}V_{ff}^{-1}Y,\ V_zz-V_{zf}V_{ff}^{-1}V_{fz}),
 $$
@@ -726,13 +730,13 @@ The $q$ is the displacement of the block from its origin, and $p$ would be the i
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.8\linewidth]{../figures/shm.pdf}
-        \caption{SHM illustration}
+        \caption{A simple mass spring system where after the mass is displaced, it will undergo simple harmonic oscillation.}
         \label{fig:shm_diagram}
 \end{figure}
 
-The equation of motion of the system is $$m\frac{d^2q}{dt^2}=-kq.$$
-And the analytical solution would be of the form $q=A\sin(\omega_0t+\phi),$ where $\omega=\frac{k}{m}$ and $A, \phi$ depends on the initial condition, which dictates the amplitude and phase of the motion. 
-For this case, we have dynamics 
+The equation of motion of the system is given by $$m\frac{d^2q}{dt^2}=-kq,$$
+with the analytical solution of the form $q=A\sin(\omega_0t+\phi),$ where $\omega_0=\frac{k}{m}$ and $A, \phi$ depends on the initial condition, which dictates the amplitude and phase of the motion respectively. 
+In this case, we have dynamics of the form 
 $$
 \mathbf{f}(\mathbf{x})=\begin{pmatrix}
     a(\mathbf{x})\\
@@ -743,12 +747,12 @@ $$
 \begin{figure}[H] 
   \includegraphics[width=0.7\linewidth]{../codes/figures/shm_trajectory_1D.pdf}
   \centering
-  \caption{Example trajectory of SHM}
+  \caption{Example trajectory of SHM where we can see the trajectory is a perfect circle.}
   \label{fig:shm_trajectory}
 \end{figure}
 
-We also have the energy, $E=\frac{mp^2}{2}+\frac{kq^2}{2},$
-Therefore, to obtain our invariance $L$, we use the conservation of energy $\frac{dE}{dt}=0$ so we finally have $$L[\mathbf{f}]=mpa+kqv=0$$
+We also have the energy, $E=\frac{mp^2}{2}+\frac{kq^2}{2}.$
+Therefore, to obtain our invariance $L$, we use the conservation of energy $\frac{dE}{dt}=0$ so from equation \ref{equ:invariance_equation}, we finally have $$L[\mathbf{f}]=mpa+kqv=0$$
 While $L$ is not able to be put into a matrix form using our stacked representation in equation \ref{equ:stacked} (since the dimension would not match), it is a linear operator as shown below. 
 If we have $$X_L\equiv\begin{pmatrix}
     \mathbf{x}_{L,1}\\
@@ -763,7 +767,7 @@ If we have $$X_L\equiv\begin{pmatrix}
     q_L & p_L\\
     \vdots & \vdots\\
 \end{pmatrix},$$
-then we have 
+then we have for either the known form of invariance in the middle or the paramerterised version on the right:
 $$
 L([\mathbf{f}(X_L)]) = \begin{pmatrix}
    mp_{L,1}a(q_{L,1},p_{L,1}) + kq_{L,1}v(q_{L,1},p_{L,1})\\ 
@@ -780,8 +784,9 @@ $$
 \end{cases},
 $$
 where $\alpha$ is some constants, and $x, y$ are some inputs.
-Combine with original GP prior assumption, we have 
-$$
+
+As explained in section 3.1, we will then apply this linear transform on our original GP prior to produce a joint distribution in the form of equation \ref{equ:invariance_joint}:
+\begin{equation}
 \begin{pmatrix}
     \mathbf{f}(X)\\
     L([\mathbf{f}(X_L)])\\
@@ -793,9 +798,10 @@ $$
    A & B \\
    C & D\\ 
 \end{pmatrix}\right),
-$$
+\label{equ:jointABCD}
+\end{equation}
 where
-$$
+\begin{equation}
 \begin{gathered}
 A=K(X,X), B=\begin{pmatrix}
     K_{RBF,a}(X, X_L) \\ K_{RBF,v}(X, X_L) \\
@@ -803,8 +809,9 @@ A=K(X,X), B=\begin{pmatrix}
     mP_L \\ kQ_L
 \end{pmatrix}, C=B^T,\\ D=K_{RBF,a}(X_L, X_L)\odot m^2(p_L\otimes p_L) + K_{RBF,v}(X_L, X_L)\odot k^2(q_L\otimes q_L),
 \end{gathered}
-$$
-where $\odot$ is the elementwise product and $\otimes$ is the Kronecker product so that 
+\label{equ:ABCD}
+\end{equation}
+where $\odot$ is the elementwise product and $\otimes$ is the outer product so that 
 $$
 P_L=\begin{pmatrix}
   p_{L,1}  & \dots & p_{L,\ell}  \\
@@ -854,27 +861,77 @@ D_{ij} &= \mathrm{Cov}(L[\mathbf{f}(X_L)], L[\mathbf{f}(X_L)])_{ij} \\
 \end{align*}
 using the bilinear property of the covariance operator and the fact that $v$ and $a$ are independent.
 Since we assume invariance holds on these invariance points, we will condition on $L([\mathbf{f}(X_L)])=0.$
-Now we can simply use the Gaussian conditional formula to obtain the Schur Complement using equation \ref{equ:normal_condtion}.
-$$
+Now we can simply use the Gaussian conditional formula to obtain the Schur Complement using equation \ref{equ:normal_condtion}
+\begin{equation}
 \mathbf{f}(X)|L[\mathbf{f}(X_L)]=0\sim\mathcal{N}(0_{2n},A-BD^{-1}C),
+\label{equ:shm_invariance}
+\end{equation}
+we will then call the resulting covariance our Invariance Kernel for one-dimensional SHM.
+If instead we are paramerterising the invariance functions with polynomials, we will have 
+\begin{equation}
+L[\mathbf{f}(X_L)] = \begin{pmatrix}
+   f(p_{L,1})a(q_{L,1},p_{L,1}) + g(q_{L,1})v(q_{L,1},p_{L,1})\\ 
+   \vdots \\
+   f(p_{L, \ell})a(q_{L,\ell},p_{L,\ell}) + g(q_{L,\ell})v(q_{L,\ell},p_{L,\ell})\\ 
+\end{pmatrix},
+\label{equ:joint_ABCDp}
+\end{equation}
+and now the $A, B, C, D$ wil be given by 
+
+\begin{equation}
+\begin{gathered}
+A=K(X,X), B=\begin{pmatrix}
+    K_{RBF,a}(X, X_L) \\ K_{RBF,v}(X, X_L) \\
+\end{pmatrix}\odot \begin{pmatrix}
+    f(P_L) \\ g(Q_L)
+\end{pmatrix}, C=B^T,\\ D=K_{RBF,a}(X_L, X_L)\odot (f(p_L)\otimes f(p_L)) + K_{RBF,v}(X_L, X_L)\odot (g(q_L)\otimes g(q_L)),
+\end{gathered}
+\label{equ:ABCDp}
+\end{equation}
+where now
 $$
-we will then call the resulting covariance our Invariance Kernel for 1D SHM, $K_L$.
+f(P_L)=\begin{pmatrix}
+  f(p_{L,1})  & \dots & f(p_{L,\ell})  \\
+  \vdots & \text{repeats n rows} &  \vdots\\
+  f(p_{L,1})  & \dots & f(p_{L,\ell})  \\
+\end{pmatrix},
+Q_L=\begin{pmatrix}
+  g(q_{L,1})  & \dots & g(q_{L,\ell})  \\
+  \vdots & \text{reqeats n rows} &  \vdots\\
+  g(q_{L,1})  & \dots & g(q_{L,\ell})  \\
+\end{pmatrix}
+$$
+and we have 
+$$
+  \begin{gathered}
+f(p_L)\otimes f(p_L)=\begin{pmatrix}
+  f(p_{L,1})^2 & f(p_{L,1})f(p_{L,2}) & \dots & f(p_{L,1})f(p_{L,\ell}) \\
+  \vdots & \vdots & \vdots & \vdots \\
+  f(p_{L,\ell})f(p_{L,1}) & f(p_{L,\ell})f(p_{L,2}) & \dots & f(p_{L,\ell})^2 \\
+\end{pmatrix},\\
+g(q_L)\otimes g(q_L)=\begin{pmatrix}
+  g(q_{L,1})^2 & g(q_{L,1})g(q_{L,2}) & \dots & g(q_{L,1})g(q_{L,\ell}) \\
+  \vdots & \vdots & \vdots & \vdots \\
+  g(q_{L,\ell})g(q_{L,1}) & g(q_{L,\ell})g(q_{L,2}) & \dots & g(q_{L,\ell})^2 \\
+\end{pmatrix}.
+  \end{gathered}
+$$
 
 Now we look at how it works in practice.
 Without loss of generality, we choose $m=k=1$.
 For the data we only have one trajectory starting randomly in $-2\le q\le2$ and $p$ to be between $\pm 2$.
-We chose $p$ to be smaller so that the future trajectory does not overshoot the upper bound of $q$ too much. 
 We allow the integrator to run for $0.1$ seconds so there will be in total 10 training points (10 time steps). 
-We will then draw three test points from the same range as training, to assess the performance of the predictive power for 3 seconds (300 points) and average the MSE over the three trajectories. 
-In figure \ref{fig:shm_prediction}, \ref{fig:shm_energy}, we have chosen one trajectory at random to illustate the predictions as well as the energy along the trajectory.
-For this task, we have used a jitter amount of $10^{-5}$ and an invariance density of 20 between $\pm 3$ in both $p$ and $q$ direction.
-We have also plotted the posterior distribution of using invariance kernel and compare that to using naive RBF kernel in figure \ref{fig:posterior_shm}.
-We can see the invariance has much better generalisability.
-For learning the invariance, we test all combinations of polynomials of $f(p)$ and $g(q)$, each with degree 0, 1, 2, 3 (i.e. up to cubic term) so there will be 16 of them to optimise, and we choose the pair with the highest marginal likelihood. 
-We initialise the coefficients with normal distribution with variance of $10^{-3}$, we also restrict the search space to be between $\pm 1$.
-We have also added a Laplace prior on the coefficients with variance 0.1 since we expect most coefficients would be zero and Laplace prior encourage sparse solution.
-The learnt $f(p)$ and $g(q)$ is plotted in figure \ref{fig:shm_learnt}.
+We will then draw ten test points from the same range as training, to assess the performance of the predictive power for 1 second (100 time steps) and average the MSE over the ten trajectories. 
 The performance is summarised in table \ref{tab:shm_performance}.
+In figure \ref{fig:shm_prediction}, \ref{fig:shm_energy}, we have chosen one trajectory at random to illustate the predictions as well as the energy along the trajectory.
+
+For this task, we have used an invariance density of 40 between $\pm 3$ in both $p$ and $q$ direction.
+We have also plotted the posterior distribution of using invariance kernel and compare that to using naive RBF kernel in figure \ref{fig:posterior_shm}.
+
+For learning the invariance, we test all combinations of polynomials of $f(p)$ and $g(q)$, each with degree 0, 1, 2, 3 (i.e. up to cubic term) so there will be 16 of them to optimise, and we choose the pair with the highest marginal likelihood. 
+We initialised the coefficients to be $10^{-3}$, we also restrict the search space to be between $\pm 1$.
+We have also added a Laplace prior on the coefficients with variance 1 since we expect most coefficients would be zero and Laplace prior encourage sparse solution.
+The learnt $f(p)$ and $g(q)$ is plotted in figure \ref{fig:shm_learnt}.
 
 \begin{table}[H]
   \centering
@@ -886,28 +943,28 @@ Log Marginal Likelihood & 67.67 & 82.00 & 79.24 \\
 MSE & 0.0950 & 0.0017 & 0.0027 \\
                     \hline
   \end{tabular}
-  \caption{SHM performance}
+  \caption{SHM performance. We can see using the invariance greatly increases the marginal likelihood as well as improving the prediction performance, we can also see that the learnt invariance has slightly worse performance than the exact one}
   \label{tab:shm_performance}
 \end{table}
 
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.8\linewidth]{../codes/figures/shm_predicted.pdf}
-        \caption{SHM predicted trajectory}
+        \caption{One SHM predicted trajectory. We can see the baseline RBF kernel is completely unable to predict since it relies on data to generalise and if the test points are far from the training points, it will have weak predictive power, similar to figure \ref{fig:posterior}. On the other hand, the invariance constraints greatly improve the generalisability of the model and give precise prediction.}
         \label{fig:shm_prediction}
 \end{figure}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/shm_energy.pdf}
   \centering
-  \caption{Energy conservation for SHM}
+  \caption{The energy along the trajectory. We can again see the energy of RBF is not conserving at all as expected due to poor performance in prediction while the invariance kernel are preserving the energy perfectly.}
   \label{fig:shm_energy}
 \end{figure}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/shm_learnt_over_time.pdf}
   \centering
-  \caption{Learnt invariance for SHM}
+  \caption{Learnt invariance for SHM. We can see the polynomials converge to the correct invariance as the algorithm trains, which are both linear in this case with $f(p)=p$ and $g(q)=q$.}
   \label{fig:shm_learnt}
 \end{figure}
 
@@ -926,26 +983,27 @@ MSE & 0.0950 & 0.0017 & 0.0027 \\
          \caption{SHM invariance posterior}
          \label{fig:posterior_shm_invariance}
      \end{subfigure}
-        \caption{SHM posteriors}
+        \caption{SHM posteriors. We see here the two posteriors have different fit, which leads to different predictive power. Here the invariance kernel generalise much better due to the invariance constraints while the RBF clearly fall back to zero mean prior away from the data points.}
         \label{fig:posterior_shm}
 \end{figure}
 
-
-
-We can clearly see the naive RBF kernel failed to learn at all as it does not have enough example data to genealise, as we can see from \ref{fig:posterior_shm_rbf}, so that it is only able to predict well in the region where the data are. 
-On the other hand, from \ref{fig:posterior_shm_invariance} and the prediction performance, we can see the invariance kernel has much better generalisation ability.
-From the energy plot in figure \ref{fig:shm_energy}, we again see both the known and learnt invariance obeys the invariance very well while the RBF kernel does not at all.
-In this case, the learnt invariance performs almost exactly as the known form, as we can also see in figure \ref{fig:shm_learnt}, and has successfully recovered the physics as it trains. 
+From table \ref{tab:shm_performance} as well as the sample predicted trajecetory in figure \ref{fig:shm_prediction}, we can clearly see the naive RBF kernel failed to generalise beyond the training points. 
+As shown in figure \ref{fig:posterior_shm_rbf}, the GP mean falls back to zero away from the training points, so that it is only able to predict well in the region where the data locate. 
+In contrast, from \ref{fig:posterior_shm_invariance} and the prediction performance, we can see the invariance kernel has much better generalisation ability.
+From the energy plot in figure \ref{fig:shm_energy}, we again see both the known and learnt invariance maintain the invariance very well while the RBF kernel does not at all.
+In this case, the learnt invariance performs very close to the known form, as we can also see in figure \ref{fig:shm_learnt}, and has successfully recovered the physics as it trains. 
+The deviation is due to the fact that we cannot shrink the terms that are supposed to be zero, such as the intercept, to exactly zero, which makes the invariance slightly less accurate.
 
 
 \subsection{Nonlinear Pendulum}
-The idea is pretty much the same for nonlinear system compared to linear; however, the fitting of statistical model is expected to be more difficult.
-A simple nonlinear system in every day life is a simple pendulum as shown in figure below, where $q$ is the angle of displacement from the vertical dotted line, and $p$ is the angular velocity.
+The derivation of the kernel is pretty much the same for nonlinear system as the linear cases; 
+however, the fitting of statistical model is expected to be more difficult since usually, nonlinear functions are more difficult to solve or learn accurately.
+A simple nonlinear system in every day life is a simple pendulum as shown in figure \ref{fig:pendulum_diagram} below, where $q$ is the angle of displacement from the vertical dotted line, and $p$ is the angular velocity.
 
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.3\linewidth]{../figures/pendulum.pdf}
-        \caption{Pendulum illustration}
+        \caption{A pendulum is a simple system that is nonlinear, largely because the gravity $g$ acts at an angle to the displacement of the mass.}
         \label{fig:pendulum_diagram}
 \end{figure}
 
@@ -953,10 +1011,11 @@ The governing equation is
 $$
 \frac{d^2q}{dt^2}=-\frac{g}{\ell}\sin q, 
 $$
-and we have example trajectory in \ref{fig:pendulum_trajectory}, where we can see the effect of nonlinearity on the shape. 
-The nonlinear dynamics arises from the sine term above, which will complicate the derivation for invariance kernel slightly. 
-However, since $\sin x \approx x$ at small angle, this system is approximately linear under small displacement. 
-There is no analytical solution to this nonlinear problem in general, besides the small displacement case, which will be one-dimensional SHM.
+where $g$ is the gravitational constant that controls the gravitational force pulling down the mass of pendulum and $\ell$ is the length of the pnedulum.
+We have an example trajectory in figure \ref{fig:pendulum_trajectory}, where we can see the effect of nonlinearity on the shape being not perfectly circular or ellpitical; instead, it has a roughly smooth diamond outline. 
+The nonlinear dynamics arises from the sinusoidal term in the differential equations, which will complicate the derivation for invariance kernel slightly. 
+Note that at small angles, $\sin x \approx x$ , so this system is approximately linear under small displacement. 
+Generally, there is no analytical solution to this nonlinear problem besides the small displacement case, which will be one-dimensional SHM we saw earlier.
 
 \begin{figure}[H] 
   \includegraphics[width=0.7\linewidth]{../codes/figures/pendulum_trajectory_1D.pdf}
@@ -965,10 +1024,11 @@ There is no analytical solution to this nonlinear problem in general, besides th
   \label{fig:pendulum_trajectory}
 \end{figure}
 
-This time we have energy, $E=\frac{m\ell^2p^2}{2}+mg\ell(1-\cos q)$, and by setting its time derivative to 0, we have 
-$$L(a, v)=\frac{dE}{dt}=m\ell^2pa+mg\ell(\sin q)v=0.$$
-If we cancel out the common term $m\ell$ since their product cannot be zero, we have $$L(a,v)=\ell pa+g(\sin q)v=0$$
-Most of the terms are unchanged from the linear case. 
+For pendulum, we have energy $E=\frac{m\ell^2p^2}{2}+mg\ell(1-\cos q)$, and by setting its time derivative to 0, we have 
+$$L[\mathbf{f}]=\frac{dE}{dt}=m\ell^2pa+mg\ell(\sin q)v=0$$
+We can cancel out the common term $m\ell$ since their product cannot be zero, we have our invariance condition 
+$$L[\mathbf{f}]=\ell pa+g(\sin q)v=0$$
+For the derivation of our kernel, most of the terms are unchanged from the linear case in equation \ref{equ:jointABCD} and \ref{equ:ABCD}. 
 However, this time, 
 $$
 \begin{gathered}
@@ -994,42 +1054,46 @@ $$
   \sin(q_{L,\ell})\sin(q_{L,1}) & \sin(q_{L,\ell})\sin(q_{L,2}) & \dots & \sin(q_{L,\ell})^2 \\
 \end{pmatrix},
 $$
-derived in exactly the same way as the linear case. 
+and this is derived in the exactly same way as the linear case by computing the covariance manually. 
+If we wish to parametise the invariance, it will be the same expressions as before in equation \ref{equ:joint_ABCDp} and \ref{equ:ABCDp}.
 We can look at the different priors in figure \ref{fig:priors}, which showcases the baseline kernel RBF, SHM invariance kernel, as well as the pendulum invariance kernel.
 
-We can see while the mean remains zero, the uncertainty parts reflects the form of invariance; such as the plane of SHM and the sinusoidal nature of pendulum invariance in \ref{fig:prior_pendulum_invariance} (left).
+We can see while the mean is zero (the assumption), the uncertainty parts reflects the form of invariance; such as the plane of SHM and the sinusoidal nature of pendulum invariance in \ref{fig:prior_pendulum_invariance} (left).
 
 \begin{figure}[H]
      \centering
-     \begin{subfigure}[b]{0.8\linewidth}
+     \begin{subfigure}[b]{0.6\linewidth}
         \centering
         \includegraphics[width=\linewidth]{../codes/figures/prior_shm_rbf.pdf}
         \caption{RBF prior}
         \label{fig:prior_shm_rbf}
      \end{subfigure}
      \hfill
-     \begin{subfigure}[b]{0.8\linewidth}
+     \begin{subfigure}[b]{0.6\linewidth}
          \centering
          \includegraphics[width=\linewidth]{../codes/figures/prior_shm_invariance.pdf}
          \caption{SHM invariance prior}
          \label{fig:prior_shm_invariance}
      \end{subfigure}
      \hfill
-     \begin{subfigure}[b]{0.8\linewidth}
+     \begin{subfigure}[b]{0.6\linewidth}
          \centering
          \includegraphics[width=\linewidth]{../codes/figures/prior_pendulum_invariance.pdf}
          \caption{Pendulum invariance prior}
          \label{fig:prior_pendulum_invariance}
      \end{subfigure}
-        \caption{Priors}
+        \caption{Priors of different invariance kernel. We can see the form of invariance will influence the shape of the prior, and therefore affect the model fitting, which is the inductive bias in action.}
         \label{fig:priors}
 \end{figure}
 
 For the implementation of pendulum invariance model, the experiment setup is essentially exactly the same as the SHM case. 
-However, since this time the dynamics is more complicated, we will draw three different starting points for training between $q=\pm 150^{\circ}$ and $\pm 10^{\circ}$ for $p$, so in total 30 points.
-This time, since it is a harder task, we will use an invariance density of 30 between $\pm 150^{\circ}$.
-We again have the prediction performance summarised in table \ref{tab:pendulum_performance} as well as figures \ref{fig:pendulum_prediction}, \ref{fig:pendulum_energy} and the posteriors in \ref{fig:posterior_pendulum}.
-The learnt polynomial is in \ref{fig:pendulum_learnt}.
+However, since this time the dynamics is more complicated, we will draw 3 different starting points for training between $q=\pm 150^{\circ}$ and $\pm 30^{\circ}$ for $p$, so in total 30 points.
+It is also necessary since otherwise it is difficult for the polynomial to learn a nonlinear function if we only have a very small range of input.
+We choose $p$ to have smaller range so the pendulum will not overshoot the $q=\pm 180^\circ$ since then the dynamics change and we would not able to use the same kernel.
+We again use an invariance density of 40 between $\pm 180^{\circ}$.
+We have the prediction performance of ten test trajectories summarised in table \ref{tab:pendulum_performance} as well as the sample trajectory in figures \ref{fig:pendulum_prediction} and energy along the trajectory in figure \ref{fig:pendulum_energy}.
+Finally, we have the posteriors in \ref{fig:posterior_pendulum}.
+The learnt polynomial is plotted in figure \ref{fig:pendulum_learnt}.
 
 \begin{table}[H]
   \centering
@@ -1041,28 +1105,28 @@ Log Marginal Likelihood & 299.12 & 331.66 & 325.76 \\
 MSE & 0.0021 & 0.0009 & 0.0006 \\
     \hline
   \end{tabular}
-  \caption{Pendulum performance}
+  \caption{Pendulum performance. We can see again using the invariance kernel greatly outperforms the RBF. Interestingly, the learnt invariance performs slightly better than the known form. We attribute that to be due to slight overfitting of the paramters in polynomials since the input space is quite small in our case.}
   \label{tab:pendulum_performance}
 \end{table}
 
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_predicted.pdf}
-        \caption{pendulum predicted trajectory}
+        \caption{Pendulum predicted trajectory. We see that the invariance kernel outperforms the RBF. The overshoot of the trajectory is likely due to the fact that our time step is not small enough so the numerical integration will drift and slightly overshoot.}
         \label{fig:pendulum_prediction}
 \end{figure}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_energy.pdf}
   \centering
-  \caption{Energy conservation for pendulum}
+  \caption{Energy of the trajectory. We again see invariance kernels almost perfectly conserve the energy while the RBF does not have the imposed constraints.}
   \label{fig:pendulum_energy}
 \end{figure}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_learnt_over_time.pdf}
   \centering
-  \caption{Learnt invariance for pendulum}
+  \caption{Learnt invariance for pendulum. We again see the polynomial converge to the true function $g(q)=\sin(q)$ and $f(p)=p$ over time.}
   \label{fig:pendulum_learnt}
 \end{figure}
 
@@ -1071,38 +1135,43 @@ MSE & 0.0021 & 0.0009 & 0.0006 \\
      \begin{subfigure}[b]{\linewidth}
         \centering
         \includegraphics[width=\linewidth]{../codes/figures/posterior_pendulum_rbf.pdf}
-        \caption{pendulum RBF posterior}
+        \caption{Pendulum RBF posterior}
         \label{fig:posterior_pendulum_rbf}
      \end{subfigure}
      \hfill
      \begin{subfigure}[b]{\linewidth}
          \centering
          \includegraphics[width=\linewidth]{../codes/figures/posterior_pendulum_invariance.pdf}
-         \caption{pendulum invariance posterior}
+         \caption{Pendulum invariance posterior}
          \label{fig:posterior_pendulum_invariance}
      \end{subfigure}
-        \caption{pendulum posteriors}
+        \caption{Pendulum posteriors. This time, there is less difference visually between the two posteriors for $a$, which is likely due to the fact that we have feeded in much more data so the RBF generalise better than the SHM case. Nevertheless, the invariance still is much more accurate for $v$, which we expect it to be $v=p$, a plane.}
         \label{fig:posterior_pendulum}
 \end{figure}
 
-From table \ref{tab:pendulum_performance}, figure \ref{fig:pendulum_prediction}, \ref{fig:pendulum_energy}.
-This time, again the RBF kernel performs poorly in terms of perdictive performance.
-The known kernel predicts very well again, almost exactly the same as the ground truth.
-However, this time, the learnt invariance is slightly worse in predicting; this is expected since we are approximating a sine function with a cubic polynomial, and so some level of deviation is expected.
-As we can see from figure \ref{fig:pendulum_learnt}, the learning is increasingly accurate as it trains over time.
-From the posteriors in \ref{fig:posterior_pendulum}, we see RBF generalise much better due to extra data points, but it is still very far from giving a reasonable prediction. 
+From table \ref{tab:pendulum_performance}, figure \ref{fig:pendulum_prediction} and \ref{fig:pendulum_energy}, we again see the RBF kernel performs poorly in terms of generalisation and perdictive performance as well as conserving energy.
+On the other hand, the invariance kernels predict almost exactly the ground truth again, the slight deviation (the overshoot in figure \ref{fig:pendulum_prediction}) is likely to be due to not very small time step size in the numerical integration. 
+Surprisingly, we see the learnt invariance is slightly better in predicting, it might be due to the extra flexbility of polynomial coefficients that allow it to slightly overfit the dynamics, where the input space is quite small.
+For the energy, both known and learnt invariance obeys the invariance very well.
+When learning the invariance function, we use a cubic polynomial to approximate the $\sin(x)$ and as we can see from figure \ref{fig:pendulum_learnt}, the learning is actually pretty accurate when it is optimised, demonstrating that marginal likelihood is a good objective function to identify the correct invariance of a system.
+From the posteriors in \ref{fig:posterior_pendulum}, we see RBF generalise much better in $a$ thanks to extra data points, but its learning in $v$ is still relatively poor compare to the invariance kernel, where it correctly identify $v=p$ a plane that is independent of $q$.
 
-We can also compare the data efficiency in this case as shown in figure \ref{fig:data_efficiency}. 
+We wish to compare quantitatively how good is invariance kernel compare to RBF in terms of data efficiency. 
+To investigate, we sample a test trajectory and feed the RBF kernel increasingly more data points until it converges to the ground truth while we simply provide the known invariance kernel with 10 data points.
+The result is shown in figure \ref{fig:data_efficiency}. 
 We see that with invariance kernel, it is at least ten times more data efficient than the baseline RBF.
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/data_efficiency.pdf}
   \centering
-  \caption{Data efficiency for pendulum}
+  \caption{Data efficiency comparison. We see the invariance kernel needs 10 times less data points to predict accurately compare to RBF, demonstrating how data efficient it can be by embedding inductive bias.}
   \label{fig:data_efficiency}
 \end{figure}
 
 \section{Invariance Density}
+The number of invariance points may seem to be arbitrarily chosen. 
+How many of these do we actually need to achieve a good result and can there be too many invariance points such that the GP has too many constraints and too little degree of freedom?
+Would that causes the GP to remain zero, where the invariance is trivally satisfied (everything is zero)?
 Here we will to explore how different invariance density affect the performance of the kernel as well as the degree of freedom.
 Since one-dimensional SHM is trival to learn, we test it on the nonlinear pendulum case, which will illustrate the point better. 
 We will use different invariance density using the same training data and three different trajectories of testing data.
@@ -1129,16 +1198,18 @@ Therefore, from this point we will choose the smallest invariance density that g
 
 
 \section{Damped System}
+Now we move on to the damped version of the previous two systems. 
+We will then used the methods, approximate invariance and latent dyanmics, described in section 3.2 and section 3.4 along with the invariance kernels derived in section 4.4.1 and section 4.4.2, to modify our GP model. 
 For the data, we will model the system as a damped SHM or pendulum with linear velocity dependent force.
 If we denote $\omega_0^2=k/m$ or $\omega_0^2=g/\ell$
-We will have the equation of motion for SHM and pendulum respectively
+we will have the equation of motion for SHM and pendulum respectively as
 $$
-\frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2q=0; \frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2\sin q=0 ,
+\frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2q=0;\ \frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2\sin q=0 ,
 $$
-and the $\gamma$ is the damping factor that controls how much frictional force there is. 
-Note that we will only focus on underdamping case ($\gamma < \omega_0^2$)so that the system still oscillate but with gradually reduced amplitude instead of critical damped ($\gamma=\omega_0^2$) or overdamped ($\gamma>\omega_0^2$) case where the system simply slowly decays to still.
+and the $\gamma$ is the damping factor that controls how strong the frictional force is, with $q$ having the same meaning as before. 
+Note that we will only focus on underdamping case ($\gamma < \omega_0^2$) so that the system still oscillate but with gradually reduced amplitude instead of critical damped ($\gamma=\omega_0^2$) or overdamped ($\gamma>\omega_0^2$) case where the system simply slowly decays to still.
 An example trajectory for damped SHM and damped pendulum is shown below in figure \ref{fig:damped_trajectory}.
-For the damping, we will choose $\gamma= 0.1$, which is fairly strongly damped as shown in figure \ref{fig:damped_pendulum_trajectory}, \ref{fig:damped_shm_trajectory}. 
+For the damping, we will choose $\gamma= 0.1$, which is fairly damped as shown in figure \ref{fig:damped_pendulum_trajectory}, \ref{fig:damped_shm_trajectory}, where we see the amplitude slowly decreases as the trajectory spirals in. 
 
 \begin{figure}[H]
      \centering
@@ -1155,40 +1226,108 @@ For the damping, we will choose $\gamma= 0.1$, which is fairly strongly damped a
         \caption{Example trajectory of damped pendulum}
         \label{fig:damped_pendulum_trajectory}
      \end{subfigure}
-        \caption{Example trajectories of damped systmes}
+        \caption{Example trajectories of damped systems, with damping factor $\gamma=0.1$. We can tell it is damped by its sprialed in trajectory.}
         \label{fig:damped_trajectory}
 \end{figure}
 
+As mentioned in section 3.4, we can invent a latent variable, $z$, to account for the dissiaptive dynamics.
+We can integrate out the $z$ to get the marginal distribution of the observed dynamics; at the same time, we can also condition the latent variable on the observed dynamics to obtain the posterior distribution of this latent disspative dynamics.
+In our cases of damped pendulum and SHM, we can actually derive the expression of this latent disspative dynamics. 
+Note that however, this requires physics knowledge, $p=v$, where we previously assumed to not known a priori.
+As a result, in general dynamical systems we would not be able to derive the analytical form of $z$ as a function of $p, q$ (we could still obtain its posterior, but we cannot verify its correctness).
+
+If we have damped SHM, we knew that $E=\frac{mp^2}{2}+\frac{kq^2}{2}$, then as before $\frac{dE}{dt}=mpa+kqv$.
+Using our knowledge of $p=v=\frac{dq}{dt}$, we have $\frac{dE}{dt}=mva+kvq=v(ma+kq)$.
+From the differential equation $\frac{d^2q}{dt^2}+2\gamma \frac{dq}{dt} +\frac{kq}{m}=0$, we can write it as $m\frac{dp}{dt}+2m\gamma v + kq=0$ so that $ma+2m\gamma v+kq=0$ or $ma+kq=-2m\gamma v$.
+Finally, we obtain
+$$
+\frac{dE}{dt} = v(-bv) = -bv^2
+$$
+As a result, from equation \ref{equ:LEplusZ}, we identify $z=-bv^2=-bp^2$, and therefore we would expect its posterior to be quadratic in $p$ and constant in $q$.
+Simliar result can be derived for damped pendulum, where we again expect $z$ to be quadratic in $p$ and independent of $q$.
+
 \subsection{Damped SHM}
-For damped SHM, we have exactly the same setup as the original undamped SHM.
-The results is again summarised in table \ref{tab:damped_shm_performance} and figure \ref{fig:damped_shm_prediction}, \ref{fig:damped_shm_energy}.
+We will demonstrate here how to modify previously derived invariance kernel to accomdate the damping.
+In the first case, we have approximate invariance.
+We will modify equation \ref{equ:shm_invariance} according to the equation \ref{equ:damped_invariance}.
+Therefore, we will have
+$$
+\mathbf{f}(X)|L[\mathbf{f}(X_L)]=0\sim\mathcal{N}(-B(D+\sigma^2_L\mathbb{I})^{-1}\mathbf{m}_\ell,A-B(D+\sigma^2_L\mathbf{I})^{-1}C),
+$$
+and as before $\sigma_L^2$ and $\mathbf{m}_\ell$ are learnable.
+$A, B, C, D$ are defined as before in \ref{equ:ABCD}.
+
+For our second method of introducing a latent dynamics, we will modify equation \ref{equ:jointABCD} according to equation \ref{equ:joint_withZ}.
+By applying equation \ref{equ:LEplusZ} to SHM, we have $$L_\gamma[\mathbf{f},z]=mpa+kqv+z=0,$$ and we obtain 
+$$
+\begin{pmatrix}
+  \begin{pmatrix}
+    \mathbf{f}(X)\\z(X)
+  \end{pmatrix}\\L_\gamma[\mathbf{f}(X_L), z(X_L)]
+\end{pmatrix}
+\sim\mathcal{N}
+\left(\begin{pmatrix}
+  \mathbf{0}_{3nd}\\\mathbf{0}_\ell
+\end{pmatrix},\begin{pmatrix}
+  A & B\\ C&D\\
+\end{pmatrix}\right),
+$$
+where now $A=K(X,X)$ with $K=\begin{pmatrix}
+  K_f & 0 \\ 0 & K_z\\
+\end{pmatrix}$ as in section 3.4 and $C=B^T$.
+In a similar fashion to the undamped SHM invariance kernel derivation in section 4.4.1, using the form of $L_\gamma$ above we have 
+$$
+\begin{gathered}
+B=\begin{pmatrix}
+  K_{RBF,a}(X, X_L) \\ K_{RBF, v}(X, X_L) \\ K_{RBF, z}(X, X_L)\\
+\end{pmatrix}
+\odot \begin{pmatrix}
+  mP_L \\ kQ_L \\ 1
+\end{pmatrix},\\ 
+D = K_{RBF, a}(X_L, X_L)\odot m^2(p_L\otimes p_L) + K_{RBF, v}(X_L, X_L)\odot k^2(q_L\otimes q_L) + K_{RBF, z}(X_L, X_L).
+\end{gathered}
+$$
+
+Finally, we use equation \ref{equ:normal_condtion} and marginalisation to arrive at
+$$
+\mathbf{f}(X)|L_\gamma[\mathbf{f}(X_L),z(X_L)]=0 \sim \mathcal{N}(\mathbf{0}_{2nd}, [A-BD^{-1}C]_{[0:2nd, 0:2nd]})
+$$
+as explained in section 3.4 to get our modified invariance kernel.
+For the derivation of posterior of $z$, please see section 3.4 to obtain appropriate sub matrixes from $A-BD^{-1}C$.
+The version for paramerterised invariance is omited since it is largely similar to what we have seen.
+
+For experiment, we have the same setup as the original undamped SHM, with the same input range.
+However, to learn the damping effect we will make the training trajectory longer to 20 time steps.
+Also, we will have three random starting trajectories instead, so we have a total of 60 training points.
+This is because of the damped system is harder to train, and also that we have a very flexible latent variable and we need more data points to help constrain it or else the invariance condition would be very trivally satisfied.
+The results of ten test trajectories is summarised in table \ref{tab:damped_shm_performance} and with trajectory prediction in figure \ref{fig:damped_shm_prediction} and energy prediction in figure \ref{fig:damped_shm_energy}.
 The learnt $f(p)$ and $g(q)$ is shown in figure \ref{fig:damped_shm_learnt}.
 
 \begin{table}[H]
     \centering
 \begin{tabularx}{\linewidth}{c|LLLLL} 
     \hline
-Method           & RBF & Known Invariance&  Learnt Invariance & Known Invariance (latent) & Learnt Invariance (latent)\\
+Method           & RBF & Known Approximate Invariance&  Learnt Approximate Invariance & Known Invariance (latent) & Learnt Invariance (latent)\\
   \hline
 Log Marginal Likelihood & 636 & 647 & 646 & 649 & 653 \\
 MSE & 0.00142 & 0.00130 & 0.00134 & 0.00091 & 0.00101 \\
     \hline
 \end{tabularx}
-\caption{Damped SHM performance}
+\caption{Damped SHM performance. We can see the approximate invariance is no longer significantly better than RBF, while the latent invariance model is much better.}
 \label{tab:damped_shm_performance}
     \end{table}
 
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_predicted.pdf}
-        \caption{Damped SHM predicted trajectory}
+        \caption{Damped SHM predicted trajectory. We can see the approximate invariance can no longer predict the trajectory perfectly, while the latent model is much closer to the truth.}
         \label{fig:damped_shm_prediction}
 \end{figure}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_energy.pdf}
   \centering
-  \caption{Energy conservation for damped SHM}
+  \caption{Energy conservation for damped SHM. We see the invariance models no longer conserve energy, and is able to dissipate energy.}
   \label{fig:damped_shm_energy}
 \end{figure}
 
@@ -1196,8 +1335,15 @@ MSE & 0.00142 & 0.00130 & 0.00134 & 0.00091 & 0.00101 \\
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_learnt_over_time.pdf}
   \centering
-  \caption{Learnt invariance for damped SHM}
+  \caption{Learnt invariance for damped SHM. Top: Approximate Invariance, Bottom: Latent Invariance. We see again the model is able to deduce the correct invariance even when there is damping.}
   \label{fig:damped_shm_learnt}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/latent_damped_shm.pdf}
+  \centering
+  \caption{Latent variable distribution. We can clearly see the posterior of $z$ follows the quadratic function of $p$ while being constant in $q$ as we expected.}
+  \label{fig:latent_damped_shm}
 \end{figure}
 
 We can see that the RBF performance is still poor as before.
@@ -1207,45 +1353,39 @@ However, it is clear that it is making use of the knowledge of the invariance si
 For energy consevation, it is reassuring that the invariance kernel is still remains invariant, while the learnt invariance might deviate a little since the extra parameters in the polynomial might fit to the damped data; but overall it conserves energy relatively well compare to the ground truth.
 Also, when we are learning the invariance, it again successfully recover the physics even under the effect of damping.
 
-\begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/latent_damped_shm.pdf}
-  \centering
-  \caption{Latent variable distribution}
-  \label{fig:latent_damped_shm}
-\end{figure}
-
-
 
 \subsection{Damped Pendulum}
-Again, the setting of damped pendulum is the same as the undamped pendulum.
-The results is summarised in table \ref{tab:damped_pendulum_performance} and figure \ref{fig:damped_pendulum_prediction}, \ref{fig:damped_pendulum_energy}.
-With the learnt polynomial in \ref{fig:damped_pendulum_learnt}.
+We omit the derivation of the appropriate invariance kernel and latent dyanmics model since it is largely similar to the damped SHM case, and we simply have to swap $q$ with $\sin(q)$ at appropriate places. 
+For the experiment, the setting of damped pendulum is the again the same as the undamped pendulum, with same input space.
+For the input data, this time we have five different starting points since we expect the $\sin(q)$ function to be harder to learn in damped cases; but since we have more starting points, we kept the length of each trajectory to be 10 time steps, so 50 points in total.
+The results is summarised in table \ref{tab:damped_pendulum_performance} and with predictions of trajectory figure \ref{fig:damped_pendulum_prediction} and energy in figure \ref{fig:damped_pendulum_energy}.
+The learnt polynomial is plotted in \ref{fig:damped_pendulum_learnt}.
 
 \begin{table}[H]
     \centering
 \begin{tabularx}{\linewidth}{c|LLLLL} 
     \hline
-Method           & RBF & Known Invariance&  Learnt Invariance & Known Invariance (latent) & Learnt Invariance (latent)\\
+Method           & RBF & Known Approximate Invariance&  Learnt Approximate Invariance & Known Invariance (latent) & Learnt Invariance (latent)\\
   \hline
 Log Marginal Likelihood & 516 & 525 & 525 & 548 & 522 \\
 MSE & 0.0012 & 0.0008 & 0.0008 & 0.0008 & 0.0008 \\
     \hline
 \end{tabularx}
-\caption{Damped  Pendulum performance}
+\caption{Damped Pendulum performance. Here the invarinace models still perform better than the RBF but this time the two methods perfrom roughly the same in predictive power.}
 \label{tab:damped_pendulum_performance}
     \end{table}
 
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_predicted.pdf}
-        \caption{damped pendulum predicted trajectory}
+        \caption{Damped pendulum predicted trajectory. Here we see the all invariance models perform similarly and better than the RBF baseline.}
         \label{fig:damped_pendulum_prediction}
 \end{figure}
 
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_energy.pdf}
   \centering
-  \caption{Energy conservation for damped pendulum}
+  \caption{Energy conservation for damped pendulum. Again, we see that the invariance models no longer conserve energy and is able to learn the dissipation.}
   \label{fig:damped_pendulum_energy}
 \end{figure}
 
@@ -1253,20 +1393,21 @@ MSE & 0.0012 & 0.0008 & 0.0008 & 0.0008 & 0.0008 \\
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_learnt_over_time.pdf}
   \centering
-  \caption{Learnt invariance for damped pendulum}
+  \caption{Learnt invariance for damped pendulum. Top: Approximate Invariance, Bottom: Latent Invariance. We see the learning of invariance is fairly accurate but slightly worse in fit than the undamped case.}
   \label{fig:damped_pendulum_learnt}
+\end{figure}
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/latent_damped_pendulum.pdf}
+  \centering
+  \caption{Latent variable distribution. Again, we see the quadratic behaviour as expected.}
+  \label{fig:latent_damped_pendulum}
 \end{figure}
 
 We see similar performance as in damped SHM, with invariance kernels performs slightly worse than undamped version but still much better than the RBF.
 The energy conservation still holds mostly for invariance kernels.
 However, this time, the learnt polynomial is not as good as the undamped case with much more deviation; this is expected due to the damping.
 
-\begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../codes/figures/latent_damped_pendulum.pdf}
-  \centering
-  \caption{Latent variable distribution}
-  \label{fig:latent_damped_pendulum}
-\end{figure}
 
 \section{Two-dimensional System}
 A two-dimensional system is not that different from an one-dimensional system. The major difference being there will be two more variables. 

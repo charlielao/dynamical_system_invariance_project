@@ -26,15 +26,15 @@
 \contentsline {section}{\numberline {4.3}Implementation Technicalities}{20}{section.4.3}%
 \contentsline {section}{\numberline {4.4}One-dimensional System}{21}{section.4.4}%
 \contentsline {subsection}{\numberline {4.4.1}Linear SHM}{21}{subsection.4.4.1}%
-\contentsline {subsection}{\numberline {4.4.2}Nonlinear Pendulum}{28}{subsection.4.4.2}%
-\contentsline {section}{\numberline {4.5}Invariance Density}{34}{section.4.5}%
-\contentsline {section}{\numberline {4.6}Damped System}{35}{section.4.6}%
-\contentsline {subsection}{\numberline {4.6.1}Damped SHM}{36}{subsection.4.6.1}%
-\contentsline {subsection}{\numberline {4.6.2}Damped Pendulum}{39}{subsection.4.6.2}%
-\contentsline {section}{\numberline {4.7}Two-dimensional System}{42}{section.4.7}%
-\contentsline {subsection}{\numberline {4.7.1}Linear SHM}{42}{subsection.4.7.1}%
-\contentsline {subsection}{\numberline {4.7.2}Nonlinear Double Pendulum}{46}{subsection.4.7.2}%
-\contentsline {chapter}{\numberline {5}Conclusion and Future Work}{50}{chapter.5}%
+\contentsline {subsection}{\numberline {4.4.2}Nonlinear Pendulum}{29}{subsection.4.4.2}%
+\contentsline {section}{\numberline {4.5}Invariance Density}{37}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Damped System}{38}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Damped SHM}{40}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Damped Pendulum}{43}{subsection.4.6.2}%
+\contentsline {section}{\numberline {4.7}Two-dimensional System}{46}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Linear SHM}{46}{subsection.4.7.1}%
+\contentsline {subsection}{\numberline {4.7.2}Nonlinear Double Pendulum}{51}{subsection.4.7.2}%
+\contentsline {chapter}{\numberline {5}Conclusion and Future Work}{55}{chapter.5}%
 \contentsline {chapter}{\numberline {A}Appendix}{A1}{appendix.A}%
 \contentsline {section}{\numberline {A.1}Effect of Jitter}{A1}{section.A.1}%
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
