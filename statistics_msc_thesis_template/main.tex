@@ -85,18 +85,18 @@
 
 \begin{abstract}
 Predicting the evolution of dynamical systems reliably has important practical values as they are used to model lots of natural and engineered processes across biology, physics and engineering.
-To improve the performance of model in terms of predictive performance and data efficieny, we can embed inductive bias, which is some prior knowledge we have, into our statistical models; in physics, the idea of symmetry and invariance are very powerful inductive bias to build into models.
+To improve the performance of a model in terms of predictive performance and data efficiency, we can embed inductive bias, which is some prior knowledge we have, into our statistical models; in physics, the idea of symmetry and invariance are very powerful inductive bias to build into models.
 Examples of such invariance includes conservation of energy or conservation of momentum.
 \cite{Mark2017} has shown marginal likelihood is a good objective function to uncover the underlying invariance and symmetry of the data, which was affine transformation of images in their case. 
 In this report, we extend their work and propose a Gaussian Process model that is able to capture the invariance in a dynamical system and hence recover the law of physics automatically.
 We also show the discovered invariance as inductive bias greatly improved the data efficiency and predictive performance, which is tested on a variety of systems, including one and two-dimensional simple harmonic motion, nonlinear pendulum as well as double pendulum.
-We have also demonstrated that the model is robust even when the system is not ideal and has dissipative effect where the invariance no longer holds exactly. 
+We have also demonstrated that the model is robust even when the system has dissipative effect where the invariance no longer holds exactly. 
 We are even able to perform inference on this latent dissipative effect.
 \end{abstract}
 
 \begin{acknowledgements}
 I would like to thank Dr Andrew Duncan and Dr Mark van der Wilk for being amazing supervisors, who provide guidance that I cannot complete the project without, and making time even though they are incredbily busy. 
-I would also like the thank my family and friends for their support.
+I would also like to thank my family and friends for their support.
 
 \end{acknowledgements}
 
@@ -109,7 +109,7 @@ I would also like the thank my family and friends for their support.
 
 \chapter{Introduction}
 Dynamical systems are one of the richest theory that models the real world with wide application across all science and engineering and therefore it is very valuable to be able to reliably predict the evolution of a system for practical purposes.
-Recently, data intensive machine learning methods, such as deep learning, has shown some very powerful results. 
+Recently, data intensive machine learning methods, such as deep learning, has demonstrated some very powerful results. 
 However, the amount of data required to achieve reasonable performance are often enormous, will often involve lots of manual labour to label and process the data.
 Sometimes, the data could be very difficult to come by in biological and medical settings.
 Therefore, data efficiency is the key if we wish to study more complicated systems.
@@ -132,7 +132,7 @@ In order to learn inductive bias automatically, we need an objective function th
 Intuitively, marginal likelihood, $p(Y)=\int p(Y|X)p(X)dX$ ($Y$ is the target and $X$ is the input) measures how well the data is explained by the model.
 This metric is common in Bayesian model selection and in our case: identifying the correct invariance. 
 Gaussian Process (GP) was particularly useful for this purpose thanks to its ability to estimate marginal likelihood exactly, and we can embed the inductive bias in the kernel function of the GP (see chapter 2).
-In this project, we aim to extend \cite{Mark2017} to learn invariance in dynamical systems to improve the data efficiency of system evolution prediction and recover the physical invariance underlying the data automatically. 
+In this project, we aim to extend \cite{Mark2017} to learn invariance in dynamical systems using marginal likelihood to improve the data efficiency of system evolution prediction and recover the physical invariance underlying the data automatically. 
 
 In the rest of the report, we will cover the essential theortical background to understand GP, dynamical systems, as well as symmetry and invariances in chapter 2. We will also review related work in this section.
 In chapter 3, we will derive the theoretical apsects and the constructions of the invariance kernels in dynamical systems.
@@ -145,7 +145,8 @@ In this chapter, we will cover the background knowledge required to understand t
 This section will also cover related work in the field.
 
 \section{Gaussian Process}
-Gaussian Process (GP) can be thought of a distribution over functions \citep{rasmussen_williams_2006}.
+Gaussian Process (GP) can be thought of a distribution over functions \citep{rasmussen_williams_2006}, so that the value of a function is probablistic.
+
 More formally, \begin{quote}GP is a collection of random variables, any finite number of which have a joint Gaussian distribution\end{quote}
 We will be able to specify a GP prior on $f(\mathbf{x})$ by mean function $m(\mathbf{x})=\mathbb{E}[f(\mathbf{x})]$ as well as the kernel function $K(\mathbf{x}, \mathbf{x'})=\mathbb{E}[f(\mathbf{x})-m(\mathbf{x})(f(\mathbf{x'})-m(\mathbf{x'}))]$, which is the covariance function.
 We then then write
@@ -153,7 +154,7 @@ $$
 f(\mathbf{x})\sim\mathcal{GP}(m(\mathbf{x}),K(\mathbf{x},\mathbf{x'})).
 $$
 Without loss of generality, we will now assume $m(\mathbf{x})=\mathbf{0}$, a common zero mean prior.
-In a noise free scenario, where we observe $f$ directly, we will have
+In a noise free scenario where we observe $f$ directly, follwing the definition, we will have
 $$
 \begin{bmatrix}
   f\\f^*
@@ -173,8 +174,9 @@ Since the noise is a white noise and are uncorrelated with each other, we will o
 \label{equ:joint_gp_noise}
 \end{equation}
 
-An important identity we use throughout the thesis is the Gaussian conditional formula: if
+An important identity we use throughout the thesis is the Gaussian conditional formula: 
 $$
+  \text{if }
   \begin{bmatrix}
     x\\y
   \end{bmatrix} 
@@ -211,7 +213,7 @@ $$
 
 Below we demonstrated an example adapted from \cite{GPflow2017} to showcase the fitting procedure of a GP.
 Different kernels defined by their various functional form as below imposes different prior knowledge on the GP.
-For instance, one of the most commonly used kernel, RBF, requires smoothness; Matérn requires once differentiability; Periodic kernel requires the prior to have periodic structure.
+For instance, one of the most commonly used kernel, RBF, requires smoothness; Matérn requires once differentiability; Periodic kernel requires the prior to have periodic structure (Our Invariance kernel will require the GP to obey invariance as shown in chapter 3).
 Below in figure \ref{fig:prior}, we showed 5 samples drawn from GP prior from each of the kernel, with mean zero.
 \begin{equation*}
   \begin{gathered}
@@ -220,10 +222,10 @@ Below in figure \ref{fig:prior}, we showed 5 samples drawn from GP prior from ea
     k_{periodic\ RBF}(r)=\exp \left(-\frac{2 \sin ^{2}\left(\frac{r}{2}\right)}{\ell^{2}}\right),
   \end{gathered}
 \end{equation*}
-where $r=|x-x'|$, the distance between two input.
+where $r=|x-x'|$, the distance between two input and the definition of the parameters can be found in \cite{rasmussen_williams_2006}.
 
 \begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../figures/prior.pdf}
+  \includegraphics[width=0.7\linewidth]{../figures/prior.pdf}
   \centering
   \caption{Samples from different GP priors of RBF, Matérn and periodic kernel. We can see different kernels enforce different prior on the GP and hence the different behaviours (periodic, smoothness etc.) of the function sample.}
   \label{fig:prior}
@@ -234,16 +236,17 @@ We randomly sampled five points and the fit is as shown below in figure \ref{fig
 We also sampled 10 posteriors.
 
 \begin{figure}[H] 
-  \includegraphics[width=0.8\linewidth]{../figures/posterior.pdf}
+  \includegraphics[width=0.7\linewidth]{../figures/posterior.pdf}
   \centering
   \caption{GP fit of the function $f=(x+x^2)\sin(x)$ with posterior samples, light shaded blue indicates 95\% credible interval. We can see that away from data, the GP is more uncertain.}
   \label{fig:posterior}
 \end{figure}
 
-We can see the function has low uncertainity around the data points and fall back to the GP prior (RBF in this case) away from the data.
+We can see the function has low uncertainity around the data points and fall back to the GP prior (RBF in this case) away from the data. 
+We also see GP is a very flexible nonparametric methods.
 
 \subsection{GPflow}
-While we can in principle build our own GP objects using linear algebra and statistical libraries, such as Numpy, Scipy, from scratch, it is better to avoid errors and improve development speed by using a well-tested, robust and efficient library called GPflow, which will be used throughout the project (\cite{GPflow2017})\footnote[1]{The codes can be found in \url{https://github.com/charlielao/dynamical\_system\_invariance\_project}}.
+While we can in principle build our own GP objects using linear algebra and statistical libraries, such as Numpy, Scipy, from scratch, it is better to avoid errors and improve development speed by using a well-tested, robust and efficient library called GPflow, which will be used throughout the project (\cite{GPflow2017})\footnote[1]{The codes for experiments and the invariance kernel classes can be found in \url{https://github.com/charlielao/dynamical\_system\_invariance\_project}}.
 It is a Python library built on TensorFlow to allow efficient and fast computation on GPUs to do GP inferences.
 A particular powerful feature is that it allows atuomatic tuning of hyperparameter such as lengthscales and variance of a kernel by computing the gradient (using automatic differentiation feature of Tensorflow) and perform optimisation.
 In later sections, when we will need to optimise more parameters than aforementioned ones with respect to maginal likelihood objective, the library will be proved to be very useful.
@@ -280,7 +283,8 @@ $$
 \end{cases}
 $$
 
-We can then visualise the state of the system specified by the $n$ variables, $x_1 \dots x_n$ in the phase space, and this system will evolve by moving in the phase space as time progresses. 
+We can then visualise the state of the system specified by the $n$ phase variables, $x_1 \dots x_n$ in the phase space, and this system will evolve by moving in the phase space as time progresses. 
+An example would figure \ref{fig:damped_shm_trajectory}.
 For instance, the damped oscillator is of degree 2 so there will be two variables describing its evolution, which in this case will be $x$ and $\frac{dx}{dt}=\dot{x}$, which is the displacement as well as velocity.
 Another example would be a naive model describing exponential growth of a organism, such as bacteria population in a petri dish
 $$
@@ -289,23 +293,23 @@ $$
 and this time it is one-dimensional with the phase variable being the population number, with $r$ again being a constant.
 Another important concept is linearity and nonlinearity, which is referring to the $f_1, \dots ,f_n$ above.
 If they depend on $x_1 \dots x_n$ linearly, then the system is linear, else it would be nonlinear.
-Other examples of dynamical systems include predator-prey dynamics, planetry evolution, and many biological processes, such as drug treatments.
+Other examples of dynamical systems include predator-prey dynamics, planetry evolution, and many biological processes, such as drug treatments, wave functions in qauntum mechanics and more; showing how large a class these models cover, and why it is important to study them.
 The systems discussed in the report include simple harmonic oscillators and single as well as double pendulums.
 
 
 
 \section{Symmetry and Invariances}
 Invariances are functions of the phase variables of a dynamical system that are unchanged throughout the evolution of the system over time. 
-An example would be from physics, the conservation of energy, that energy will remain unchanged or constant throught out the trajectories of the system.
+An example would be from physics, the conservation of energy, that energy, depending on the position and velocity, will remain unchanged or constant throught out the trajectories of the system.
 This is related to the symmetry under time translation.
-There are other types of symmetry, such as translational symmetry, rotational symmetry, permutation symmetry, which are widely explored in geometric deep learning literature \cite{Bronstein2017}. 
+There are other types of symmetry, such as translational symmetry, rotational symmetry, permutation symmetry, which are widely explored in geometric deep learning literature \citep{Bronstein2017}. 
 More formally, we can describe symmetry using a little group theory.
 Refering to \cite{Kondor2008}, we have symmetries and associated invariance if we have a symmetry group $G$ acting on $\mathcal{X}$, the input space, by $x\mapsto T_g(x)$ for $g\in G$, where $T$ is some transformation function parameterised by $g$. 
 Then we should have $f(T_g(x))=f(x)$ for any function $f$, in other words, invariant under symmetry transformation.
 For instance, if it is a rotational symmetric group then we will have $T$ corresponds to the rotation transformation of angle $g$, and we expect $f$ to be invariant under rotation.
 In dynamical system, it has a slightly different interpretation.
 From \cite{marsden_sirovich_antman_2008}, in this description of dynamical system, we consider a generator $\mathcal{L}$, which is an operator that generates the evolution of some function quantity that depends on the phase variables over time.
-If we have the ODE $\frac{dx}{dt}=f$; then \begin{equation}\mathcal{L}[E]=\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),\label{equ:LE}\end{equation} followed by simple chain rule, where $E$ is some function of the phase.
+If we have the ODE $\frac{dx}{dt}=f$; then \begin{equation}\mathcal{L}[E]\equiv\frac{dE}{dt}=f(x)\cdot \nabla_x E(x),\label{equ:LE}\end{equation} followed by simple chain rule, where $E$ is some function of the phase.
 If we would like $E$ to be the conserved invariant quantity, we would then require $\mathcal{L}[E]=0$. 
 This will then define what we mean by invariance in the context of dynamical system: some quantity depending on the input that does not change along the evolution of the system.
 
@@ -314,20 +318,20 @@ Neverthless, in physics, there is a deeper connection between symmetry and invar
 In plain words, every conservation law (invariance) is associated with an underlying symmetry.
 For instance, conservation of momentum is obeyed when there is a spatial translation symmetry of the system. 
 Similarly, rotational symmetry is associated with the conservation of angular momentum.
-There are more abstract conservation law, such as conservation of electrical charge is related to Gauge symmetry.
+There are more abstract symmetry, such as Gauge symmetry.
 Here the more relevant ones is the conservation of energy, which is related to the symmetry of the system under temporal translation, i.e. the quantity is unchanged as time passes.
 
 
 \section{Related Work}
 There are many existing literature in the field of learning invariance, prediction in dynamical systems, as well as physics based machine learning methods.
-A summary of comparison is made in table \ref{tab:compare}.
+A summary of comparison of the capabilities of each is made in table \ref{tab:compare}.
 
 \subsection{Physics Informed Machine Learning}
 Many physics informed machine learning techniques exist as outlined in \cite{Cuomo2022, PIML}
 For example, in Physics Informed Neural Network (PINN) from \cite{Raissi2019}, the authors embedded the functional form of partial differential equations (PDEs) that describe the physics of the problem into the loss function so that the neural network model assume the PDE; they also allow the parameters in the PDEs to be learnt. 
 There are many variants of such as \cite{Qian2020}.
 In \cite{Raissi2018}, it even uses a GP to model the evolution of the state by using the PDE form as a linear operator to evolve the GP; since the linear transform of GP is still a GP, we will get joint GP, then we can do inference.
-However, they are restricted to known PDE expression and only learn the coefficients instead of learning the whole physics from scratch. 
+However, they are restricted to known PDE expression and only learn the coefficients instead of learning the whole physics from scratch automatically. 
 Moreover, for nonlinear dynamics, it has to use a linear approximation for the method to work, which is very restrictive.
 There are also versions of PINN that takes conservation of energy into account such as \cite{Jagtap2020}.
 However, it still suffers from other problems described above.
@@ -384,7 +388,7 @@ There is also \cite{Heinonen2018}, that also uses GP to model the ODE models in 
     \centering
 \begin{tabularx}{\linewidth}{c|LLL} 
     \hline
- Methods & Respect the physics laws & Recover the physics laws & Generalise to dynamical systems beyond physics  \\ 
+ Methods & Respect the physics laws (conservation of energy) & Learn the physics laws (differential equations) & Generalise beyond physics dynamical systems  \\ 
     \hline
   ODE approach & X & O & O \\
   Symbolic approach & O & O & X \\
@@ -403,14 +407,14 @@ There is also \cite{Heinonen2018}, that also uses GP to model the ODE models in 
 \chapter{Invariance Kernel}
 In this chapter we will start with general theoretical construction of invariance kernel given the knowledge of the invariance of the system.
 Recall in section 2.1, differnt kernels assume differnt prior on the GP; we will therefore attempt to embed our invariance priors into the kernel so the GP respects the invariance.
-We will then describe how we are able to accomdation dissiaptive systems.
+We will then describe how we are able to accomdate dissiaptive systems.
 Finally, we will demonstrate how we are able to learn invariances without any prior knowledge of the system.
 
 \section{General Construction}
 If we are given a dynamical system of dimension $d$ with variables $\mathbf{q}, \mathbf{p}$, where $\mathbf{q} = (q_1, q_2,\dots,q_d)$ is the vector of positional coordinates, and $\mathbf{p}=(p_1, p_2, \dots, p_d)$ is the vector of velocity coordinates of the states of the dynamical system.
 We are interested to predict the future trajectories of the state of the system.
 Therefore, we would like to know the time derivative of these coordinates so we can update them using an integrator (e.g. Euler, Runge-Kutta). 
-These time derivatives are referred to as the \textbf{dynamics} of a dynamical system, which governs the evolution of the system, and is a function of the coordinates $\mathbf{q}$ and $\mathbf{p}$ (it could also be explicitly time dependent but that will be a straightforward generalisation, and so is not considered here). 
+These time derivatives are referred to as the \textbf{dynamics} of a dynamical system, which governs the evolution of the system, and is a function of the coordinates $\mathbf{q}$ and $\mathbf{p}$ (it could also be explicitly time dependent but that will be a straightforward generalisation, and so is not considered here for simplicity). 
 
 For our systems, we will denote the dynamics of $\mathbf{p}$ as $\frac{d\mathbf{p}}{dt}=\mathbf{a}(\mathbf{q}, \mathbf{p})$, and that of $\mathbf{q}$ as $\frac{d\mathbf{q}}{dt}=\mathbf{v}(\mathbf{q}, \mathbf{p})$.
 Astute readers or someone with physics background would notice $p$ is related to the velocity, which in principle should be exactly equal to $v$; while this is true in physical dynamical system, the setup is generally applicable to non physical dynamical systems too, so that we will not use this knowledge. 
@@ -421,10 +425,10 @@ Notation wise, we will collect the two dynamics term and call them $$\mathbf{f(\
 \end{pmatrix}$$
 For simplicity of notation, the dependence on $\mathbf{q}, \mathbf{p}$ is now implicit. 
 
-The goal is to learn the dynamics, so for the inference procedure, we choose to put GP priors on $\mathbf{f}$ so that $\mathbf{f}\sim\mathcal{GP}(m, K)$.
+The goal is to learn the dynamics, so for the inference procedure, we choose to put GP priors on $\mathbf{f}$ so that $$\mathbf{f}\sim\mathcal{GP}(m, K)$$.
 We will choose $m$ to be zero since there is no obvious prior knowledge for the mean function.
 We will also assume $\mathbf{a}$ and $\mathbf{v}$ to be independent since there are no reason to assume otherwise. 
-For the choice of kernel, we chose the standard smooth kernel, the squared exponential kernel, or RBF, and we denote this kernel to be $K_{RBF}$. 
+For the choice of kernel of each independent dynamics, we chose the standard smooth kernel, the squared exponential kernel, or RBF, and we denote this kernel to be $K_{RBF}$. 
 We will also denote any set of points in the input space of length $n$ and dimension $d$ as $$X\equiv\begin{pmatrix}
     \mathbf{x}_1\\\mathbf{x}_2\\\vdots\\\mathbf{x}_n
 \end{pmatrix}=\begin{pmatrix}
@@ -449,7 +453,7 @@ Without loss of generality, we will choose to stack the dynamics vertically in $
     \vdots\\
     v_d(\mathbf{x}_n)\\
 \end{pmatrix}\label{equ:stacked}\end{equation}
-For our naive independent RBF GP prior, we will finally have the covariance matrix K (kernel) being a block diagonal 
+For our naive independent RBF GP prior, we will finally have the covariance matrix $K$ (kernel) being a block diagonal 
 \begin{CentreLongEquation}
 $$
 K=\mathrm{Cov}(\mathbf{f}(X), \mathbf{f}(X'))=\begin{pmatrix}
@@ -464,27 +468,27 @@ $$
 with all the off diagonal terms being zero block matrixes because of the independence assumption between dynamics.
 Note that each $K_{RBF}$ is independent from one another with independent hyperparameters.
 This naive kernel will be our baseline to be compared to throughout the whole project.
-This is essentially a GP model without any knowledge of the invariance, and simply treating the dynamics as targets like standard GP regression tasks we considered in section 2.1 and equation \ref{equ:joint_gp_noise}.
+This is essentially a GP model without any knowledge of the invariance, and simply treating the dynamics as targets and phase space as inputs like standard GP regression tasks we considered in section 2.1 and equation \ref{equ:joint_gp_noise}.
 
 Now we can start considering the invariance. 
-If we assume the invariance constraints has to hold throughout the input phase space $\mathbb{R}^{2d}$, then we can condition the baseline GP on a grid of points covering the input space, which we referred to invariance points, $X_L$, where the invariance constraints hold. 
+If we assume the invariance constraints has to hold throughout the input phase space $\mathbb{R}^{2d}$, then we can condition the baseline GP on a fine grid of points covering the input space, which we referred to as invariance points, $X_L$, where the invariance constraints hold. 
 We denote $\ell$ as the number of invariance points, and we will call the invariance constraints $\mathcal{L}[E]$ as described in section 2.3.
 
 The form of $\mathcal{L}[E]$ will depend on the system as well as $X_{L}$, and examples will be given in chapter 3 to make it clear.
 Since the conservation of energy, $E$, is one of the most common invariance in physical systems, we will focus on making use of this constraint.
-Therefore, we have $E=\text{energy}.$
+Therefore, we have $E\equiv\text{energy}$ in this report. 
 We can see the invariance constraints will always be a linear function on the dynamics $\mathbf{f}=\begin{pmatrix}
   \mathbf{a} \\ \mathbf{v}
 \end{pmatrix}$ almost by definition because of chain rule as shown in the next paragraph.
 
-We have $\text{energy}=E(\mathbf{\theta}, \mathbf{p}, \mathbf{q})$, where $\mathbf{\theta}$ are constants that parameterised the energy function, like mass or gravity.
+We have $\text{energy}=E_\theta(\mathbf{p}, \mathbf{q})$, where $\mathbf{\theta}$ are constants that parameterised the energy function, like mass or gravity, now implicit.
 Then refering back to equation \ref{equ:LE}, we have 
 \begin{equation}
-\mathcal{L}[E] = \frac{dE}{dt}=\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} =\sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i(\mathbf{p,q}) + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i(\mathbf{p,q})
+\mathcal{L}[E] \equiv \frac{dE}{dt}=\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} =\sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i(\mathbf{p,q}) + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i(\mathbf{p,q})
 \label{equ:invariance_equation}
 \end{equation}
 We can therefore see it is always a linear combination of dynamics with coefficients independent of dynamics.
-As a result, $\mathcal{L}[E]$ can be seen to be a linear transformation of $\mathbf{f}$, and now we call this transformation operator $L$ acting on the dynamics, which will be a function of $\mathbf{p}, \mathbf{q}$ and $\mathbf{\theta}$.
+As a result, $\mathcal{L}[E]$ can be seen to be a linear transformation of $\mathbf{f}=\begin{pmatrix}\mathbf{a}\\\mathbf{v}\end{pmatrix}$, and now we call this transformation operator $L$ acting on the dynamics, which will be a function of $\mathbf{p}, \mathbf{q}$ and $\mathbf{\theta}$.
 If we apply this linear transformation $L$ on $\mathbf{f}(X_L)$, $L[\mathbf{f}(X_L)]$ will again be a GP with a transformed kernel because of the property of multivariable normal distribution.
 $$
 \text{if } x\sim\mathcal{N}(0, K);\ Ax\sim\mathcal{N}(0, AKA^T),
@@ -514,9 +518,9 @@ The kernel in equation \ref{equ:invariance_condition} will then be our invarianc
 \section{Damped System}
 Up to now, we have considered a perfect system, i.e. ideal world without frictions and the conservation of energy is completely obeyed such that $L[\mathbf{f}(X_L)]=0$ exactly.
 However, in a real system, there will be dissipation where energy is lost in the form of heat etc.  
-For example, in equation \ref{equ:damped}, the frictional force enters through the $b\frac{dx}{dt}$ term that makes the system loss energy to the surrounding as heat.  
-Therefore, to model that, we need to allow "approximate" invariance, such that the invariance $L[\mathbf{f}(X_L)]$ is noisy and not always exactly equal to zero, i.e. soft invariance.
-To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noise signal in equation \ref{equ:joint_gp_noise}, such that we have $K+\sigma_n^2 \mathbb{I}$;
+For example, in equation \ref{equ:damped}, the frictional force enters through the $b\frac{dx}{dt}$ term that makes the system losses energy to the surrounding as heat.  
+Therefore, to model that, we need to allow \textit{approximate} invariance, such that the evaluation of invariance $L[\mathbf{f}(X_L)]$ is noisy and not always exactly equal to zero, i.e. soft invariance.
+To account for that, in a similar spirit to when we add noise to the underlying latent GP to represent noisy signal in equation \ref{equ:joint_gp_noise}, such that we have $K+\sigma_n^2 \mathbb{I}$ in our covariance matrix;
 we will therefore add a noise to the invariance evaluation so that we have $L[\mathbf{f}(X_L)]=\epsilon$, where $\epsilon\sim\mathcal{N}(m_L, \sigma_L^2)$.
 Therefore, instead of equation \ref{equ:invariance_joint}, we will have 
 $$
@@ -539,7 +543,7 @@ We will then able to do the conditioning according to equation \ref{equ:normal_c
 \end{equation}
 Here, the parameters $\mathbf{m}_L$ and $\sigma^2_L$ will be learnt by optimising marginal likelihood. 
 The reason we allow the noise to have a non-zero mean is that we know that the energy can only decrease so that $\frac{dE}{dt}\equiv L[\mathbf{f}(X_L)] \le 0 $, so the deviation of invariance from zero is not symmetrical between positive and negative as a zero mean Gaussian noise would; we therefore introduce a learnable negative mean to accounts for that.  
-The idea of introducing this soft invariance noise is that hopefully this relaxation of the contrains of invariance will allow the model to use some information of invariance to do prediction and at the same time not strictly enforcing it, which would have lead to poor performance. 
+The idea of introducing this soft invariance noise is that hopefully this relaxation of the contraints of invariance will allow the model to use some information of invariance to do inference and at the same time not strictly enforcing it, which would have lead to poor prediction performance. 
 We will also use an alternative method to model the dissipative dynamics of the system using latent variables as shown in the section 3.4. 
 
 
@@ -547,7 +551,7 @@ We will also use an alternative method to model the dissipative dynamics of the 
 Previously, we have assumed the knowledge of the dynamics equation from Newton's Law, which has allowed us to derive the energy, $E$ and the invariance linear transformation $L$ accordingly. 
 However, for the kernel to be useful in real life, we cannot assume the equations of the system beforehand, since if we have the knowledge, then we can just use a numerical ODE integrator to obtain the trajectories. 
 Therefore, we should find a way for the system to learn the form of invariance from data directly.
-The way we chose to do so is to parameterise our invariance function and allow the system to learn the coefficients of the paramerterisation by maximising the log marginal likelihood.
+The way we chose to do so is to parameterise our invariance function and allow the system to learn the coefficients of the paramerterisation by maximising the marginal likelihood.
 (Interestingly, even if we specify the form of invariance, we would still not completely solve the system since there are still lots of degree of freedom left as will be illustrated in the next chapter.) 
 
 \subsection{One-dimensional system}
@@ -568,7 +572,7 @@ where $c_{f,i}, c_{g,i}$ are the parameters we will optimise based on marginal l
 In two-dimensions, things are a bit more complicated. 
 For example, it is very clear that in double pendulum shown in chapter 3, the invariance constraints is not seperable.
 Instead, we need to consider all combinations of polynomials; i.e. multivariate polynomial.
-Therefore, for two-dimensions we have $L(\mathbf{f})=f_1(p_1, p_2, q_1, q_2)a_1+f_2(p_1, p_2, q_1, q_2)a_2+g_1(p_1, p_2, q_1, q_2)v_1+g_2(p_1, p_2, q_1, q_2)v_2$.
+Therefore, for two-dimensions we have $L[\mathbf{f}]=f_1(p_1, p_2, q_1, q_2)a_1+f_2(p_1, p_2, q_1, q_2)a_2+g_1(p_1, p_2, q_1, q_2)v_1+g_2(p_1, p_2, q_1, q_2)v_2$.
 We will paramertise each of $f_1, f_2, g_1, g_2$ with $$\sum_{i,j,k,l=0}^{n}c_{ijkl}p_1^ip_2^jq_1^kq_2^l$$
 Therefore, there will be many more coefficients to be optimised.
 We can calculate the number by using the combination with replacement formula
@@ -581,10 +585,9 @@ For example, if we wish to have a cubic polynomial, then we would require $\frac
 \section{Partially Observed System}
 Partially observed data can be very common in dynamical system.
 With examples of physical system, we can imagine not observing $p$ and only observe $q$ (of course we do not possess the knowledge that $\dot{q}=p$).
-This will correpond to just observing the trajectory of a particle but has no information about the time and hence we cannot deduce velocity.
-If we have a two-dimensional system, we might only observe one set of dimension due to data recording mechanism, or perhaps some situation where we project three-dimensional objects on to the wall and we can only observe the two-dimensional shadows.
-In a more general sense, we can imagine if we have a system with unquantifiable friction (without prior knowledge).
-We may not be able to write down the form of friction analytically due to complex interaction of the system with the enviroment (i.e. not simply a damped system as shown in equation \ref{equ:damped}, where it is analytical).
+This will correpond to for example, we just observe the trajectory of a particle but we do not have a timer so we cannot compute velocity.
+If we have a two-dimensional system, we might only observe one set of dimension due to data recording mechanism, or perhaps some situation where we project three-dimensional objects on to the wall or we observe it through a nontransparent barrier and we can only observe the two-dimensional shadows.
+In a more general sense, we can imagine if we have a system with unquantifiable friction (or without prior knowledge of its form), we will not be able to write down the form of friction analytically due to complex interaction of the system with the enviroment (i.e. not simply a damped system as shown in equation \ref{equ:damped}, where it is analytical).
 Nevertheless, the law of physics and conservation of energy will still hold in the broad sense; 
 in other words, if we take into account of every single force of the interactions (including the enviroment), the total energy will be conserved so the invariance holds. 
 For example, in the case of frictional forces, they arise because of the electric-magnetic forces between particles and the surface of the enviroment.
@@ -596,16 +599,17 @@ The idea is to model the unobserved variable as a latent variable $z$ and its as
 For example, if we only observe $q$ in an one-dimensional system, then we can set $z=p$, a latent variable. 
 Then the dynamics $f$ will include the $\dot{z}$ term, which is equivalent to $a$ if it is observed. 
 In the case of two-dimensional system, where we do not observe the $p$ nor $q$ of one dimension, we will then have two latent variables $z_1, z_2$ and their associated dynamics.
-We can then use the invariance condition as before to constrain the distribution of the latent variables and does inference on it using inference scheme such as Markov Chain Monte Carlo or Variational Inference since we need to integrate out the latent variables, and is often intractable.
+We can then use the invariance condition as before to constrain the distribution of the latent variables and does inference on it using inference scheme such as Markov Chain Monte Carlo or Variational Inference since we need to integrate out the latent variables, and is often not in closed form or intractable.
 
-In this report, we will focus on one particular problem: the damping case.
-Here, we do not have missing inputs; instead, we have missing dynamics that accounts for the dissipative forces. 
-Therefore, we invent the latent variable $z$ to represent the dissipative effect.
+In this report, we will focus on one particular problem: the damping case, which actually can be easily accomdated with some extension to our current framework, without using complex inference schemes.
+Here, we do not have missing inputs; instead, we have missing dynamics that accounts for the dissipative forces that makes $\frac{dE}{dt}<0$. 
+Therefore, we invent the latent variable $z$ to represent the dissipative effect to account for the missing energy from $0-\frac{dE}{dt}$.
 This can be related to \cite{LatentForce}, where they model the underlying dynamical system with latent forces.
-Here, instead of modelling everything as forces, we combine both observed dyanmics as well as latent dynamics and relate them using the invariance relation. 
-Now, instead of the invariance in equation \ref{equ:invariance_equation} being equal to zero, $\frac{dE}{dt}\equiv\mathcal{L}[E]=0$, we have $\frac{dE}{dt}+z=0,$ so that now we have 
+Here, we combine both observed dynamics as well as latent dynamics and relate them using the invariance condition. 
+Now, instead of the invariance in equation \ref{equ:invariance_equation} being equal to zero, $\frac{dE}{dt}\equiv\mathcal{L}[E]=0$, we have $$\frac{dE}{dt}+z=0,$$ so that we effectively restored the strict invariance by using an extra latent varaible; or in other words, we are applying conservation of energy to the entire system, including the enviroment, which $z$ models.
+Now we have 
 \begin{equation}
-\mathcal{L}[E] + z = \frac{dE}{dt} + z =\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} + z = \sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i + z,
+\mathcal{L}[E] + z = \frac{dE}{dt} + z =\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} + z = \sum_{i=1}^d \frac{\partial E}{\partial p_i} a_i + \sum_{i=1}^d\frac{\partial E}{\partial q_i} v_i + z=0
 \label{equ:LEplusZ}
 \end{equation}
 which is therefore the a linear transformation on an augmented dynamics $\mathbf{f_\gamma}=\begin{pmatrix}
@@ -614,7 +618,7 @@ which is therefore the a linear transformation on an augmented dynamics $\mathbf
 and we will define this new linear transformation as $L_\gamma$, which operates on $\mathbf{f_\gamma}.$
 Effectively, we treat $z$ as dynamics with equal footing with $\mathbf{a}$ and $\mathbf{v}$.
 Following this argument, in a similar fashion as section 3.1, we will again put an GP prior on $z$ with RBF kernel, that is independent from $\mathbf{f}$.
-Now instead of equation \ref{equ:invariance_joint}, we have 
+Now instead of equation \ref{equ:invariance_joint}, we have joint distribution of $\mathbf{f}_\gamma$ and its linear tranformed invariance being
 \begin{equation}
 \begin{pmatrix}
 \begin{pmatrix}\mathbf{f}(X)\\ z(X)\end{pmatrix}\\L_\gamma[\mathbf{f}(X_L), z(X_L)]
@@ -629,8 +633,8 @@ Now instead of equation \ref{equ:invariance_joint}, we have
 where now 
 $$
 K = \begin{pmatrix}
-  K_f & 0 \\
-  0 & K_z\\
+  K_{RBF, f} & 0 \\
+  0 & K_{RBF, z}\\
 \end{pmatrix},
 $$
 Finally, using the normal conditional formula \ref{equ:normal_condtion}, we have 
@@ -666,6 +670,7 @@ $$
 \mathbf{f}(X)|L_\gamma[\mathbf{f}(X_L), z(X_L)]=0 \sim \mathcal{N}(\mathbf{0}_{2nd}, [K-L_\gamma K(L_\gamma KL_\gamma^T)^{-1}KL_\gamma^T]_{[0:2nd, 0:2nd]}),
 $$
 where for a matrix $M$, $M_{[0:r,0:c]}$ is a submatrix of $M$ equal to the first $r$ rows and first $c$ columns of the $M$ (zero indexed).
+
 At the same time, we are able to get the posterior of $z$ in the same inference procedure. 
 If we denote 
 $$
@@ -673,16 +678,19 @@ K-L_\gamma K(L_\gamma KL_\gamma^T)^{-1}KL_\gamma^T \equiv \begin{pmatrix}
   V_{ff} & V_{fz} \\ V_{zf} & V_{zz} \\
 \end{pmatrix},
 $$
-where $V_ff$ is the submatrix of the full covariance matrix corresponds to variance of $\mathbf{f}(X)$ (i.e. the first $2nd$ rows and $2nd$ columns as before), the rest are defined accordingly.  
-Then using the normal condition formula \ref{equ:normal_condtion} once again, 
+where $V_{ff}$ is the submatrix of the full covariance matrix corresponds to variance of $\mathbf{f}(X)$ (i.e. the first $2nd$ rows and $2nd$ columns as before), the rest are defined accordingly.  
+Then using the normal condition formula \ref{equ:normal_condtion} once again on equation \ref{equ:invariance_condition_withZ}, 
 $$
 z(X)|\mathbf{f}(X)=Y, L_\gamma[\mathbf{f}(X_L), z(X_L)]=0
 \sim\mathcal{N}
 (V_{zf}V_{ff}^{-1}Y,\ V_zz-V_{zf}V_{ff}^{-1}V_{fz}),
 $$
-where $Y$ is the data for the observed dynamics.
+where $Y$ is the data for the observed dynamics $\mathbf{f}$.
 
 \chapter{Experiments}
+In this chapter, we will take the theortical framework described in chapter 3 and apply them to real dynamical systems, namely one/two-dimensional simple harmonic oscillator, single/double pendulum as well as the damped one-dimensional systems.
+We will also run experiments to demonstrate the generalisability and predictive power of our invariance kernel over baseline methods.
+
 \section{Data Generation}
 To generate the data, we use a Runge-Kutta integrator to generate trajectories using the equation of motions for each problem. 
 We also added some small Gaussian noise $10^{-8}$ to the dynamics (the time derivative of variables) when integrating to reflect the real world better as well as stablising the integrator.
@@ -691,7 +699,7 @@ This is obtained by combining forward and backward finite difference (midpoint m
 To illustate, $f'(x_1)=\frac{f(x_2)-f(x_0)}{2h}$, where $h$ is the spacing between $x_0, x_1$ and $x_1, x_2$ and $f'(x_1)$ is the derivative evaluated at $x_1$.
 We also choose the time step to be $0.01$ to ensure sufficient accuracy for the integrator.
 For training data, $X$, we choose a few random starting point within a range (datails depends on the task as described later) in the input space and generate data from there for a number of timesteps (again, tasks specific). 
-To assess the performance, we generate the test set using the same input range, we will pick ten different starting points and then average the result.
+To assess the performance, we generate the test set using the same input range, we will pick ten different starting points and project the trajectory for 100 time steps and then average the result.
 
 \section{Evaluation Method}
 We will mainly use the mean squared error (MSE) between the trajectory prediction and ground truth as our evaluation metrics. 
@@ -710,7 +718,7 @@ Therefore, here I would set the range of both lengthscales and variable to be ar
 For example, if we have maximum range of $\pm 2$, my upper bound for search is set to $10$ and lower bound is $10^{-6}$.
 
 \subsection*{Invariance points $X_L$}
-In low dimensions, we could simply allow $X_L$ to be a evenly spaced grid in the input space, and we will call the number of points in each dimension the \textbf{invariance density}.
+In low dimensions (1), we could simply allow $X_L$ to be a evenly spaced grid in the input space, and we will call the number of points in each dimension the \textbf{invariance density}.
 So that if we have an invariance density of $40$, it means $X_L$ will contain $1600$ points in one-dimensional cases. 
 However, conditioning on a grid of invariance points is simply not scalable in high dimensions. 
 If we have an invariance density of 10 in a $\pm 5$ range for two-dimensional SHM (spacing of 1), then we will have 10000 points. 
@@ -1257,7 +1265,7 @@ Finally, we obtain
 $$
 \frac{dE}{dt} = v(-bv) = -bv^2
 $$
-As a result, from equation \ref{equ:LEplusZ}, we identify $z=-bv^2=-bp^2$, and therefore we would expect its posterior to be quadratic in $p$ and constant in $q$.
+As a result, from equation \ref{equ:LEplusZ}, we identify $z=bv^2=bp^2$, and therefore we would expect its posterior to be quadratic in $p$ and constant in $q$.
 Simliar result can be derived for damped pendulum, where we again expect $z$ to be quadratic in $p$ and independent of $q$.
 
 \subsection{Damped SHM}
