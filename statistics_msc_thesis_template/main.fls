@@ -1513,11 +1513,6 @@ INPUT ../codes/figures/shm_energy.pdf
 INPUT ../codes/figures/shm_energy.pdf
 INPUT ../codes/figures/shm_energy.pdf
 INPUT ../codes/figures/shm_energy.pdf
-INPUT ../codes/figures/shm_learnt_over_time.pdf
-INPUT ../codes/figures/shm_learnt_over_time.pdf
-INPUT ../codes/figures/shm_learnt_over_time.pdf
-INPUT ../codes/figures/shm_learnt_over_time.pdf
-INPUT ../codes/figures/shm_learnt_over_time.pdf
 INPUT ../codes/figures/posterior_shm_rbf.pdf
 INPUT ../codes/figures/posterior_shm_rbf.pdf
 INPUT ../codes/figures/posterior_shm_rbf.pdf
@@ -1528,6 +1523,11 @@ INPUT ../codes/figures/posterior_shm_invariance.pdf
 INPUT ../codes/figures/posterior_shm_invariance.pdf
 INPUT ../codes/figures/posterior_shm_invariance.pdf
 INPUT ../codes/figures/posterior_shm_invariance.pdf
+INPUT ../codes/figures/shm_learnt_over_time.pdf
+INPUT ../codes/figures/shm_learnt_over_time.pdf
+INPUT ../codes/figures/shm_learnt_over_time.pdf
+INPUT ../codes/figures/shm_learnt_over_time.pdf
+INPUT ../codes/figures/shm_learnt_over_time.pdf
 INPUT ../figures/pendulum.pdf
 INPUT ../figures/pendulum.pdf
 INPUT ../figures/pendulum.pdf
@@ -1563,11 +1563,6 @@ INPUT ../codes/figures/pendulum_energy.pdf
 INPUT ../codes/figures/pendulum_energy.pdf
 INPUT ../codes/figures/pendulum_energy.pdf
 INPUT ../codes/figures/pendulum_energy.pdf
-INPUT ../codes/figures/pendulum_learnt_over_time.pdf
-INPUT ../codes/figures/pendulum_learnt_over_time.pdf
-INPUT ../codes/figures/pendulum_learnt_over_time.pdf
-INPUT ../codes/figures/pendulum_learnt_over_time.pdf
-INPUT ../codes/figures/pendulum_learnt_over_time.pdf
 INPUT ../codes/figures/posterior_pendulum_rbf.pdf
 INPUT ../codes/figures/posterior_pendulum_rbf.pdf
 INPUT ../codes/figures/posterior_pendulum_rbf.pdf
@@ -1578,6 +1573,11 @@ INPUT ../codes/figures/posterior_pendulum_invariance.pdf
 INPUT ../codes/figures/posterior_pendulum_invariance.pdf
 INPUT ../codes/figures/posterior_pendulum_invariance.pdf
 INPUT ../codes/figures/posterior_pendulum_invariance.pdf
+INPUT ../codes/figures/pendulum_learnt_over_time.pdf
+INPUT ../codes/figures/pendulum_learnt_over_time.pdf
+INPUT ../codes/figures/pendulum_learnt_over_time.pdf
+INPUT ../codes/figures/pendulum_learnt_over_time.pdf
+INPUT ../codes/figures/pendulum_learnt_over_time.pdf
 INPUT ../codes/figures/data_efficiency.pdf
 INPUT ../codes/figures/data_efficiency.pdf
 INPUT ../codes/figures/data_efficiency.pdf
