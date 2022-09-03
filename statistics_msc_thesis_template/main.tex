@@ -92,6 +92,7 @@ In this report, we extend their work and propose a Gaussian Process model that i
 We also show the discovered invariance as inductive bias greatly improved the data efficiency and predictive performance, which is tested on a variety of systems, including one and two-dimensional simple harmonic motion, nonlinear pendulum as well as double pendulum.
 We have also demonstrated that the model is robust even when the system has dissipative effect where the invariance no longer holds exactly. 
 We are even able to perform inference on this latent dissipative effect.
+We conclude with some possible future directions that could generalise our results to larger class of dynamical systems and partially observed systems.
 \end{abstract}
 
 \begin{acknowledgements}
@@ -1342,14 +1343,14 @@ Log Marginal Likelihood & 636 & 647 & 646 & 649 & 653 \\
 MSE & 0.00142 & 0.00130 & 0.00134 & 0.00091 & 0.00101 \\
     \hline
 \end{tabularx}
-\caption{Damped SHM performance. We can see the approximate invariance is no longer significantly better than RBF, while the latent invariance model is much better.}
+\caption{Damped SHM performance. We can see the approximate invariance is no longer significantly better than RBF, while the latent dynamics model is much better.}
 \label{tab:damped_shm_performance}
     \end{table}
 
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_predicted.pdf}
-        \caption{Damped SHM predicted trajectory. We can see the approximate invariance can no longer predict the trajectory perfectly, while the latent model is much closer to the truth.}
+        \caption{Damped SHM predicted trajectory. We can see the approximate invariance can no longer predict the trajectory perfectly, while the latent dynamics model is much closer to the truth.}
         \label{fig:damped_shm_prediction}
 \end{figure}
 
@@ -1364,7 +1365,7 @@ MSE & 0.00142 & 0.00130 & 0.00134 & 0.00091 & 0.00101 \\
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_learnt_over_time.pdf}
   \centering
-  \caption{Learnt invariance for damped SHM. Top: Approximate Invariance, Bottom: Latent Invariance. We see again the model is able to deduce the correct invariance even when there is damping.}
+  \caption{Learnt invariance for damped SHM. Top: Approximate Invariance, Bottom: Latent Dynamics Invariance. We see again the model is able to deduce the correct invariance even when there is damping.}
   \label{fig:damped_shm_learnt}
 \end{figure}
 
@@ -1438,7 +1439,7 @@ MSE & 0.0012 & 0.0008 & 0.0008 & 0.0008 & 0.0008 \\
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_learnt_over_time.pdf}
   \centering
-  \caption{Learnt invariance for damped pendulum. Top: Approximate Invariance, Bottom: Latent Invariance. We see the learning of invariance is fairly accurate but slightly worse in fit than the undamped case.}
+  \caption{Learnt invariance for damped pendulum. Top: Approximate Invariance, Bottom: Latent Dynamics Invariance. We see the learning of invariance is fairly accurate but slightly worse in fit than the undamped case.}
   \label{fig:damped_pendulum_learnt}
 \end{figure}
 
@@ -1699,7 +1700,7 @@ To learn this invariance condition, we parameterise it with polynomials and opti
 The model is able to capture the correct invariance and recover the law of physics.
 We have also demonstrated it is also robust against dissiaptive effects using a noise variable to allow approximate invariance as well as using a latent variable to model the dissipative forces. 
 
-In the future, more work need to be done to properly investigate some parts of the project that is a bit hand-wavy. For example, comparing the data efficiency between approximate invariance and latent dissiaptive dynamics invariance.
+In the future, more work need to be done to properly investigate some parts of the project that is not thoroughly studied quantitatively. For example, comparing the data efficiency between approximate invariance and latent dissiaptive dynamics invariance.
 Also, investigating the effect of longer trajectory versus more different trajectories.
 
 There are also several exciting directions this project could evolve into.
@@ -1722,6 +1723,9 @@ However, as systems grow more complex, including a single latent dynamics may no
 As mentioned in section 3.4, an important and very common case is the missing input dimension problem.
 If we are able to successfully recover the higher dimensional space by observing the lower dimensional space combined with the knowledge of invariance, it will be very useful in applications like 3D reconstruction.
 More sophisticated inference technique will be needed such as Markov Chain Monte Carlo or Variational Inference.
+
+To conclude, symmetry and invariance are powerful inductive bias that is the bedrock of modern physics and has shown promising results in modern machine learning literature. 
+We hope this work can be a step towards understanding how general invariances can help us predict better in dynamical systems automatically.
 
 
 % References: modify the file refs.bib
