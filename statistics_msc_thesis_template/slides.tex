@@ -629,74 +629,367 @@ MSE & 0.0021 & 0.0009 & 0.0006 \\
 
 
 \begin{frame}{Damped Systems}
-\onslide<1->{
+\only<1>{
 $$
 \frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2q=0;\ \frac{d^2q}{dt^2}+2\gamma\frac{dq}{dt}+\omega_0^2\sin q=0 ,
 $$}
+\onslide<2->{
+
+\begin{figure}[H]
+     \centering
+     \begin{subfigure}[b]{\linewidth}
+        \centering
+        \includegraphics[width=0.5\linewidth]{../codes/figures/damped_shm_trajectory_1D.pdf}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{\linewidth}
+        \centering
+        \includegraphics[width=0.5\linewidth]{../codes/figures/damped_pendulum_trajectory_1D.pdf}
+     \end{subfigure}
+        \caption{Example trajectories of damped systems, with damping factor $\gamma=0.1$.}
+\end{figure}
+
+}
 	
 \end{frame}
 
+\begin{frame}{Damped SHM}
+	\only<1>{
+Approximate Invariance
+$$
+\mathbf{f}(X)|L[\mathbf{f}(X_L)]=0\sim\mathcal{N}(-B(D+\sigma^2_L\mathbb{I})^{-1}\mathbf{m}_\ell,A-B(D+\sigma^2_L\mathbf{I})^{-1}C),
+$$
+	}
+	\only<2>{
+		Latent Dynamics
+ $$L_\gamma[\mathbf{f},z]=\frac{dE}{dt}+z = mpa+kqv+z=0,$$ and we obtain 
+$$
+\begin{pmatrix}
+  \begin{pmatrix}
+    \mathbf{f}(X)\\z(X)
+  \end{pmatrix}\\L_\gamma[\mathbf{f}(X_L), z(X_L)]
+\end{pmatrix}
+\sim\mathcal{N}
+\left(\begin{pmatrix}
+  \mathbf{0}_{3n}\\\mathbf{0}_\ell
+\end{pmatrix},\begin{pmatrix}
+  A & B\\ C&D\\
+\end{pmatrix}\right),
+$$
+	}
+	\only<3>{
+ $$A=K(X,X) \text{ with } K=\begin{pmatrix}
+  K_{RBF, f} & 0 \\ 0 & K_{RBF, z}\\
+\end{pmatrix} C=B^T$$.
+$$
+\begin{gathered}
+B=\begin{pmatrix}
+  K_{RBF,a}(X, X_L) \\ K_{RBF, v}(X, X_L) \\ K_{RBF, z}(X, X_L)\\
+\end{pmatrix}
+\odot \begin{pmatrix}
+  mP_L \\ kQ_L \\ 1
+\end{pmatrix},\\ 
+D = K_{RBF, a}(X_L, X_L)\odot m^2(p_L\otimes p_L) + K_{RBF, v}(X_L, X_L)\odot k^2(q_L\otimes q_L)
+\end{gathered}
+$$
+$$
++ K_{RBF, z}(X_L, X_L)
+$$
+	}
+	\only<4>{
+
+If we have damped SHM, we knew that $E=\frac{mp^2}{2}+\frac{kq^2}{2}$, then as before $\frac{dE}{dt}=mpa+kqv$.
+Using our knowledge of $p=v=\frac{dq}{dt}$, we have $\frac{dE}{dt}=mva+kvq=v(ma+kq)$.
+From the differential equation $\frac{d^2q}{dt^2}+2\gamma \frac{dq}{dt} +\frac{kq}{m}=0$, we can write it as $m\frac{dp}{dt}+2m\gamma v + kq=0$ so that $ma+2m\gamma v+kq=0$ or $ma+kq=-2m\gamma v=-bv$.
+Finally, we obtain
+$$
+\frac{dE}{dt} = v(-bv) = -bv^2
+$$
+As a result, from equation \ref{equ:LEplusZ}, we identify $z=bv^2=bp^2$, and therefore we would expect its posterior to be quadratic in $p$ and constant in $q$.
+Simliar result can be derived for damped pendulum, where we again expect $z$ to be quadratic in $p$ and independent of $q$.
+
+
+	}
+	
+\end{frame}
+
+\begin{frame}{Damped SHM Results}
+\only<1>{
+\begin{table}[H]
+    \centering
+\begin{tabularx}{\linewidth}{c|LLLLL} 
+    \hline
+Method           & RBF & Known (Approx) &  Learnt (Approx) & Known (Latent)  & Learnt (Latent)  \\
+  \hline
+Log Marginal Likelihood & 636 & 647 & 646 & 649 & 653 \\
+MSE & 0.00142 & 0.00130 & 0.00134 & 0.00091 & 0.00101 \\
+    \hline
+\end{tabularx}
+\caption{Damped SHM performance. We can see the approximate invariance is no longer significantly better than RBF, while the latent dynamics model is much better.}
+\caption{Damped SHM performance.}
+    \end{table}
+}
+\only<2>{
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_predicted.pdf}
+        \caption{Damped SHM predicted trajectory.}\end{figure}
+}
+\only<3>{
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_energy.pdf}
+  \centering
+  \caption{The energy along the trajectory.}\end{figure}
+}
+\only<4>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_shm_learnt_over_time.pdf}
+  \centering
+  \caption{Learnt invariance for damped SHM.} \end{figure}
+
+
+}
+\only<5>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/latent_damped_shm.pdf}
+  \centering
+  \caption{Latent variable distribution.} \end{figure}
+}
+\end{frame}
 	
 
 
+\begin{frame}{Damped pendulum Results}
+\only<1>{
+\begin{table}[H]
+    \centering
+\begin{tabularx}{\linewidth}{c|LLLLL} 
+    \hline
+Method           & RBF & Known (Approx) &  Learnt (Approx) & Known (Latent)  & Learnt (Latent)  \\
+  \hline
+Log Marginal Likelihood & 516 & 525 & 525 & 548 & 522 \\
+MSE & 0.0012 & 0.0008 & 0.0008 & 0.0008 & 0.0008 \\
+    \hline
+\end{tabularx}
+\caption{Damped pendulum performance. We can see the approximate invariance is no longer significantly better than RBF, while the latent dynamics model is much better.}
+\caption{Damped pendulum performance.}
+    \end{table}
+}
+\only<2>{
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_predicted.pdf}
+        \caption{Damped pendulum predicted trajectory.}\end{figure}
+}
+\only<3>{
+
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_energy.pdf}
+  \centering
+  \caption{The energy along the trajectory.}\end{figure}
+}
+\only<4>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/damped_pendulum_learnt_over_time.pdf}
+  \centering
+  \caption{Learnt invariance for damped pendulum.} \end{figure}
 
 
-\begin{frame}
-	\frametitle{Two Figures aside}
-	\begin{columns}[b]
-		\column{0.0125\textwidth}
-		\column{0.4875\textwidth}
-			\centering
-			\begin{figure}
-				\includegraphics[draft,width=\textwidth]{fooA.pdf} \
-				% remove the 'draft' keyword, when replacing with final figure!
-				\caption{Caption of Figure A}
-			\end{figure}
-		\column{0.4875\textwidth}
-			\centering
-			\begin{figure}
-				\includegraphics[draft,width=\textwidth]{fooB.pdf} \
-				% remove the 'draft' keyword, when replacing with final figure!
-				\caption{Caption of Figure B}
-			\end{figure}
-		\column{0.0125\textwidth}
-	\end{columns}
+}
+\only<5>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/latent_damped_pendulum.pdf}
+  \centering
+  \caption{Latent variable distribution.} \end{figure}
+}
+\end{frame}
+
+\begin{frame}{Two-dimensional SHM}
+\onslide<1->{
+$$
+\begin{cases}
+    \frac{d^2{q_1}}{dt^2} = -\frac{k}{m}q_1\\
+    \frac{d^2{q_2}}{dt^2} = -\frac{k}{m}q_2\\
+\end{cases}
+$$}
+\onslide<2->{
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\linewidth]{../figures/2dshm.pdf}
+        \caption{Two-dimensional mass-spring system.}
+\end{figure}}
+\end{frame}
+
+\begin{frame}{Two-dimensional SHM Invariance}
+
+	\only<1-2>{$$E=\frac{m(p_1^2+p_2^2)}{2}+\frac{k(q_1^2+q_2^2)}{2}$$} \onslide<2-4>{$$L[\mathbf{f}]=\frac{dE}{dt}=mp_1a_1+mp_2a_2+kq_1v_1+kq_2v_2=0.$$}
+	\only<3-4>{
+$$
+K(X,X')=\begin{pmatrix}
+K_{a_1}(X,X') & 0 & 0 & 0 \\
+0 & K_{a_2}(X,X') & 0 & 0 \\
+0 & 0 & K_{v_1}(X,X') & 0 \\
+0 & 0 & 0 & K_{v_2}(X,X') \\
+\end{pmatrix}.
+$$
+	}
+	\onslide<4->{
+$$
+\begin{pmatrix}
+    \mathbf{f}(X)\\L[\mathbf{f}(X_L)]\\
+\end{pmatrix}
+\sim\mathcal{N}
+\left(
+\begin{pmatrix}
+    0_{4n} \\ 0_{\ell}
+\end{pmatrix},
+\begin{pmatrix}
+    A & B \\
+    C & D\\
+\end{pmatrix}
+\right),
+$$}
+\onslide<5->{
+$$
+A=K(X, X'), 
+B=\begin{pmatrix}
+    K_{a_1}\\
+    K_{a_2}\\
+    K_{v_1}\\
+    K_{v_2}\\
+\end{pmatrix}\odot
+\begin{pmatrix}
+mP_{1,L}  \\
+mP_{2,L}  \\
+kQ_{1,L}  \\
+kQ_{2,L}  \\
+\end{pmatrix},
+C=B^T 
+$$
+
+\begin{gather*}
+D=K_{a_1}m^2\odot(p_{1,L}\otimes p_{1,L}) + K_{a_2}m^2\odot(p_{2,L}\otimes p_{2L})\\+K_{v_1}k^2\odot(q_{1,L}\otimes q_{1,L})+K_{v_2}k^2\odot(q_{2,L}\otimes p_{2,L})
+\end{gather*}
+
+	}
+\end{frame}
+
+\begin{frame}{Learning Invariance}
+	\onslide<1->{
+		$$L[\mathbf{f}]=f_1(p_1, p_2, q_1, q_2)a_1+f_2(p_1, p_2, q_1, q_2)a_2
+		$$
+		$$
+		+g_1(p_1, p_2, q_1, q_2)v_1+g_2(p_1, p_2, q_1, q_2)v_2$$
+	}
+	\onslide<2->{
+\begin{enumerate}
+  \item Compare random invariance to the theortically correct one as well as the known form in terms of marginal likelihood and MSE.
+  \item Find the correlation between the marginal likelihood and predictive performance, which is expect to be positive  
+  \item  Allow the polynomial coefficients to be optimised from the theoretical value.
+\end{enumerate}
+
+
+	}
+
+\end{frame}
+
+\begin{frame}{Two-dimensional SHM Results}
+\only<1>{
+\begin{table}[H]
+  \centering
+  \begin{tabular}{l l l l}
+    \hline
+Method           & RBF & Known &  Learnt\\
+  \hline
+Log Marginal Likelihood & 430.62 & 478.70 & 475.42  \\
+MSE & 0.0271 & 0.0035 & 0.0035 \\
+                    \hline
+  \end{tabular}
+  \caption{Two-dimensional SHM Invariance performance.}
+\end{table}}
+
+\only<2>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_predicted.pdf}
+  \centering
+  \caption{Two-dimensional SHM prediction. }
+\end{figure}}
+
+\only<3>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_energy.pdf}
+  \centering
+  \caption{Two-dimensional SHM energy.}
+\end{figure}
+}
+\only<4>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/shm_2d_polynomial.pdf}
+  \centering
+  \caption{Two-dimensional SHM learnt invariance. }
+\end{figure}}
+	
+\end{frame}
+
+\begin{frame}{Double Pendulum}
+\onslide<1->{
+$$
+\begin{cases}
+\frac{d^2q_1}{dt^2}=\frac{-g\left(2 m_{1}+m_{2}\right) \sin q_1-m_{2} g \sin \left(q_1-2 q_2\right)-2 \sin \left(q_1-q_2\right) m_{2}\left(p_2^{2} l_{2}+p_1^{2} l_{1} \cos \left(q_1-q_2\right)\right)}{l_{1}\left(2 m_{1}+m_{2}-m_{2} \cos \left(2 q_1-2 q_2\right)\right)} \\
+\frac{d^2q_2}{dt^2}=\frac{2 \sin \left(q_1-q_2\right)\left(p_1^{2} l_{1}\left(m_{1}+m_{2}\right)+g\left(m_{1}+m_{2}\right) \cos q_1+p_2{ }^{2} l_{2} m_{2} \cos \left(q_1-q_2\right)\right)}{l_{2}\left(2 m_{1}+m_{2}-m_{2} \cos \left(2 q_1-2 q_2\right)\right)}
+\end{cases}
+$$
+}
+\onslide<2->{
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.4\linewidth]{../figures/doublependulum.pdf}
+        \caption{Double Pendulum.}
+\end{figure}}
+	
+\end{frame}
+
+\begin{frame}{Double Pendulum Results}
+\only<1>{
+\begin{table}[H]
+  \centering
+  \begin{tabular}{l l l l}
+    \hline
+Method           & RBF & Known&  Learnt\\
+  \hline
+Log Marginal Likelihood & 783.46 & 838.41 & 869.09  \\
+MSE & 0.0040 & 0.0004 & 0.0018 \\
+                    \hline
+  \end{tabular}
+  \caption{Double pendulum Invariance performance.}
+\end{table}}
+
+\only<2>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_predicted.pdf}
+  \centering
+  \caption{Double pendulum prediction. }
+\end{figure}}
+
+\only<3>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_energy.pdf}
+  \centering
+  \caption{Double pendulum energy.}
+\end{figure}
+}
+\only<4>{
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/double_pendulum_polynomial.pdf}
+  \centering
+  \caption{Double pendulum learnt invariance. }
+\end{figure}}
+	
+	
 \end{frame}
 
 
-\begin{frame}
-	\frametitle{Text and Figure aside}
-	\begin{columns}[]
-		\column{0.0125\textwidth}
-		\column{0.4875\textwidth}
-			\centering
-			\begin{figure}
-				\includegraphics[draft,width=\textwidth]{fooC.pdf} \
-				% remove the 'draft' keyword, when replacing with final figure!
-				\caption{Caption of Figure C}
-			\end{figure}
-		\column{0.4875\textwidth}
-			Some text and a bullet point list
-			\begin{itemize}
-				\item ItemA
-				\item ItemB
-				\item ItemC
-				\item ItemD
-			\end{itemize}			
-		\column{0.0125\textwidth}
-	\end{columns}
-\end{frame}
-
-
-\begin{frame}
-	\frametitle{One Figure}
-	\bigskip
-	\begin{figure}
-		\includegraphics[draft,width=0.8\textwidth, height=0.5\textwidth]{fooD.pdf}
-		% remove the 'draft' keyword, when replacing with final figure!
-		\caption{Caption of Figure D}
-	\end{figure}
-\end{frame}
 
  
 \end{document}
