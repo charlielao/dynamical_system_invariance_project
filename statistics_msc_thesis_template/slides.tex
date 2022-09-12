@@ -13,6 +13,8 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{epstopdf}
+\usepackage[style=authoryear]{biblatex}
+\addbibresource{refs.bib}
 \usepackage{tabularx}
     \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 
@@ -70,8 +72,22 @@ Planetary Evolution; Predator-Prey Dynamics, Protein mechanics, Quantum Mechanic
 \end{frame}
 
 \begin{frame}{Symmetry and Invariances}
+ \begin{itemize}
+  \item<1-> Powerful inductive bias underlying many successful modern machine learning methods $\Rightarrow$ Data efficiency
+  \item<2-> Discrete and continuous symmetry
+  \item<3-> Symmetry group $G$ acting on $\mathcal{X}$, by $x\mapsto T_g(x)$ for $g\in G$, where $T$ is some transformation function parameterised by $g$. Then we should have $f(T_g(x))=f(x)$ for any function $f$, in other words, invariant under symmetry transformation.
+  \item<4-> In dynamical system, generator $\mathcal{L}$ generates evolution of function quantity, $E$. 
+  \item<5-> If we have ODE $\frac{dx}{dt}=f$; then $$\mathcal{L}[E]\equiv\frac{dE}{dt}=f(x)\cdot \nabla_x E(x) \stackrel{invariance}{=} 0$$. 
+ \item<6-> Noether's Theorem
+ \end{itemize} 	
+\end{frame}
 
-	
+\begin{frame}{Learning Invariance using Marginal Likelihood}
+\begin{itemize}
+  \item<1-> \cite{Mark2017}
+  \item<2-> Symmetry of images (MNIST) under affine transformation, which includes rotation, shear, translation
+  \item<3-> $$p(Y)=\int p(Y|X)p(X)dX,$$ the marginal likelihood of data, as the objective to learn invariance 
+\end{itemize}
 \end{frame}
 
 
@@ -273,8 +289,9 @@ $$
 \end{frame}
 
 \begin{frame}{Damped System- Approximate Invariance}
-\onslide<1->{we have $L[\mathbf{f}(X_L)]=\epsilon$, where $\epsilon\sim\mathcal{N}(m_L, \sigma_L^2)$}
-\onslide<2->{
+\onslide<1->{We had $L[\mathbf{f}(X_L)]=\frac{dE}{dt}=0,$ but in a damped system $\frac{dE}{dt}<0$\newline}
+\onslide<2->{Now instead, we have $L[\mathbf{f}(X_L)]=\epsilon$, where $\epsilon\sim\mathcal{N}(m_L, \sigma_L^2)$}
+\onslide<3->{
 $$
 \begin{pmatrix}
 \mathbf{f}(X)\\L[\mathbf{f}(X_L)]
@@ -286,10 +303,16 @@ $$
 \end{pmatrix}\right),
 $$
 }
+\onslide<4->{
+  $$\mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} (-LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}\mathbf{m}_\ell,$$
+  $$ \begin{pmatrix}
+    K-LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}KL^T
+  \end{pmatrix})$$}
 \end{frame}
 
 \begin{frame}{Damped System- Latent Dynamics}
 	\onslide<1->{
+Now to model the missing part that makes an invariant system no longer invariant, we invent a latent variable $z$ such that
 $$
 \mathcal{L}[E] + z = \frac{dE}{dt} + z =\sum_{i=1}^d \frac{\partial E}{\partial p_i} \frac{\partial p_i}{\partial t}+ \sum_{i=1}^d\frac{\partial E}{\partial q_i}\frac{\partial q_i}{\partial t} + z = 
 $$
@@ -315,7 +338,7 @@ $$
 	\begin{enumerate}
 		\item Data Generation
 		\item Evaluation Methods
-		\item Implementation Techicalities
+		\item Implementation Technicalities 
 	\end{enumerate}
 \end{frame}
 
@@ -698,17 +721,14 @@ $$
 	}
 	\only<4>{
 
-If we have damped SHM, we knew that $E=\frac{mp^2}{2}+\frac{kq^2}{2}$, then as before $\frac{dE}{dt}=mpa+kqv$.
-Using our knowledge of $p=v=\frac{dq}{dt}$, we have $\frac{dE}{dt}=mva+kvq=v(ma+kq)$.
-From the differential equation $\frac{d^2q}{dt^2}+2\gamma \frac{dq}{dt} +\frac{kq}{m}=0$, we can write it as $m\frac{dp}{dt}+2m\gamma v + kq=0$ so that $ma+2m\gamma v+kq=0$ or $ma+kq=-2m\gamma v=-bv$.
-Finally, we obtain
-$$
-\frac{dE}{dt} = v(-bv) = -bv^2
-$$
-As a result, from equation \ref{equ:LEplusZ}, we identify $z=bv^2=bp^2$, and therefore we would expect its posterior to be quadratic in $p$ and constant in $q$.
-Simliar result can be derived for damped pendulum, where we again expect $z$ to be quadratic in $p$ and independent of $q$.
-
-
+\begin{itemize}
+  \item  $E=\frac{mp^2}{2}+\frac{kq^2}{2}$, $\frac{dE}{dt}=mpa+kqv$.
+  \item  $p=v=\frac{dq}{dt}\Rightarrow\frac{dE}{dt}=mva+kvq=v(ma+kq)$
+  \item  $\frac{d^2q}{dt^2}+2\gamma \frac{dq}{dt} +\frac{kq}{m} =0 \equiv m\frac{dp}{dt}+2m\gamma v + kq=0$
+  \item $ma+2m\gamma v+kq=0$ or $ma+kq=-2m\gamma v\equiv -bv$.
+  \item $\frac{dE}{dt} = v(-bv) = -bv^2$
+  \item $\frac{dE}{dt}+z=0 \Rightarrow z=bv^2=bp^2$
+\end{itemize}
 	}
 	
 \end{frame}
@@ -989,6 +1009,10 @@ MSE & 0.0040 & 0.0004 & 0.0018 \\
 	
 \end{frame}
 
+\begin{frame}[allowframebreaks]{Reference}
+\printbibliography
+
+\end{frame}
 
 
  
