@@ -4,6 +4,7 @@
 **/*.log
 **/*.out
 **/*.gz
-codes\__pycache__
+codes/__pycache__
 codes/figures
-./.vscode
+.vscode
+__pycache__
