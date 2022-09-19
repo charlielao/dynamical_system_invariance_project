@@ -5,3 +5,5 @@
 **/*.out
 **/*.gz
 codes\__pycache__
+codes/figures
+./.vscode
