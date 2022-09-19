@@ -2348,6 +2348,11 @@
     <bcf:citekey order="1">Mark2017</bcf:citekey>
     <bcf:citekey order="2">Mark2017</bcf:citekey>
     <bcf:citekey order="3">Mark2017</bcf:citekey>
+    <bcf:citekey order="4">rasmussen_williams_2006</bcf:citekey>
+    <bcf:citekey order="5">Raissi2019</bcf:citekey>
+    <bcf:citekey order="6">HNN</bcf:citekey>
+    <bcf:citekey order="7">NeuralODE</bcf:citekey>
+    <bcf:citekey order="8">GraphSymbolicPhysics</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="nyt">

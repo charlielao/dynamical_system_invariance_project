@@ -93,7 +93,7 @@ Planetary Evolution; Predator-Prey Dynamics, Protein mechanics, Quantum Mechanic
 
 \begin{frame}
 	\frametitle{Gaussian Process (GP)}
-	\only<1>{\begin{definition}\begin{quote}GP is a collection of random variables, any finite number of which have a joint Gaussian distribution\end{quote}
+	\only<1>{\begin{definition}\begin{quote}GP is a collection of random variables, any finite number of which have a joint Gaussian distribution (\cite{rasmussen_williams_2006})\end{quote}
 	\end{definition}}
 \only<2-4>{
 $$
@@ -200,6 +200,7 @@ $$
 \end{tabularx}
 \caption{Comparing the capabilities of different existing approach to learning invariance in dynamical systems}
     \end{table}
+  \cite{Raissi2019}, \cite{HNN}, \cite{NeuralODE}, \cite{GraphSymbolicPhysics}
 \end{frame}
 
 \begin{frame}{Invariance Kernel I}
@@ -232,7 +233,7 @@ $$
     v_d(\mathbf{x}_n)\\
 \end{pmatrix}$$}
 \onslide<3->{
-$$K=\mathrm{Cov}(\mathbf{f}(X), \mathbf{f}(X'))=
+$$K(X, X')=\mathrm{Cov}(\mathbf{f}(X), \mathbf{f}(X'))=
 $$
 $$
 \begin{pmatrix}
@@ -290,11 +291,11 @@ $$
 
 \begin{frame}{Damped System- Approximate Invariance}
 \onslide<1->{We had $L[\mathbf{f}(X_L)]=\frac{dE}{dt}=0,$ but in a damped system $\frac{dE}{dt}<0$\newline}
-\onslide<2->{Now instead, we have $L[\mathbf{f}(X_L)]=\epsilon$, where $\epsilon\sim\mathcal{N}(m_L, \sigma_L^2)$}
+\onslide<2->{Now instead, we have $L'[\mathbf{f}(X_L)]=L+\epsilon$, where $\epsilon\sim\mathcal{N}(m_L, \sigma_L^2)$}
 \onslide<3->{
 $$
 \begin{pmatrix}
-\mathbf{f}(X)\\L[\mathbf{f}(X_L)]
+\mathbf{f}(X)\\L'[\mathbf{f}(X_L)]
 \end{pmatrix}
 \sim\mathcal{N}
 \left(\begin{pmatrix}\mathbf{0}_{2nd}\\\mathbf{m}_{\ell}\end{pmatrix}, \begin{pmatrix}
@@ -304,7 +305,7 @@ $$
 $$
 }
 \onslide<4->{
-  $$\mathbf{f}(X)|L[\mathbf{f}(X_L)]=0 \sim \mathcal{N} (-LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}\mathbf{m}_\ell,$$
+  $$\mathbf{f}(X)|L'[\mathbf{f}(X_L)]=0 \sim \mathcal{N} (-LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}\mathbf{m}_\ell,$$
   $$ \begin{pmatrix}
     K-LK(LKL^T+\sigma^2_L\mathbb{I})^{-1}KL^T
   \end{pmatrix})$$}
@@ -332,6 +333,7 @@ $$
 \end{pmatrix}\right),
 	$$
 }
+\onslide<3->{Extensions of latent variable models}
 	
 \end{frame}
 \begin{frame}{Experiments}
@@ -443,7 +445,8 @@ B_{ij} &= \mathrm{Cov}(\mathbf{f}(X), L[\mathbf{f}(X_L)])_{ij} \\
 	\only<2>{
 \begin{align*}
 D_{ij} &= \mathrm{Cov}(L[\mathbf{f}(X_L)], L[\mathbf{f}(X_L)])_{ij} \\
-       &= \mathrm{Cov}(mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i}), mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i})) \\
+       &= \mathrm{Cov}(mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i}), \\
+       &mp_{L,i}a(q_{L,i},p_{L,i}) + kq_{L,i}v(q_{L,i},p_{L,i})) \\
        &= m^2p_{L,i}p_{L,j}K_{RBF,a}(\mathbf{x}_{L,i},\mathbf{x}_{L,j}) + k^2q_{L,i}q_{L,j}K_{RBF,v}(\mathbf{x}_{L,i},\mathbf{x}_{L,j})
 \end{align*}
 	}
@@ -603,6 +606,22 @@ $$
 	}
 \end{frame}
 
+\begin{frame}{Invariance Priors}
+\only<1>{
+\begin{figure}[H]
+     \centering
+         \includegraphics[width=0.8\linewidth]{../codes/figures/prior_shm_invariance.pdf}
+         \caption{SHM invariance prior}
+\end{figure}}
+\only<2>{
+\begin{figure}[H]
+     \centering
+         \includegraphics[width=0.8\linewidth]{../codes/figures/prior_pendulum_invariance.pdf}
+         \caption{Pendulum invariance prior}
+\end{figure}
+}
+\end{frame}
+
 \begin{frame}{Results for Pendulum}
 \only<1>{
 \begin{table}[H]
@@ -632,12 +651,19 @@ MSE & 0.0021 & 0.0009 & 0.0006 \\
 }
 \only<4>{
 \begin{figure}[H]
+         \includegraphics[width=\linewidth]{../codes/figures/posterior_pendulum_rbf.pdf}
+	\centering
+         \caption{Pendulum RBF posterior}
+\end{figure}
+}
+\only<5>{
+\begin{figure}[H]
          \includegraphics[width=\linewidth]{../codes/figures/posterior_pendulum_invariance.pdf}
 	\centering
          \caption{Pendulum invariance posterior}
 \end{figure}
 }
-\only<5>{
+\only<6>{
 \begin{figure}[H] 
   \includegraphics[width=0.8\linewidth]{../codes/figures/pendulum_learnt_over_time.pdf}
   \centering
@@ -648,6 +674,13 @@ MSE & 0.0021 & 0.0009 & 0.0006 \\
 
 
 	
+\end{frame}
+
+\begin{frame}{Data efficiency}
+\begin{figure}[H] 
+  \includegraphics[width=0.8\linewidth]{../codes/figures/data_efficiency.pdf}
+  \centering
+  \caption{Data efficiency for pendulum.} \end{figure}
 \end{frame}
 
 
@@ -680,7 +713,7 @@ $$}
 	\only<1>{
 Approximate Invariance
 $$
-\mathbf{f}(X)|L[\mathbf{f}(X_L)]=0\sim\mathcal{N}(-B(D+\sigma^2_L\mathbb{I})^{-1}\mathbf{m}_\ell,A-B(D+\sigma^2_L\mathbf{I})^{-1}C),
+\mathbf{f}(X)|L'[\mathbf{f}(X_L)]=0\sim\mathcal{N}(-B(D+\sigma^2_L\mathbb{I})^{-1}\mathbf{m}_\ell,A-B(D+\sigma^2_L\mathbf{I})^{-1}C),
 $$
 	}
 	\only<2>{
@@ -1007,6 +1040,15 @@ MSE & 0.0040 & 0.0004 & 0.0018 \\
 \end{figure}}
 	
 	
+\end{frame}
+
+\begin{frame}{Conclusion and Future work}
+  \begin{enumerate}
+    \item Latent Variable Models extension
+    \item General physics framework 
+    \item Investigate the invariance kernel methods deeper
+  \end{enumerate}
+  
 \end{frame}
 
 \begin{frame}[allowframebreaks]{Reference}

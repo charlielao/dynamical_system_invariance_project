@@ -1,11 +1,11 @@
 # Fdb version 3
-["biber slides"] 1662912421 "slides.bcf" "slides.bbl" "slides" 1662977895
+["biber slides"] 1663232453 "slides.bcf" "slides.bbl" "slides" 1663232524
   "refs.bib" 1661966467 31281 f5a0ad5b600895ac610e43ace20ad61d ""
-  "slides.bcf" 1662977893 107059 001ecba4b6d9e932a3a7e81378529de4 "pdflatex"
+  "slides.bcf" 1663232522 107334 d4358eabec0e380adb68f7446e339938 "pdflatex"
   (generated)
   "slides.bbl"
   "slides.blg"
-["pdflatex"] 1662977875 "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/slides.tex" "slides.pdf" "slides" 1662977895
+["pdflatex"] 1663232504 "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/slides.tex" "slides.pdf" "slides" 1663232524
   "../codes/figures/damped_pendulum_energy.pdf" 1661773139 17062 ba6985a58f11450e5d518cf73fb8fad0 ""
   "../codes/figures/damped_pendulum_learnt_over_time.pdf" 1661773139 26972 91a04713a3c57fb9053a151215624852 ""
   "../codes/figures/damped_pendulum_predicted.pdf" 1661773139 19679 72b9329aae3ed71a1fad5ae6ede7aa41 ""
@@ -14,6 +14,7 @@
   "../codes/figures/damped_shm_learnt_over_time.pdf" 1661773139 26648 a637044a58f33629d975b6590b5a093b ""
   "../codes/figures/damped_shm_predicted.pdf" 1661773139 19743 3fb88a32d1f3bbf38b34e108d9c7303c ""
   "../codes/figures/damped_shm_trajectory_1D.pdf" 1657447453 12936 8c47b04f8a0246f3f28335c3afa3afde ""
+  "../codes/figures/data_efficiency.pdf" 1661795073 21169 b8895d6ac6e021bb42c8911049f2a191 ""
   "../codes/figures/double_pendulum_energy.pdf" 1661073633 13164 f66bce7fd050221d67bb7d3d57cde322 ""
   "../codes/figures/double_pendulum_polynomial.pdf" 1662977873 14307 e70ffe5913e7e01e3b4c14f349885279 ""
   "../codes/figures/double_pendulum_predicted.pdf" 1661073633 25303 b2897c1744e5999ee26e58e1ff8ed7eb ""
@@ -24,8 +25,11 @@
   "../codes/figures/pendulum_predicted.pdf" 1661795073 17104 e4cee98aaad5299a1234515a0c59e961 ""
   "../codes/figures/pendulum_trajectory_1D.pdf" 1657373624 12209 4b11c34f0e2aa44a8b2b7ad654d2e045 ""
   "../codes/figures/posterior_pendulum_invariance.pdf" 1661795073 106381 cad17ab6609d54db94aa70206e43e46b ""
+  "../codes/figures/posterior_pendulum_rbf.pdf" 1661795073 107745 0e2992bd045ce4c395a00e976f9a17e5 ""
   "../codes/figures/posterior_shm_invariance.pdf" 1661773139 107219 bfb9cdbb9e993025aae0ef2f77a7ceac ""
   "../codes/figures/posterior_shm_rbf.pdf" 1661773139 101334 06c9c830ddf5c362617b32944c50f735 ""
+  "../codes/figures/prior_pendulum_invariance.pdf" 1658438584 267568 c3dd28a2d237b010e4f48bfbdb9a41e5 ""
+  "../codes/figures/prior_shm_invariance.pdf" 1658438584 267966 1143a31485fd8587f6a84c03b4c7fc39 ""
   "../codes/figures/shm_2d_energy.pdf" 1661866438 13288 610718e09200715aad83d823e0eeda91 ""
   "../codes/figures/shm_2d_polynomial.pdf" 1662977873 14596 6503801152a42e4ed1cddcaa790c3ed7 ""
   "../codes/figures/shm_2d_predicted.pdf" 1661866438 24287 8190197d5b177e76f2ee20bc0231d109 ""
@@ -41,7 +45,7 @@
   "../figures/shm.pdf" 1660081514 12717 ca6813724dab1f33d7735a4c66d42968 ""
   "Imperial_1_Pantone_solid.eps" 1662204948 310981 e6a20037c01dcbd012d06800f4f3399e ""
   "beamercolorthemeImperial.sty" 1662205024 3741 b5e330e02ae29c4a969ac8cf88528c69 ""
-  "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/slides.tex" 1662913368 29664 e45ee115a85b1b54fd5fd7d5f85af2d8 ""
+  "c:/Users/cheng/Documents/Charlie learning invariance research project/statistics_msc_thesis_template/slides.tex" 1663232429 30956 c625bd53497299803ec4f7b489eddaf9 ""
   "c:/texlive/2021/texmf-dist/fonts/map/fontname/texfonts.map" 1643573932 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "c:/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1643572477 1004 54797486969f23fa377b128694d548df ""
   "c:/texlive/2021/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1643572477 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -294,12 +298,12 @@
   "c:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1643577591 4417058 0b608c5d44817b826a1c6b0dd51c3a64 ""
   "c:/texlive/2021/texmf-var/web2c/pdftex/pdflatex.fmt" 1643577759 2796727 b2dac15f369e114b80aeca667807ff9d ""
   "c:/texlive/2021/texmf.cnf" 1643577561 713 614551405fc44b98efbf516466e3c909 ""
-  "slides.aux" 1662977893 11242 3b4b44c25b8a7ce916899adb541deb34 "pdflatex"
-  "slides.bbl" 1662912428 4226 f265a7ea0b76ab6276926f88bccca11e "biber slides"
-  "slides.nav" 1662977893 6196 4f5db4edb4368d8158815c7908657547 "pdflatex"
-  "slides.out" 1662977893 93 aea4b6a8ae45636c75679c2f0dfa4493 "pdflatex"
-  "slides.run.xml" 1662977893 2383 1d7ba1d6e75b88761a525cca25280fd3 "pdflatex"
-  "slides.tex" 1662913368 29664 e45ee115a85b1b54fd5fd7d5f85af2d8 ""
+  "slides.aux" 1663232522 13321 14e2717859b3f934e737d8eedf2f90cc "pdflatex"
+  "slides.bbl" 1663232460 18194 0fe156d91a0b4a35e775242247159c39 "biber slides"
+  "slides.nav" 1663232522 7025 44594bdfb49ca01c39f1220f483ac467 "pdflatex"
+  "slides.out" 1663232522 93 aea4b6a8ae45636c75679c2f0dfa4493 "pdflatex"
+  "slides.run.xml" 1663232522 2383 1d7ba1d6e75b88761a525cca25280fd3 "pdflatex"
+  "slides.tex" 1663232429 30956 c625bd53497299803ec4f7b489eddaf9 ""
   (generated)
   "slides.aux"
   "slides.bcf"
