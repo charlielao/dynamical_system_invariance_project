@@ -1,3 +1,7 @@
+'''
+This file contains the model for 2D baseline RBF model as well as invariance 2D SHM and 
+double pendulum kernel.
+'''
 import gpflow
 import numpy as np
 import tensorflow as tf
@@ -7,6 +11,9 @@ from scipy.special import comb, legendre
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 from itertools import combinations_with_replacement
 
+'''
+baseline RBF.
+'''
 class MOI2D(gpflow.kernels.Kernel):
     def __init__(self):
         super().__init__(active_dims=[0,1,2,3])
@@ -44,6 +51,9 @@ class MOI2D(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(K_X)
 
+'''
+2D SHM kernel.
+'''
 class SHMLocalInvariance2D(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density, invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours, jitter_size):
         super().__init__(active_dims=[0, 1, 2, 3])
@@ -187,6 +197,9 @@ class SHMLocalInvariance2D(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
+'''
+Double pendulum kernel.
+'''
 class DoublePendulumLocalInvariance(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density, invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours, jitter_size):
         super().__init__(active_dims=[0, 1, 2, 3])
@@ -346,6 +359,9 @@ class DoublePendulumLocalInvariance(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
+'''
+Learnt polynomial kernel in 2D.
+'''
 class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
     def __init__(self, invariance_range, invar_density, invar_neighbourhood_min, invar_neighbourhood_max, n_neighbours, jitter_size, poly_d):
         super().__init__(active_dims=[0, 1, 2, 3])
@@ -364,6 +380,9 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         self.prior_variance = 1#gpflow.Parameter(1, transform=positive())#tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(1)), name="prior_variance")
 #        self.poly = gpflow.Parameter(tf.Variable(0.1*np.random.normal(size=(4, self.number_of_coefficients(self.poly_d))), dtype=tf.float64), transform =tfp.bijectors.Sigmoid(to_default_float(-1.), to_default_float(1.)), trainable=True, prior=tfp.distributions.Laplace(to_default_float(0),(self.prior_variance)), name="poly")
         init_poly = np.zeros((4, self.number_of_coefficients(self.poly_d)))
+        '''
+        first four is for SHM, second four is for double pendulum.
+        '''
         init_poly[0,3]=1
         init_poly[1,4]=1
         init_poly[2,1]=1
@@ -570,6 +589,17 @@ class PolynomialLocalInvariance2D(gpflow.kernels.Kernel):
         
         return tf.linalg.tensor_diag_part(A-tf.tensordot(tf.tensordot(B, tf.linalg.inv(D),1), C, 1))
 
+'''
+get fresh new kernels with hyperparameters limited to certain range.
+kernel                  : depends on the dynamical system
+invar_range             : should be slightly bigger than the input range
+invar_density           : range from 5-8 or it may take a long time or OOM
+invar_neighbourhood_min : ideally small, can be set to zero
+invar_neighbourhood_max : ideally small, but not too small, can be set roughly as the spacing between
+                          global invariance points (i.e. invar_range/invar_density)
+n_neighbours            : 40-80
+jitter                  : small, 1e-5 to 1e-3
+'''
 def get_MOI_2D():
     moi = MOI2D()
     moi.Ka1.variance = gpflow.Parameter(moi.Ka1.variance.numpy(), transform=tfp.bijectors.Sigmoid(to_default_float(1e-3), to_default_float(10.))) 

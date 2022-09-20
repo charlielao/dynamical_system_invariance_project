@@ -1,3 +1,6 @@
+'''
+This file contains useful functions and helper functions that helps setup, run and analyse experiments.
+'''
 import gpflow
 import numpy as np
 import tensorflow as tf
@@ -6,11 +9,21 @@ import time
 from scipy.integrate import solve_ivp, odeint
 from gpflow.utilities import print_summary, positive, to_default_float, set_trainable
 
+'''
+Compute the degree of freedom given a grid of test points, 
+the kernel and the likelihood variance.
+'''
 def degree_of_freedom(kernel, grid_range, grid_density, likelihood):
     test_points = get_grid_of_points_1D(grid_range, grid_density)
     K = kernel(test_points)
     return tf.linalg.trace(tf.tensordot(K, tf.linalg.inv(K+likelihood*tf.eye(K.shape[0], dtype=tf.float64)), 1)).numpy()
 
+'''
+Simulate Simple Harnomic Motion with m=k=1.
+time_step : size of the time step, the lower the finer the data.
+total_time: length of the trajectory.
+noise     : the variance of noise added to the time derivative at every integrator step.   
+'''
 def get_SHM_data(time_step, total_time, noise, initial_positions, initial_velocities):
     m = k = 1
     w02 = k/m
@@ -27,6 +40,9 @@ def get_SHM_data(time_step, total_time, noise, initial_positions, initial_veloci
     Y = Y.transpose(2,0,1).reshape(-1,2)
     return (X, Y)
 
+'''
+Simulate two-dimensional SHM with m=k=1.
+'''
 def get_SHM_data_2D(time_step, total_time, noise, initial_positions_1,initial_positions_2, initial_velocities_1,initial_velocities_2):
     m = k = 1
     w02 = k/m
@@ -45,6 +61,9 @@ def get_SHM_data_2D(time_step, total_time, noise, initial_positions_1,initial_po
     Y = Y.transpose(2,0,1).reshape(-1,4)
     return (X, Y)
 
+'''
+Simulate damped SHM with m=k=1, where gamma is the damping factor, defaulted to be 0.1.
+'''
 def get_damped_SHM_data(time_step, total_time, noise, initial_positions, initial_velocities, gamma=0.1):
     m = k = 1
     w02 = k/m
@@ -61,6 +80,10 @@ def get_damped_SHM_data(time_step, total_time, noise, initial_positions, initial
     Y = Y.transpose(2,0,1).reshape(-1,2)
     return (X, Y)
 
+'''
+Simulate pendulum data with g=l=1.
+Initial conditions given in degrees and degrees/time.
+'''
 def get_pendulum_data(time_step, total_time, noise, initial_angles, initial_angular_velocities):
     g = l = 1
     w02 = g/l
@@ -77,6 +100,10 @@ def get_pendulum_data(time_step, total_time, noise, initial_angles, initial_angu
     Y = Y.transpose(2,0,1).reshape(-1,2)
     return (X, Y)
 
+'''
+Simulate double pendulum data with g=l1=l2=m1=m2=1. 
+Initial conditions given in degress and degrees/time.
+'''
 def get_double_pendulum_data(time_step, total_time, noise, initial_angles_1, initial_angles_2, initial_angular_velocities_1, initial_angular_velocities_2):
     m1 = m2 = l1 = l2 = g = 1
     t = tf.linspace(0., total_time, int(total_time/time_step))
@@ -96,6 +123,10 @@ def get_double_pendulum_data(time_step, total_time, noise, initial_angles_1, ini
     Y = Y.transpose(2,0,1).reshape(-1,4)
     return (X, Y)
 
+'''
+Simulate damped pendulum data with g=l=1, damping factor defaulted to be 0.1.
+Initial conditions given in degrees, degrees/time.
+'''
 def get_damped_pendulum_data(time_step, total_time, noise, initial_angles, initial_angular_velocities, gamma=0.1):
     g = l = 1
     w02 = g/l
@@ -112,6 +143,7 @@ def get_damped_pendulum_data(time_step, total_time, noise, initial_angles, initi
     Y = Y.transpose(2,0,1).reshape(-1,2)
     return (X, Y)
 
+#helper function to get grid of points
 def get_grid_of_points_1D(grid_range, grid_density):
     grid_xs = tf.linspace(-grid_range,grid_range,grid_density)
     grid_vs = tf.linspace(-grid_range,grid_range,grid_density)
@@ -119,6 +151,7 @@ def get_grid_of_points_1D(grid_range, grid_density):
     grid_points = tf.stack([tf.reshape(grid_xx,[-1]), tf.reshape(grid_vv,[-1])], axis=1)
     return grid_points
 
+#helper function to get grid of points in two-dimensions
 def get_grid_of_points_2D(grid_range, grid_density):
     grid_x1s = tf.linspace(-grid_range,grid_range,grid_density)
     grid_x2s = tf.linspace(-grid_range,grid_range,grid_density)
@@ -128,9 +161,20 @@ def get_grid_of_points_2D(grid_range, grid_density):
     grid_points = tf.stack([tf.reshape(grid_xx1,[-1]),tf.reshape(grid_xx2,[-1]),tf.reshape(grid_vv1,[-1]), tf.reshape(grid_vv2,[-1])], axis=1)
     return grid_points
 
+#help to know the current optimisation step 
 def callback(step, variables, values):
     print(step, end='\r')
 
+'''
+Obtain a GPR (Gaussian Process Regression) model.
+kernel        : GP kernel
+mean_function : GP mean
+data          : input data
+iterations    : max number of optimisation allowed
+stored        : storing coefficents of the learnt polynomial over time
+
+return model, polynomial f, polynoimal g, as well as other optimised variables
+'''
 def get_GPR_model(kernel, mean_function, data, iterations, stored=False):
 
     if stored:
@@ -151,6 +195,19 @@ def get_GPR_model(kernel, mean_function, data, iterations, stored=False):
     opt = gpflow.optimizers.Scipy()
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables, options=dict(maxiter=iterations), step_callback=callback)
     return m, stored_f, stored_g, stored_coeff
+
+'''
+Obtain a GPR (Gaussian Process Regression) model in two-dimensions.
+kernel        : GP kernel
+mean_function : GP mean
+data          : input data
+iterations    : max number of optimisation allowed
+old_model     : the model for which we wish to copy/borrow the hyperparameters of lengthscale 
+                and variance as well as the local invariance grid points as well as likelihood variance
+fixed         : if we allow the model to optimise the parameters or keep it as in.
+
+return model
+'''
 
 def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None, fixed=None):
     X, Y = data
@@ -178,6 +235,16 @@ def get_GPR_model_2D(kernel, mean_function, data, iterations, old_model=None, fi
     opt_logs = opt.minimize(m.training_loss, m.trainable_variables,  options=dict(maxiter=iterations), step_callback=callback)
     return m
 
+'''
+Evaulate the performance of a model.
+m             : GPR model
+test_starting : starting points of the trajectory
+dynamics      : the dynamics model systems we are comparing against (see below)
+time_setting  : (evaluation total time, evaluation time step size)
+energy        : the function expression of energy of the system
+return MSE, predicted trajectory, upper bound of predicted trajectory, lower bound of predicted trajectory
+        true trajectory, true energy along the trajectory, predicted energy along the trajectory
+'''
 def evaluate_model_future(m, test_starting, dynamics, time_setting, energy):
     test_starting_position, test_starting_velocity = test_starting
     total_time, time_step = time_setting
@@ -226,6 +293,17 @@ def evaluate_model_future(m, test_starting, dynamics, time_setting, energy):
     true_energy = energy(X)
     predicted_energy = energy(predicted_future)
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, true_energy, predicted_energy)
+
+'''
+Evaulate the performance of a two-dimensional model.
+m             : GPR model
+test_starting : starting points of the trajectory
+dynamics      : the dynamics model systems we are comparing against (see below)
+time_setting  : (evaluation total time, evaluation time step size)
+energy        : the function expression of energy of the system
+return MSE, predicted trajectory, upper bound of predicted trajectory, lower bound of predicted trajectory
+        true trajectory, true energy along the trajectory, predicted energy along the trajectory
+'''
 
 def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, energy):
     test_starting_position1, test_starting_position2, test_starting_velocity1, test_starting_velocity2 = test_starting
@@ -286,33 +364,41 @@ def evaluate_model_future_2D(m, test_starting, dynamics, time_setting, scalers, 
     predicted_energy = energy(predicted_future)
     return (MSE_future.numpy(), predicted_future, predicted_future_variance_top, predicted_future_variance_bottom, X, true_energy, predicted_energy)
 
+# the dynamics (acceleration) of SHM with m=k=1
 def SHM_dynamics(X):
     return -X[:,0]
 
+# the first dynamics (acceleration) of 2D SHM with m=k=1
 def SHM_dynamics1_2D(X):
     return -X[:,0]
 
+# the second dynamics (x acceleration) of 2D SHM with m=k=1
 def SHM_dynamics2_2D(X):
     return -X[:,1]
 
+# the dynamics (y acceleration) of pendulum with g=l=1
 def pendulum_dynamics(X):
     return -np.sin(X[:,0])
 
+# the first dynamics (blob 1 acceleration) of double pendulum with g=l1=l2=m1=m2=1
 def double_pendulum_dynamics1(X):
     x1 = X[:,0]; x2 = X[:,1]; v1 = X[:,2]; v2 = X[:,3]
     numerator = -3*np.sin(x1)-np.sin(x1-2*x2)-2*np.sin(x1-x2)*(v2**2+v1**2*np.cos(x1-x2))
     denominator = 3-np.cos(2*x1-2*x2)
     return numerator/denominator
 
+# the second dynamics (blob 2 acceleration) of double pendulum with g=l1=l2=m1=m2=1
 def double_pendulum_dynamics2(X):
     x1 = X[:,0]; x2 = X[:,1]; v1 = X[:,2]; v2 = X[:,3]
     numerator = 2*np.sin(x1-x2)*(2*v1**2+2*np.cos(x1)+v2**2*np.cos(x1-x2))
     denominator = 3-np.cos(2*x1-2*x2)
     return numerator/denominator
 
+# the dynamics (acceleration) of damped SHM with m=k=1, gamma=0.1
 def damped_SHM_dynamics(X, gamma=0.1):
     return -X[:,0]-2*gamma*X[:,1]
 
+# the dynamics (acceleration) of damped pendulum with g=l=1, gamma=0.1
 def damped_pendulum_dynamics(X, gamma=0.1):
     return -np.sin(X[:,0])-2*gamma*X[:,1]
 
