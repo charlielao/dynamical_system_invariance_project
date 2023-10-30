@@ -1,5 +1,5 @@
 # dynamical_system_invariance_project
-An implementation of my master thesis "Learning Invariances in Dynamical Systems" supervised by Dr Mark van der Wilk and Dr Andrew Duncan. 
+An implementation of my master thesis "Learning Invariances in Dynamical Systems" supervised by Dr Mark van der Wilk and Dr Andrew Duncan, available here https://drive.google.com/file/d/1BiIh4ddMsMJFEqZFEQIOh2zn5Oq5H4rq/view?usp=sharing.
 The codes are built on GPflow and provide several kernels and mean functions that incoporates the inductive bias of invariances and symmetries underlying a dynamical system. 
 Specifically the conservation of energy in this case. The model is also able to enforce soft invariance to account for dissipative systems. 
 More importantly, the model is able to recover the form of invariance or physics laws automatically by maximising the marginal likelihood of the data.
